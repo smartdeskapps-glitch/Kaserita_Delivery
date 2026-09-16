@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kaserita Delivery</title>
+<meta name="description" content="Pedí de tu bodega de confianza y mandá el pedido por WhatsApp." />
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { background: #fafaf9; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo, useCallback } = React;
+
+const SUPABASE_URL = "https://hzmrsbeamtbloudmxjrp.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_RHAkd7pZIadDnSQClFdjMQ_lrG3p-gw";
+const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function formatoMoneda(n) {
+  return `S/ ${Number(n || 0).toFixed(2)}`;
+}
+
+function getSlugFromPath() {
+  return decodeURIComponent(location.pathname.replace(/^\/+|\/+$/g, ""));
+}
+
+function generarCodigoCorto() {
+  // Sin caracteres ambiguos (0/O, 1/I) para que sea fácil de leer y transcribir.
+  const alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let codigo = "";
+  for (let i = 0; i < 6; i++) {
+    codigo += alfabeto[Math.floor(Math.random() * alfabeto.length)];
+  }
+  return codigo;
+}
+
+function armarMensajeWhatsapp({ bodegaNombre, items, total, codigo }) {
+  const lineas = items.map(
+    (it) => `• ${it.cantidad} x ${it.descripcion} — ${formatoMoneda(it.precio_venta * it.cantidad)}`
+  );
+  return [
+    `Hola ${bodegaNombre}! Quiero hacer este pedido:`,
+    "",
+    ...lineas,
+    "",
+    `Total: ${formatoMoneda(total)}`,
+    `Código de referencia: ${codigo}`,
+    "",
+    "(mostrá este código en caja para cargar el pedido)",
+  ].join("\n");
+}
+
+function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar }) {
+  const sinStock = Number(producto.stock_actual) <= 0;
+  return (
+    <div className="bg-white rounded-xl border border-stone-200 overflow-hidden flex flex-col">
+      <div className="aspect-square bg-stone-100 flex items-center justify-center overflow-hidden">
+        {producto.foto_url ? (
+          <img src={producto.foto_url} alt={producto.descripcion} className="w-full h-full object-cover" />
+        ) : (
+          <i className="fa-solid fa-image text-stone-300 text-3xl"></i>
+        )}
+      </div>
+      <div className="p-3 flex flex-col gap-1 flex-1">
+        <p className="text-sm font-semibold text-stone-800 leading-tight line-clamp-2">{producto.descripcion}</p>
+        {producto.categoria && <p className="text-xs text-stone-400">{producto.categoria}</p>}
+        <div className="mt-auto pt-2 flex items-center justify-between gap-2">
+          <span className="text-sm font-bold text-emerald-700">{formatoMoneda(producto.precio_venta)}</span>
+          {sinStock ? (
+            <span className="text-xs text-stone-400 font-medium">Sin stock</span>
+          ) : cantidadEnCarrito > 0 ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onQuitar(producto)}
+                className="w-7 h-7 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center active:scale-95"
+              >
+                <i className="fa-solid fa-minus text-xs"></i>
+              </button>
+              <span className="text-sm font-semibold w-4 text-center">{cantidadEnCarrito}</span>
+              <button
+                onClick={() => onAgregar(producto)}
+                className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center active:scale-95"
+              >
+                <i className="fa-solid fa-plus text-xs"></i>
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => onAgregar(producto)}
+              className="px-3 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-semibold active:scale-95"
+            >
+              Agregar
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver }) {
+  const [copiado, setCopiado] = useState(false);
+  const copiarCodigo = async () => {
+    try {
+      await navigator.clipboard.writeText(codigo);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    } catch (e) {}
+  };
+  return (
+    <div className="max-w-md mx-auto px-4 py-10 flex flex-col items-center text-center gap-4">
+      <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl">
+        <i className="fa-solid fa-check"></i>
+      </div>
+      <h1 className="text-lg font-bold text-stone-800">¡Tu pedido está listo!</h1>
+      <p className="text-sm text-stone-500">
+        Mandá el mensaje por WhatsApp a <strong>{bodega.nombre}</strong>. Mostrá este código
+        en caja para que carguen tu pedido al instante.
+      </p>
+      <button
+        onClick={copiarCodigo}
+        className="text-3xl font-mono font-bold tracking-widest bg-stone-100 rounded-xl px-6 py-3 text-stone-800"
+      >
+        {codigo}
+      </button>
+      <p className="text-xs text-stone-400 -mt-2">{copiado ? "¡Copiado!" : "Tocá el código para copiarlo"}</p>
+      <a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-full py-3 rounded-xl bg-emerald-600 text-white font-semibold flex items-center justify-center gap-2"
+      >
+        <i className="fa-brands fa-whatsapp text-lg"></i> Enviar por WhatsApp
+      </a>
+      <button onClick={onVolver} className="text-sm text-stone-500 underline mt-2">
+        Volver al catálogo
+      </button>
+    </div>
+  );
+}
+
+function App() {
+  const [slug] = useState(getSlugFromPath());
+  const [estadoBodega, setEstadoBodega] = useState("cargando"); // cargando | ok | no-encontrada | sin-slug
+  const [bodega, setBodega] = useState(null);
+  const [productos, setProductos] = useState([]);
+  const [cargandoProductos, setCargandoProductos] = useState(false);
+  const [carrito, setCarrito] = useState({}); // { [producto_id]: cantidad }
+  const [carritoAbierto, setCarritoAbierto] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState("");
+  const [pedidoConfirmado, setPedidoConfirmado] = useState(null); // { codigo, whatsappUrl }
+
+  useEffect(() => {
+    if (!slug) {
+      setEstadoBodega("sin-slug");
+      return;
+    }
+    (async () => {
+      const { data, error: err } = await sbClient
+        .from("bodegas_delivery")
+        .select("*")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (err || !data) {
+        setEstadoBodega("no-encontrada");
+        return;
+      }
+      setBodega(data);
+      setEstadoBodega("ok");
+    })();
+  }, [slug]);
+
+  useEffect(() => {
+    if (estadoBodega !== "ok" || !bodega) return;
+    setCargandoProductos(true);
+    sbClient
+      .from("productos_delivery")
+      .select("*")
+      .eq("bodega_id", bodega.bodega_id)
+      .order("descripcion")
+      .then(({ data, error: err }) => {
+        if (!err) setProductos(data || []);
+        setCargandoProductos(false);
+      });
+  }, [estadoBodega, bodega]);
+
+  const productosPorId = useMemo(() => {
+    const m = {};
+    productos.forEach((p) => (m[p.id] = p));
+    return m;
+  }, [productos]);
+
+  const itemsCarrito = useMemo(
+    () =>
+      Object.entries(carrito)
+        .filter(([, cant]) => cant > 0)
+        .map(([id, cantidad]) => ({ ...productosPorId[id], cantidad }))
+        .filter((it) => it.id),
+    [carrito, productosPorId]
+  );
+
+  const totalCarrito = useMemo(
+    () => itemsCarrito.reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0),
+    [itemsCarrito]
+  );
+  const totalUnidades = useMemo(() => itemsCarrito.reduce((acc, it) => acc + it.cantidad, 0), [itemsCarrito]);
+
+  const agregarAlCarrito = useCallback((producto) => {
+    setCarrito((c) => ({ ...c, [producto.id]: (c[producto.id] || 0) + 1 }));
+  }, []);
+
+  const quitarDelCarrito = useCallback((producto) => {
+    setCarrito((c) => {
+      const actual = c[producto.id] || 0;
+      if (actual <= 1) {
+        const { [producto.id]: _quitado, ...resto } = c;
+        return resto;
+      }
+      return { ...c, [producto.id]: actual - 1 };
+    });
+  }, []);
+
+  const confirmarPedido = async () => {
+    if (itemsCarrito.length === 0) return;
+    setEnviando(true);
+    setError("");
+    const codigo = generarCodigoCorto();
+    const items = itemsCarrito.map((it) => ({
+      id: it.id,
+      descripcion: it.descripcion,
+      precio_venta: it.precio_venta,
+      cantidad: it.cantidad,
+    }));
+    const { error: err } = await sbClient.from("pedidos_delivery").insert({
+      codigo_corto: codigo,
+      bodega_id: bodega.bodega_id,
+      items,
+    });
+    setEnviando(false);
+    if (err) {
+      setError("No se pudo generar el pedido. Intentá de nuevo en un momento.");
+      return;
+    }
+    const mensaje = armarMensajeWhatsapp({
+      bodegaNombre: bodega.nombre,
+      items,
+      total: totalCarrito,
+      codigo,
+    });
+    const telefono = (bodega.telefono || "").replace(/\D/g, "");
+    const whatsappUrl = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+    setPedidoConfirmado({ codigo, whatsappUrl });
+    setCarrito({});
+    setCarritoAbierto(false);
+  };
+
+  if (estadoBodega === "sin-slug") {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center text-stone-500">
+        <i className="fa-solid fa-store text-3xl text-stone-300 mb-3"></i>
+        <p>Este es el catálogo de pedidos de Kaserita.</p>
+        <p className="text-sm mt-1">Pedile a tu bodega el link de su catálogo para empezar a pedir.</p>
+      </div>
+    );
+  }
+
+  if (estadoBodega === "cargando") {
+    return <div className="max-w-md mx-auto px-4 py-16 text-center text-stone-400">Cargando...</div>;
+  }
+
+  if (estadoBodega === "no-encontrada") {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center text-stone-500">
+        <i className="fa-solid fa-circle-exclamation text-3xl text-stone-300 mb-3"></i>
+        <p>No encontramos este catálogo.</p>
+        <p className="text-sm mt-1">Puede que el link esté mal escrito o que la bodega no tenga delivery habilitado.</p>
+      </div>
+    );
+  }
+
+  if (pedidoConfirmado) {
+    return (
+      <PantallaConfirmacion
+        bodega={bodega}
+        codigo={pedidoConfirmado.codigo}
+        whatsappUrl={pedidoConfirmado.whatsappUrl}
+        onVolver={() => setPedidoConfirmado(null)}
+      />
+    );
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto pb-28">
+      <header className="px-4 py-5 border-b border-stone-200 bg-white">
+        <h1 className="text-lg font-bold text-stone-800">{bodega.nombre}</h1>
+        <p className="text-xs text-stone-400">Armá tu pedido y mandalo por WhatsApp</p>
+      </header>
+
+      <main className="px-4 py-4">
+        {cargandoProductos ? (
+          <p className="text-center text-stone-400 py-10">Cargando catálogo...</p>
+        ) : productos.length === 0 ? (
+          <p className="text-center text-stone-400 py-10">Esta bodega todavía no tiene productos publicados.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {productos.map((p) => (
+              <TarjetaProducto
+                key={p.id}
+                producto={p}
+                cantidadEnCarrito={carrito[p.id] || 0}
+                onAgregar={agregarAlCarrito}
+                onQuitar={quitarDelCarrito}
+              />
+            ))}
+          </div>
+        )}
+      </main>
+
+      {totalUnidades > 0 && !carritoAbierto && (
+        <button
+          onClick={() => setCarritoAbierto(true)}
+          className="fixed bottom-4 left-4 right-4 max-w-3xl mx-auto bg-emerald-600 text-white rounded-xl py-3.5 px-5 flex items-center justify-between shadow-lg"
+        >
+          <span className="font-semibold text-sm">{totalUnidades} {totalUnidades === 1 ? "producto" : "productos"}</span>
+          <span className="font-bold">{formatoMoneda(totalCarrito)}</span>
+          <span className="text-sm underline">Ver carrito</span>
+        </button>
+      )}
+
+      {carritoAbierto && (
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center sm:justify-center z-20">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col">
+            <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
+              <h2 className="font-bold text-stone-800">Tu pedido</h2>
+              <button onClick={() => setCarritoAbierto(false)} className="text-stone-400">
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 px-4 py-3 flex flex-col gap-3">
+              {itemsCarrito.map((it) => (
+                <div key={it.id} className="flex items-center justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-stone-800 truncate">{it.descripcion}</p>
+                    <p className="text-xs text-stone-400">{formatoMoneda(it.precio_venta)} c/u</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => quitarDelCarrito(it)}
+                      className="w-7 h-7 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center"
+                    >
+                      <i className="fa-solid fa-minus text-xs"></i>
+                    </button>
+                    <span className="text-sm font-semibold w-4 text-center">{it.cantidad}</span>
+                    <button
+                      onClick={() => agregarAlCarrito(it)}
+                      className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center"
+                    >
+                      <i className="fa-solid fa-plus text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {itemsCarrito.length === 0 && <p className="text-center text-stone-400 py-6">Tu carrito está vacío.</p>}
+            </div>
+            <div className="px-4 py-4 border-t border-stone-200">
+              {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-stone-500">Total</span>
+                <span className="font-bold text-stone-800">{formatoMoneda(totalCarrito)}</span>
+              </div>
+              <button
+                onClick={confirmarPedido}
+                disabled={itemsCarrito.length === 0 || enviando}
+                className="w-full py-3 rounded-xl bg-emerald-600 text-white font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {enviando ? "Generando..." : (
+                  <>
+                    <i className="fa-brands fa-whatsapp text-lg"></i> Confirmar y enviar por WhatsApp
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
