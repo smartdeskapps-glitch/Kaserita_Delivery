@@ -3,6 +3,11 @@
 -- Kaserita se corra producto_fotos_extra.sql (agrega esas dos columnas a
 -- la tabla productos). Pensado para negocios que necesitan mostrar más
 -- que una sola foto (ej. ropa).
+--
+-- Nota: las columnas nuevas van AL FINAL del select, no en el medio --
+-- CREATE OR REPLACE VIEW de Postgres no permite insertar una columna
+-- entre dos existentes, solo agregar al final (si no, tira "cannot change
+-- name of view column").
 
 create or replace view public.productos_delivery
 with (security_invoker = false) as
@@ -12,10 +17,10 @@ select
   p.descripcion,
   p.categoria,
   coalesce(cm.foto_url, p.foto_url) as foto_url,
-  p.fotos_extra,
-  p.descripcion_larga,
   p.precio_venta,
-  p.stock_actual
+  p.stock_actual,
+  p.fotos_extra,
+  p.descripcion_larga
 from productos p
 join bodegas b on b.id = p.bodega_id
 left join catalogo_maestro cm on cm.id = p.catalogo_maestro_id
@@ -33,17 +38,17 @@ returns table (
   descripcion text,
   categoria text,
   foto_url text,
-  fotos_extra text[],
-  descripcion_larga text,
   precio_venta numeric,
-  stock_actual numeric
+  stock_actual numeric,
+  fotos_extra text[],
+  descripcion_larga text
 )
 language sql
 stable
 security definer
 set search_path = public
 as $$
-  select pd.id, pd.bodega_id, pd.descripcion, pd.categoria, pd.foto_url, pd.fotos_extra, pd.descripcion_larga, pd.precio_venta, pd.stock_actual
+  select pd.id, pd.bodega_id, pd.descripcion, pd.categoria, pd.foto_url, pd.precio_venta, pd.stock_actual, pd.fotos_extra, pd.descripcion_larga
   from productos_delivery pd
   join bodegas b on b.id = pd.bodega_id
   where b.slug = p_slug;
