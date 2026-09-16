@@ -110,6 +110,63 @@ function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onV
   );
 }
 
+function VisorFoto({ producto, onCerrar }) {
+  const fotos = [producto.foto_url, ...(producto.fotos_extra || [])].filter(Boolean);
+  const [indice, setIndice] = useState(0);
+  const siguiente = (e) => { e.stopPropagation(); setIndice((i) => (i + 1) % fotos.length); };
+  const anterior = (e) => { e.stopPropagation(); setIndice((i) => (i - 1 + fotos.length) % fotos.length); };
+  return (
+    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-30 p-4" onClick={onCerrar}>
+      <button
+        onClick={onCerrar}
+        className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition"
+      >
+        <i className="fa-solid fa-xmark text-lg"></i>
+      </button>
+      <div className="max-w-lg w-full flex flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
+        <div className="relative w-full flex items-center justify-center">
+          {fotos.length > 1 && (
+            <button
+              onClick={anterior}
+              className="absolute left-1 w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition z-10"
+            >
+              <i className="fa-solid fa-chevron-left"></i>
+            </button>
+          )}
+          <img
+            src={fotos[indice]}
+            alt={producto.descripcion}
+            className="max-w-full max-h-[65vh] rounded-xl object-contain shadow-2xl"
+          />
+          {fotos.length > 1 && (
+            <button
+              onClick={siguiente}
+              className="absolute right-1 w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition z-10"
+            >
+              <i className="fa-solid fa-chevron-right"></i>
+            </button>
+          )}
+        </div>
+        {fotos.length > 1 && (
+          <div className="flex gap-1.5">
+            {fotos.map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); setIndice(i); }}
+                className={`w-2 h-2 rounded-full transition ${i === indice ? "bg-white" : "bg-white/30"}`}
+              />
+            ))}
+          </div>
+        )}
+        <p className="text-white text-sm font-semibold text-center">{producto.descripcion}</p>
+        {producto.descripcion_larga && (
+          <p className="text-white/70 text-xs text-center max-w-sm whitespace-pre-line">{producto.descripcion_larga}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver }) {
   const [copiado, setCopiado] = useState(false);
   const copiarCodigo = async () => {
@@ -479,25 +536,7 @@ function App() {
       )}
 
       {fotoAmpliada && (
-        <div
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-30 p-4"
-          onClick={() => setFotoAmpliada(null)}
-        >
-          <button
-            onClick={() => setFotoAmpliada(null)}
-            className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition"
-          >
-            <i className="fa-solid fa-xmark text-lg"></i>
-          </button>
-          <div className="max-w-lg w-full flex flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={fotoAmpliada.foto_url}
-              alt={fotoAmpliada.descripcion}
-              className="max-w-full max-h-[75vh] rounded-xl object-contain shadow-2xl"
-            />
-            <p className="text-white text-sm font-semibold text-center">{fotoAmpliada.descripcion}</p>
-          </div>
-        </div>
+        <VisorFoto producto={fotoAmpliada} onCerrar={() => setFotoAmpliada(null)} />
       )}
     </div>
   );
