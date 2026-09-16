@@ -19,7 +19,7 @@
 <div id="root"></div>
 
 <script type="text/babel" data-presets="react">
-const { useState, useEffect, useMemo, useCallback } = React;
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
 
 const SUPABASE_URL = "https://hzmrsbeamtbloudmxjrp.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_RHAkd7pZIadDnSQClFdjMQ_lrG3p-gw";
@@ -115,6 +115,20 @@ function VisorFoto({ producto, onCerrar }) {
   const [indice, setIndice] = useState(0);
   const siguiente = (e) => { e.stopPropagation(); setIndice((i) => (i + 1) % fotos.length); };
   const anterior = (e) => { e.stopPropagation(); setIndice((i) => (i - 1 + fotos.length) % fotos.length); };
+
+  // Deslizar con el dedo en mobile, además de los botones -- se compara la
+  // posición X del touch al empezar y al soltar, un swipe de +40px cuenta
+  // como "cambiar de foto" (no hace falta librería para esto).
+  const inicioToqueX = useRef(null);
+  const manejarTouchStart = (e) => { inicioToqueX.current = e.touches[0].clientX; };
+  const manejarTouchEnd = (e) => {
+    if (inicioToqueX.current == null || fotos.length <= 1) return;
+    const delta = e.changedTouches[0].clientX - inicioToqueX.current;
+    inicioToqueX.current = null;
+    if (Math.abs(delta) < 40) return;
+    setIndice((i) => (delta < 0 ? (i + 1) % fotos.length : (i - 1 + fotos.length) % fotos.length));
+  };
+
   return (
     <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-30 p-4" onClick={onCerrar}>
       <button
@@ -124,7 +138,11 @@ function VisorFoto({ producto, onCerrar }) {
         <i className="fa-solid fa-xmark text-lg"></i>
       </button>
       <div className="max-w-lg w-full flex flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
-        <div className="relative w-full flex items-center justify-center">
+        <div
+          className="relative w-full flex items-center justify-center touch-pan-y"
+          onTouchStart={manejarTouchStart}
+          onTouchEnd={manejarTouchEnd}
+        >
           {fotos.length > 1 && (
             <button
               onClick={anterior}
