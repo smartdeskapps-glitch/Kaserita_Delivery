@@ -183,9 +183,7 @@ function App() {
     }
     (async () => {
       const { data, error: err } = await sbClient
-        .from("bodegas_delivery")
-        .select("*")
-        .eq("slug", slug)
+        .rpc("obtener_bodega_delivery", { p_slug: slug })
         .maybeSingle();
       if (err || !data) {
         setEstadoBodega("no-encontrada");
