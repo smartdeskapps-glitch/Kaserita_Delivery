@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Kaserita Delivery</title>
 <meta name="description" content="Pedí de tu bodega de confianza y mandá el pedido por WhatsApp." />
+
+<!-- Open Graph / WhatsApp, Facebook, etc. -- la misma imagen se usa para
+     cualquier bodega porque es un solo index.html estático sin server-side
+     rendering; no hay forma de que cada link de bodega tenga su propia
+     imagen sin agregar un backend que genere una por slug. -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Kaserita Delivery" />
+<meta property="og:description" content="Pedí de tu bodega de confianza y mandá el pedido por WhatsApp." />
+<meta property="og:image" content="https://kaserita-delivery.vercel.app/og-image.jpg" />
+<meta property="og:url" content="https://kaserita-delivery.vercel.app" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Kaserita Delivery" />
+<meta name="twitter:description" content="Pedí de tu bodega de confianza y mandá el pedido por WhatsApp." />
+<meta name="twitter:image" content="https://kaserita-delivery.vercel.app/og-image.jpg" />
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
