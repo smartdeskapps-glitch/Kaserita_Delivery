@@ -198,12 +198,14 @@ function App() {
     if (estadoBodega !== "ok" || !bodega) return;
     setCargandoProductos(true);
     sbClient
-      .from("productos_delivery")
-      .select("*")
-      .eq("bodega_id", bodega.bodega_id)
-      .order("descripcion")
+      .rpc("obtener_productos_delivery", { p_slug: slug })
       .then(({ data, error: err }) => {
-        if (!err) setProductos(data || []);
+        if (!err) {
+          const ordenados = (data || []).slice().sort((a, b) =>
+            a.descripcion.localeCompare(b.descripcion)
+          );
+          setProductos(ordenados);
+        }
         setCargandoProductos(false);
       });
   }, [estadoBodega, bodega]);
