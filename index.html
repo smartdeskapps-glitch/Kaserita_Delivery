@@ -161,6 +161,16 @@ function App() {
   const [pedidoConfirmado, setPedidoConfirmado] = useState(null); // { codigo, whatsappUrl }
 
   useEffect(() => {
+    // Limpieza oportunista: de paso en cada visita, borra pedidos sin usar
+    // de más de 2 horas (de cualquier bodega, no solo esta). No hace falta
+    // ningún cron aparte -- se apoya en el tráfico normal del sitio. Se
+    // ignora el resultado a propósito: si falla, simplemente se borra en
+    // otra visita.
+    const dosHorasAtras = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    sbClient.from("pedidos_delivery").delete().eq("usado", false).lt("creado_en", dosHorasAtras).then(() => {});
+  }, []);
+
+  useEffect(() => {
     if (!slug) {
       setEstadoBodega("sin-slug");
       return;
