@@ -279,7 +279,11 @@ function App() {
     });
     setEnviando(false);
     if (err) {
-      setError("No se pudo generar el pedido. Intentá de nuevo en un momento.");
+      setError(
+        (err.message || "").includes("Demasiados pedidos")
+          ? "Hiciste varios pedidos seguidos. Esperá unos minutos e intentá de nuevo."
+          : "No se pudo generar el pedido. Intentá de nuevo en un momento."
+      );
       return;
     }
     const mensaje = armarMensajeWhatsapp({
