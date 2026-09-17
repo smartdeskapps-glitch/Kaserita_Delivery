@@ -74,7 +74,7 @@ function armarMensajeWhatsapp({ bodegaNombre, items, total, codigo }) {
 }
 
 function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onVerFoto }) {
-  const sinStock = Number(producto.stock_actual) <= 0;
+  const sinStock = !producto.hay_stock;
   return (
     <div className="bg-white rounded-xl border border-stone-200 overflow-hidden flex flex-col">
       <div
@@ -368,9 +368,12 @@ function App() {
     });
     setEnviando(false);
     if (err) {
+      const msg = err.message || "";
       setError(
-        (err.message || "").includes("Demasiados pedidos")
+        msg.includes("Demasiados pedidos")
           ? "Hiciste varios pedidos seguidos. Esperá unos minutos e intentá de nuevo."
+          : msg.includes("suficiente stock")
+          ? `${msg} Bajá la cantidad e intentá de nuevo.`
           : "No se pudo generar el pedido. Intentá de nuevo en un momento."
       );
       return;
