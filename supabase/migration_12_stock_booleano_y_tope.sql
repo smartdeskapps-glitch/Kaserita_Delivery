@@ -1,28 +1,49 @@
--- KaseritaDelivery — no exponer el stock exacto, y no aceptar pedidos que
--- superen el stock actual.
+-- KaseritaDelivery — stock disponible = stock real menos pedidos pendientes.
 -- Ejecutar a mano en el SQL Editor de Supabase, después de migration_11.
 --
 -- 1. obtener_productos_delivery devolvía stock_actual (el número). La
 --    vitrina solo lo usa para mostrar "Sin stock", así que ahora devuelve
---    hay_stock (boolean). Cualquiera con el link ya no puede monitorear el
---    inventario exacto de la bodega.
---    Regla: stock NULL = la bodega no lleva stock de ese producto = se
---    puede pedir (igual que el POS, que no advierte cuando es NULL).
---    Antes la vitrina lo mostraba como "Sin stock" por accidente
---    (Number(null) es 0).
+--    hay_stock (boolean) y nadie con el link puede monitorear el
+--    inventario exacto.
 --
--- 2. El trigger ahora rechaza cada línea cuya cantidad supere el stock
---    actual del producto (si la bodega lleva stock). No es una reserva:
---    el stock se descuenta recién cuando el cajero cobra en el POS. Dos
---    pedidos casi simultáneos por la última unidad entran los dos; el
---    segundo lo ve el cajero al cargar el código ("quedan 0"). Reservar
---    stock desde la vitrina sería peor: cualquiera con el link podría
---    dejar en cero el stock visible de una bodega sin comprar nada.
---    También se rechazan líneas repetidas del mismo producto (evitaba el
---    tope por línea sumando varias).
+-- 2. hay_stock y el tope del trigger NO usan el stock real a secas: usan
+--    stock_actual menos lo que ya está pedido en pedidos_delivery y todavía
+--    nadie cargó en el POS (usado = false, menos de 2 horas). Así, si queda
+--    1 unidad y un cliente la pide, el siguiente ya la ve como "Sin stock"
+--    aunque el cajero todavía no haya cobrado. No se toca productos: el
+--    stock real se descuenta recién al cobrar, y la "reserva" desaparece
+--    sola cuando el pedido se carga, se elimina o vence a las 2 horas.
 --
--- De paso, los chequeos baratos de formato pasan antes que el COUNT del
--- límite por IP: un request basura ya no cuesta una consulta.
+--    Costo de esto (aceptado por el dueño): alguien con el link puede
+--    "reservar" unidades sin comprar, y durante hasta 2 horas se ven como
+--    sin stock. El límite de 5 pedidos por IP cada 10 minutos lo acota.
+--
+-- 3. Dos pedidos exactamente simultáneos por la última unidad: el trigger
+--    toma un lock por bodega (pg_advisory_xact_lock) así que se procesan
+--    de a uno, y el segundo ya ve la reserva del primero.
+--
+-- 4. Regla para stock NULL: la bodega no lleva stock de ese producto =
+--    siempre se puede pedir (igual que el POS, que no advierte en NULL).
+--    Antes la vitrina lo mostraba "Sin stock" por accidente.
+--
+-- También se rechazan líneas repetidas del mismo producto, y los chequeos
+-- baratos de formato van antes del COUNT del límite por IP.
+
+create or replace function public.stock_reservado_delivery(p_bodega_id uuid, p_producto_id uuid)
+returns numeric
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(sum((it->>'cantidad')::numeric), 0)
+  from pedidos_delivery p
+  cross join lateral jsonb_array_elements(p.items) as it
+  where p.bodega_id = p_bodega_id
+    and p.usado = false
+    and p.creado_en > now() - interval '2 hours'
+    and (it->>'id')::uuid = p_producto_id;
+$$;
 
 drop function if exists public.obtener_productos_delivery(text);
 
@@ -44,7 +65,8 @@ security definer
 set search_path = public
 as $$
   select pd.id, pd.bodega_id, pd.descripcion, pd.categoria, pd.foto_url, pd.precio_venta,
-         (pd.stock_actual is null or pd.stock_actual > 0) as hay_stock,
+         (pd.stock_actual is null
+          or pd.stock_actual - stock_reservado_delivery(pd.bodega_id, pd.id) > 0) as hay_stock,
          pd.fotos_extra, pd.descripcion_larga
   from productos_delivery pd
   join bodegas b on b.id = pd.bodega_id
@@ -64,6 +86,7 @@ declare
   v_item jsonb;
   v_producto record;
   v_cantidad numeric;
+  v_disponible numeric;
   v_ids uuid[] := '{}';
   v_headers json;
   v_xff text;
@@ -93,6 +116,11 @@ begin
     nullif(trim(split_part(v_xff, ',', -1)), ''),
     'desconocida'
   );
+
+  -- Un pedido a la vez por bodega: dos clientes pidiendo la última unidad
+  -- al mismo tiempo se procesan en fila, y el segundo ve la reserva del
+  -- primero. Se libera solo al terminar la transacción.
+  perform pg_advisory_xact_lock(hashtext(new.bodega_id::text));
 
   select count(*) into v_pedidos_recientes
     from pedidos_delivery
@@ -127,8 +155,11 @@ begin
     end if;
     v_ids := v_ids || v_producto.id;
 
-    if v_producto.stock_actual is not null and v_cantidad > v_producto.stock_actual then
-      raise exception 'No hay suficiente stock de "%".', v_producto.descripcion;
+    if v_producto.stock_actual is not null then
+      v_disponible := v_producto.stock_actual - stock_reservado_delivery(new.bodega_id, v_producto.id);
+      if v_cantidad > v_disponible then
+        raise exception 'No hay suficiente stock de "%".', v_producto.descripcion;
+      end if;
     end if;
 
     -- Se reconstruye el item entero con los datos reales del producto --
