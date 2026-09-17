@@ -74,7 +74,7 @@ function armarMensajeWhatsapp({ bodegaNombre, items, total, codigo }) {
 }
 
 function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onVerFoto }) {
-  const sinStock = !producto.hay_stock;
+  const stockPoco = producto.stock_disponible != null && producto.stock_disponible <= 3;
   return (
     <div className="bg-white rounded-xl border border-stone-200 overflow-hidden flex flex-col">
       <div
@@ -89,12 +89,17 @@ function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onV
       </div>
       <div className="p-3 flex flex-col gap-1 flex-1">
         <p className="text-sm font-semibold text-stone-800 leading-tight line-clamp-2">{producto.descripcion}</p>
-        {producto.categoria && <p className="text-xs text-stone-400">{producto.categoria}</p>}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {producto.categoria && <p className="text-xs text-stone-400">{producto.categoria}</p>}
+          {producto.stock_disponible != null && (
+            <span className={`text-[11px] font-semibold ${stockPoco ? "text-amber-600" : "text-stone-400"}`}>
+              Quedan {producto.stock_disponible}
+            </span>
+          )}
+        </div>
         <div className="mt-auto pt-2 flex items-center justify-between gap-2">
           <span className="text-sm font-bold text-emerald-700">{formatoMoneda(producto.precio_venta)}</span>
-          {sinStock ? (
-            <span className="text-xs text-stone-400 font-medium">Sin stock</span>
-          ) : cantidadEnCarrito > 0 ? (
+          {cantidadEnCarrito > 0 ? (
             <div className="flex items-center gap-2">
               <button
                 onClick={() => onQuitar(producto)}
@@ -301,13 +306,17 @@ function App() {
 
   const categorias = useMemo(() => {
     const set = new Set();
-    productos.forEach((p) => { if (p.categoria) set.add(p.categoria); });
+    productos.forEach((p) => {
+      const sinStock = p.stock_disponible != null && p.stock_disponible <= 0;
+      if (p.categoria && !sinStock) set.add(p.categoria);
+    });
     return Array.from(set).sort();
   }, [productos]);
 
   const productosFiltrados = useMemo(() => {
     const b = busqueda.trim().toLowerCase();
     return productos.filter((p) => {
+      if (p.stock_disponible != null && p.stock_disponible <= 0) return false;
       if (categoriaActiva && p.categoria !== categoriaActiva) return false;
       if (b && !p.descripcion.toLowerCase().includes(b)) return false;
       return true;
