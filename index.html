@@ -124,10 +124,10 @@ function armarMensajeWhatsapp({ bodegaNombre, items, total, codigo }) {
 function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onVerFoto }) {
   const stockPoco = producto.stock_disponible != null && producto.stock_disponible <= 3;
   return (
-    <div className="bg-white rounded-xl border border-stone-200 overflow-hidden flex flex-col">
+    <div className="bg-white rounded-[26px] border border-stone-100 shadow-sm p-2 flex flex-col">
       <div
         onClick={producto.foto_url ? () => onVerFoto(producto) : undefined}
-        className={`aspect-square bg-stone-100 flex items-center justify-center overflow-hidden ${producto.foto_url ? "cursor-zoom-in" : ""}`}
+        className={`aspect-[4/5] rounded-[18px] bg-stone-100 flex items-center justify-center overflow-hidden ${producto.foto_url ? "cursor-zoom-in" : ""}`}
       >
         {producto.foto_url ? (
           <img src={producto.foto_url} alt={producto.descripcion} className="w-full h-full object-cover" />
@@ -135,40 +135,48 @@ function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onV
           <i className="fa-solid fa-image text-stone-300 text-3xl"></i>
         )}
       </div>
-      <div className="p-3 flex flex-col gap-1 flex-1">
-        <p className="text-sm font-semibold text-stone-800 leading-tight line-clamp-2">{producto.descripcion}</p>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {producto.categoria && <p className="text-xs text-stone-400">{producto.categoria}</p>}
-          {producto.stock_disponible != null && (
-            <span className={`text-[11px] font-semibold ${stockPoco ? "text-amber-600" : "text-stone-400"}`}>
-              Quedan {producto.stock_disponible}
-            </span>
-          )}
+      <div className="px-1.5 pt-3 pb-1 flex flex-col gap-1 flex-1">
+        <div className="flex items-center gap-1.5">
+          <p className="text-[15px] font-bold text-stone-800 leading-tight line-clamp-1">{producto.descripcion}</p>
+          {stockPoco && <i className="fa-solid fa-circle-exclamation text-amber-500 text-xs shrink-0"></i>}
         </div>
-        <div className="mt-auto pt-2 flex items-center justify-between gap-2">
-          <span className="text-sm font-bold text-emerald-700">{formatoMoneda(producto.precio_venta)}</span>
+        {producto.categoria && <p className="text-xs text-stone-400 line-clamp-1">{producto.categoria}</p>}
+
+        <div className="mt-auto pt-2.5 border-t border-stone-100 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <span className="text-sm font-bold text-emerald-700">{formatoMoneda(producto.precio_venta)}</span>
+            {producto.stock_disponible != null && (
+              <span
+                className={`flex items-center gap-1 text-[11px] font-semibold ${stockPoco ? "text-amber-600" : "text-stone-400"}`}
+              >
+                <i className="fa-solid fa-box text-[10px]"></i>
+                {producto.stock_disponible}
+              </span>
+            )}
+          </div>
+
           {cantidadEnCarrito > 0 ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 bg-stone-50 rounded-full p-1">
               <button
                 onClick={() => onQuitar(producto)}
-                className="w-7 h-7 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center active:scale-95"
+                className="w-6 h-6 rounded-full bg-white shadow-sm text-stone-600 flex items-center justify-center active:scale-95"
               >
-                <i className="fa-solid fa-minus text-xs"></i>
+                <i className="fa-solid fa-minus text-[10px]"></i>
               </button>
               <span className="text-sm font-semibold w-4 text-center">{cantidadEnCarrito}</span>
               <button
                 onClick={() => onAgregar(producto)}
-                className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center active:scale-95"
+                className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center active:scale-95"
               >
-                <i className="fa-solid fa-plus text-xs"></i>
+                <i className="fa-solid fa-plus text-[10px]"></i>
               </button>
             </div>
           ) : (
             <button
               onClick={() => onAgregar(producto)}
-              className="px-3 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-semibold active:scale-95"
+              className="pl-3 pr-2.5 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-semibold flex items-center gap-1 active:scale-95"
             >
-              Agregar
+              Agregar <i className="fa-solid fa-plus text-[10px]"></i>
             </button>
           )}
         </div>
