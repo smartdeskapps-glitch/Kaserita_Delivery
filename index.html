@@ -578,32 +578,37 @@ function PantallaMisPedidos({ cliente, onVolver }) {
 function PantallaMisTiendas({ onVolver }) {
   const [tiendas, setTiendas] = useState([]);
   const [ultimoPedidoPorBodega, setUltimoPedidoPorBodega] = useState({});
+  const [ultimaVisitaPorBodega, setUltimaVisitaPorBodega] = useState({});
   const [busqueda, setBusqueda] = useState("");
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    // No hay una tabla de "tiendas visitadas" -- se arma a partir de las
-    // bodegas distintas en el historial de pedidos del cliente (RLS ya
-    // filtra pedidos_seguimiento por su propia cuenta). obtener_nombres_bodegas
-    // de paso deja afuera cualquier bodega que haya dejado de ofrecer
-    // delivery desde entonces.
+    // "Mis tiendas" sale de bodegas_visitadas (cualquier bodega a la que
+    // entró el cliente logueado, haya pedido algo o no) -- antes salía
+    // solo de pedidos_seguimiento, así que una bodega que solo se miró
+    // nunca aparecía. obtener_nombres_bodegas de paso deja afuera
+    // cualquier bodega que haya dejado de ofrecer delivery desde entonces.
     sbClient
-      .from("pedidos_seguimiento")
-      .select("bodega_id, creado_en")
-      .order("creado_en", { ascending: false })
-      .then(async ({ data }) => {
-        const filas = data || [];
-        const idsEnOrden = [...new Set(filas.map((p) => p.bodega_id))];
+      .from("bodegas_visitadas")
+      .select("bodega_id, visto_en")
+      .order("visto_en", { ascending: false })
+      .then(async ({ data: visitas }) => {
+        const filas = visitas || [];
+        const idsEnOrden = filas.map((v) => v.bodega_id);
         if (idsEnOrden.length === 0) {
           setCargando(false);
           return;
         }
-        // El primer pedido de cada bodega_id en esta lista (ya ordenada
-        // desc) es el más reciente -- de ahí sale "Último pedido: hace X".
+        const visitasPorId = {};
+        filas.forEach((v) => { visitasPorId[v.bodega_id] = v.visto_en; });
+        setUltimaVisitaPorBodega(visitasPorId);
+        const [{ data: bodegas }, { data: pedidos }] = await Promise.all([
+          sbClient.rpc("obtener_nombres_bodegas", { p_ids: idsEnOrden }),
+          sbClient.from("pedidos_seguimiento").select("bodega_id, creado_en").order("creado_en", { ascending: false }),
+        ]);
         const ultimos = {};
-        filas.forEach((p) => { if (!ultimos[p.bodega_id]) ultimos[p.bodega_id] = p.creado_en; });
+        (pedidos || []).forEach((p) => { if (!ultimos[p.bodega_id]) ultimos[p.bodega_id] = p.creado_en; });
         setUltimoPedidoPorBodega(ultimos);
-        const { data: bodegas } = await sbClient.rpc("obtener_nombres_bodegas", { p_ids: idsEnOrden });
         const porId = {};
         (bodegas || []).forEach((b) => { porId[b.bodega_id] = b; });
         setTiendas(idsEnOrden.map((id) => porId[id]).filter(Boolean));
@@ -689,9 +694,11 @@ function PantallaMisTiendas({ onVolver }) {
                     <span className="truncate">{t.direccion}</span>
                   </p>
                 )}
-                {ultimoPedidoPorBodega[t.bodega_id] && (
+                {ultimoPedidoPorBodega[t.bodega_id] ? (
                   <p className="text-[11px] text-stone-300">Último pedido: {fechaRelativa(ultimoPedidoPorBodega[t.bodega_id])}</p>
-                )}
+                ) : ultimaVisitaPorBodega[t.bodega_id] ? (
+                  <p className="text-[11px] text-stone-300">Visto: {fechaRelativa(ultimaVisitaPorBodega[t.bodega_id])}</p>
+                ) : null}
               </div>
               <i className="fa-solid fa-chevron-right text-stone-300 text-xs shrink-0"></i>
             </a>
@@ -836,6 +843,19 @@ function App() {
       if (anterior) URL.revokeObjectURL(anterior);
     };
   }, [estadoBodega, bodega, slug]);
+
+  useEffect(() => {
+    // Registra la visita para "Mis tiendas" -- se guarda aunque el cliente
+    // no llegue a pedir nada, así no "desaparece" una bodega que solo miró.
+    if (estadoBodega !== "ok" || !bodega || !clienteSesion) return;
+    sbClient
+      .from("bodegas_visitadas")
+      .upsert(
+        { cliente_id: clienteSesion.id, bodega_id: bodega.bodega_id, visto_en: new Date().toISOString() },
+        { onConflict: "cliente_id,bodega_id" }
+      )
+      .then(() => {});
+  }, [estadoBodega, bodega, clienteSesion]);
 
   useEffect(() => {
     if (estadoBodega !== "ok" || !bodega) return;
