@@ -798,6 +798,15 @@ function App() {
     });
   }, [productos, busqueda, categoriaActiva]);
 
+  // Card "destacado" de la pantalla de inicio (estilo hero de app de delivery)
+  // -- solo se muestra en la vista home (sin búsqueda ni categoría activa) y
+  // toma el primer producto con foto, ya que no hay un flag de "destacado" en
+  // la base de datos.
+  const productoDestacado = useMemo(() => {
+    if (busqueda.trim() || categoriaActiva) return null;
+    return productosFiltrados.find((p) => p.foto_url) || null;
+  }, [busqueda, categoriaActiva, productosFiltrados]);
+
   const productosPorId = useMemo(() => {
     const m = {};
     productos.forEach((p) => (m[p.id] = p));
@@ -1046,6 +1055,40 @@ function App() {
               <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-white to-transparent"></div>
             </div>
           )}
+        </div>
+      )}
+
+      {productoDestacado && (
+        <div className="px-4 pt-4">
+          <div className="relative bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-[22px] p-4 pr-28 overflow-hidden min-h-[168px] flex flex-col justify-between">
+            <div className="flex items-center gap-2">
+              <span className="bg-white/15 backdrop-blur text-white text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                <i className="fa-solid fa-star text-amber-300"></i> Destacado
+              </span>
+              {productoDestacado.categoria && (
+                <span className="bg-white/15 backdrop-blur text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                  {productoDestacado.categoria}
+                </span>
+              )}
+            </div>
+            <div>
+              <p className="text-white text-lg font-bold leading-tight line-clamp-2">{productoDestacado.descripcion}</p>
+              <p className="text-emerald-100 text-sm font-semibold mt-1">{formatoMoneda(productoDestacado.precio_venta)}</p>
+            </div>
+            <button
+              onClick={() => agregarAlCarrito(productoDestacado)}
+              className="self-start bg-white text-emerald-700 text-xs font-bold px-4 py-2 rounded-full flex items-center gap-1.5 active:scale-95"
+            >
+              Pedir ahora <i className="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+            <div className="absolute -right-3 bottom-0 w-32 h-32 rounded-full overflow-hidden border-4 border-white/20">
+              <img
+                src={productoDestacado.foto_url}
+                alt={productoDestacado.descripcion}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
         </div>
       )}
 
