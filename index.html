@@ -1059,7 +1059,7 @@ function App() {
 
       {productoDestacado && (
         <div className="px-4 pt-4">
-          <div className="relative bg-gradient-to-br from-blue-600 to-violet-700 rounded-[22px] p-4 pr-28 overflow-hidden min-h-[168px] flex flex-col justify-between">
+          <div className="relative bg-gradient-to-br from-blue-600 to-violet-700 rounded-[22px] p-4 pr-28 min-h-[168px] flex flex-col justify-between">
             <div className="flex items-center gap-2">
               <span className="bg-white/15 backdrop-blur text-white text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
                 <i className="fa-solid fa-star text-amber-300"></i> Destacado
@@ -1080,7 +1080,7 @@ function App() {
             >
               Pedir ahora <i className="fa-solid fa-arrow-right text-[10px]"></i>
             </button>
-            <div className="absolute -right-3 bottom-0 w-32 h-32 rounded-full overflow-hidden border-4 border-white/20">
+            <div className="absolute right-3 bottom-3 w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 bg-white/10">
               <img
                 src={productoDestacado.foto_url}
                 alt={productoDestacado.descripcion}
