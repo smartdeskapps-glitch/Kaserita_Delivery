@@ -68,6 +68,17 @@ function estiloCategoria(nombre) {
   return { icono: "fa-tag", bg: "bg-stone-100", texto: "text-stone-600", borde: "border-stone-200", bordeActivo: "border-stone-400 ring-2 ring-stone-200" };
 }
 
+// Fecha relativa cortita para "Mis tiendas" (Hoy, Ayer, Hace 3 días...) --
+// nada de fechas exactas, es solo una referencia rápida de cuándo compraste ahí.
+function fechaRelativa(fechaIso) {
+  const dias = Math.floor((Date.now() - new Date(fechaIso).getTime()) / 86400000);
+  if (dias <= 0) return "Hoy";
+  if (dias === 1) return "Ayer";
+  if (dias < 30) return `Hace ${dias} días`;
+  const meses = Math.floor(dias / 30);
+  return meses === 1 ? "Hace 1 mes" : `Hace ${meses} meses`;
+}
+
 function getSlugFromPath() {
   return decodeURIComponent(location.pathname.replace(/^\/+|\/+$/g, ""));
 }
@@ -566,6 +577,8 @@ function PantallaMisPedidos({ cliente, onVolver }) {
 
 function PantallaMisTiendas({ onVolver }) {
   const [tiendas, setTiendas] = useState([]);
+  const [ultimoPedidoPorBodega, setUltimoPedidoPorBodega] = useState({});
+  const [busqueda, setBusqueda] = useState("");
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
@@ -585,6 +598,11 @@ function PantallaMisTiendas({ onVolver }) {
           setCargando(false);
           return;
         }
+        // El primer pedido de cada bodega_id en esta lista (ya ordenada
+        // desc) es el más reciente -- de ahí sale "Último pedido: hace X".
+        const ultimos = {};
+        filas.forEach((p) => { if (!ultimos[p.bodega_id]) ultimos[p.bodega_id] = p.creado_en; });
+        setUltimoPedidoPorBodega(ultimos);
         const { data: bodegas } = await sbClient.rpc("obtener_nombres_bodegas", { p_ids: idsEnOrden });
         const porId = {};
         (bodegas || []).forEach((b) => { porId[b.bodega_id] = b; });
@@ -593,17 +611,43 @@ function PantallaMisTiendas({ onVolver }) {
       });
   }, []);
 
+  const tiendasFiltradas = useMemo(() => {
+    const b = busqueda.trim().toLowerCase();
+    if (!b) return tiendas;
+    return tiendas.filter((t) => t.nombre?.toLowerCase().includes(b));
+  }, [tiendas, busqueda]);
+
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-4 pb-16">
       <div className="flex items-center gap-3">
         <button onClick={onVolver} className="text-stone-500">
           <i className="fa-solid fa-arrow-left"></i>
         </button>
-        <div>
-          <h1 className="text-lg font-bold text-stone-800">Mis tiendas</h1>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-bold text-stone-800">Mis tiendas</h1>
+            {tiendas.length > 0 && (
+              <span className="bg-violet-100 text-violet-700 text-[11px] font-bold px-2 py-0.5 rounded-full">
+                {tiendas.length} guardada{tiendas.length === 1 ? "" : "s"}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-stone-400">Las bodegas donde ya compraste, para volver sin buscar el link</p>
         </div>
       </div>
+
+      {tiendas.length > 1 && (
+        <div className="relative">
+          <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm"></i>
+          <input
+            type="text"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Buscar entre mis bodegas..."
+            className="w-full bg-stone-100 border border-stone-200 rounded-xl pl-9 pr-3 py-2.5 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+          />
+        </div>
+      )}
 
       {cargando ? (
         <p className="text-center text-stone-400 py-10">Cargando...</p>
@@ -613,13 +657,17 @@ function PantallaMisTiendas({ onVolver }) {
           <p>Todavía no compraste en ninguna bodega.</p>
           <p className="text-xs">En cuanto hagas tu primer pedido, va a aparecer acá.</p>
         </div>
+      ) : tiendasFiltradas.length === 0 ? (
+        <p className="text-center text-stone-400 py-10">No encontramos ninguna bodega con ese nombre.</p>
       ) : (
         <div className="space-y-2">
-          {tiendas.map((t) => (
+          {tiendasFiltradas.map((t, i) => (
             <a
               key={t.bodega_id}
               href={`/${t.slug}`}
-              className="flex items-center gap-3 bg-white border border-stone-200 rounded-xl p-3"
+              className={`flex items-center gap-3 bg-white rounded-xl p-3 ${
+                i === 0 && !busqueda ? "border-2 border-violet-200 shadow-sm" : "border border-stone-200"
+              }`}
             >
               <div className="w-11 h-11 rounded-xl bg-stone-100 overflow-hidden shrink-0">
                 {t.logo_url ? (
@@ -631,14 +679,18 @@ function PantallaMisTiendas({ onVolver }) {
                 )}
               </div>
               <div className="min-w-0 flex-1">
+                {i === 0 && !busqueda && (
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-violet-600">Bodega habitual</span>
+                )}
                 <p className="font-semibold text-sm text-stone-800 truncate">{t.nombre}</p>
-                {t.direccion ? (
+                {t.direccion && (
                   <p className="text-[11px] text-stone-400 truncate flex items-center gap-1">
                     <i className="fa-solid fa-location-dot text-[9px] shrink-0"></i>
                     <span className="truncate">{t.direccion}</span>
                   </p>
-                ) : (
-                  <p className="text-[11px] text-stone-300">Sin dirección cargada</p>
+                )}
+                {ultimoPedidoPorBodega[t.bodega_id] && (
+                  <p className="text-[11px] text-stone-300">Último pedido: {fechaRelativa(ultimoPedidoPorBodega[t.bodega_id])}</p>
                 )}
               </div>
               <i className="fa-solid fa-chevron-right text-stone-300 text-xs shrink-0"></i>
