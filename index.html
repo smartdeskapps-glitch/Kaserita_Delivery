@@ -46,23 +46,26 @@ function formatoMoneda(n) {
   return `S/ ${Number(n || 0).toFixed(2)}`;
 }
 
-// Ícono aproximado por nombre de categoría (texto libre que carga cada
-// bodega) -- no hay un catálogo fijo de categorías, así que se matchea por
-// palabras clave comunes en bodegas/abarrotes y se cae a un ícono genérico.
-function iconoCategoria(nombre) {
+// Ícono + color aproximados por nombre de categoría (texto libre que carga
+// cada bodega) -- no hay un catálogo fijo de categorías, así que se matchea
+// por palabras clave comunes en bodegas/abarrotes y se cae a un estilo
+// genérico. El color es solo para diferenciar de un vistazo (como en apps
+// de delivery), no tiene relación con la marca.
+function estiloCategoria(nombre) {
   const n = (nombre || "").toLowerCase();
-  if (/agua|bebida|gaseosa|jugo/.test(n)) return "fa-bottle-water";
-  if (/cerveza|licor|vino/.test(n)) return "fa-wine-bottle";
-  if (/carne|embutido|pollo|res/.test(n)) return "fa-drumstick-bite";
-  if (/lácte|lacte|leche|queso|yogur/.test(n)) return "fa-cheese";
-  if (/pan|panader/.test(n)) return "fa-bread-slice";
-  if (/limpieza|hogar/.test(n)) return "fa-spray-can-sparkles";
-  if (/golosina|snack|dulce|chocolate/.test(n)) return "fa-cookie-bite";
-  if (/fruta|verdura|abarrote/.test(n)) return "fa-basket-shopping";
-  if (/cigarr|tabaco/.test(n)) return "fa-smoking";
-  if (/mascota/.test(n)) return "fa-paw";
-  if (/higiene|cuidado|personal|farmac/.test(n)) return "fa-pump-soap";
-  return "fa-tag";
+  if (/agua|hidrata/.test(n)) return { icono: "fa-droplet", bg: "bg-sky-50", texto: "text-sky-600", borde: "border-sky-200", bordeActivo: "border-sky-500 ring-2 ring-sky-200" };
+  if (/gaseosa|bebida|jugo|néctar|nectar/.test(n)) return { icono: "fa-bottle-water", bg: "bg-rose-50", texto: "text-rose-600", borde: "border-rose-200", bordeActivo: "border-rose-500 ring-2 ring-rose-200" };
+  if (/cerveza|licor|vino/.test(n)) return { icono: "fa-beer-mug-empty", bg: "bg-amber-50", texto: "text-amber-600", borde: "border-amber-200", bordeActivo: "border-amber-500 ring-2 ring-amber-200" };
+  if (/carne|embutido|pollo|res/.test(n)) return { icono: "fa-drumstick-bite", bg: "bg-red-50", texto: "text-red-600", borde: "border-red-200", bordeActivo: "border-red-500 ring-2 ring-red-200" };
+  if (/lácte|lacte|leche|queso|yogur/.test(n)) return { icono: "fa-cheese", bg: "bg-yellow-50", texto: "text-yellow-600", borde: "border-yellow-200", bordeActivo: "border-yellow-500 ring-2 ring-yellow-200" };
+  if (/pan|panader/.test(n)) return { icono: "fa-bread-slice", bg: "bg-orange-50", texto: "text-orange-600", borde: "border-orange-200", bordeActivo: "border-orange-500 ring-2 ring-orange-200" };
+  if (/limpieza|hogar/.test(n)) return { icono: "fa-spray-can-sparkles", bg: "bg-emerald-50", texto: "text-emerald-600", borde: "border-emerald-200", bordeActivo: "border-emerald-500 ring-2 ring-emerald-200" };
+  if (/golosina|snack|dulce|chocolate/.test(n)) return { icono: "fa-cookie-bite", bg: "bg-fuchsia-50", texto: "text-fuchsia-600", borde: "border-fuchsia-200", bordeActivo: "border-fuchsia-500 ring-2 ring-fuchsia-200" };
+  if (/fruta|verdura|abarrote/.test(n)) return { icono: "fa-basket-shopping", bg: "bg-lime-50", texto: "text-lime-700", borde: "border-lime-200", bordeActivo: "border-lime-500 ring-2 ring-lime-200" };
+  if (/cigarr|tabaco/.test(n)) return { icono: "fa-smoking", bg: "bg-stone-100", texto: "text-stone-600", borde: "border-stone-200", bordeActivo: "border-stone-400 ring-2 ring-stone-200" };
+  if (/mascota/.test(n)) return { icono: "fa-paw", bg: "bg-indigo-50", texto: "text-indigo-600", borde: "border-indigo-200", bordeActivo: "border-indigo-500 ring-2 ring-indigo-200" };
+  if (/higiene|cuidado|personal|farmac/.test(n)) return { icono: "fa-pump-soap", bg: "bg-teal-50", texto: "text-teal-600", borde: "border-teal-200", bordeActivo: "border-teal-500 ring-2 ring-teal-200" };
+  return { icono: "fa-tag", bg: "bg-stone-100", texto: "text-stone-600", borde: "border-stone-200", bordeActivo: "border-stone-400 ring-2 ring-stone-200" };
 }
 
 function getSlugFromPath() {
@@ -1004,52 +1007,37 @@ function App() {
           </div>
           {categorias.length > 0 && (
             <div className="relative -mx-4">
-              <div className="flex gap-2.5 overflow-x-auto px-4 pb-1" style={{ scrollbarWidth: "none" }}>
-                <button
-                  onClick={() => setCategoriaActiva("")}
-                  className={`shrink-0 w-16 flex flex-col items-center gap-1 py-1.5 rounded-xl border transition ${
-                    categoriaActiva === "" ? "border-violet-500 bg-violet-50" : "border-stone-200 bg-white"
-                  }`}
-                >
+              <div className="flex gap-3 overflow-x-auto px-4 py-1" style={{ scrollbarWidth: "none" }}>
+                <button onClick={() => setCategoriaActiva("")} className="shrink-0 w-16 flex flex-col items-center gap-1 active:scale-95 transition">
                   <span
-                    className={`w-9 h-9 rounded-full flex items-center justify-center ${
-                      categoriaActiva === "" ? "bg-violet-600 text-white" : "bg-stone-100 text-stone-500"
+                    className={`w-[52px] h-[52px] rounded-2xl flex items-center justify-center shadow-sm ${
+                      categoriaActiva === ""
+                        ? "bg-gradient-to-br from-violet-500 to-blue-600 text-white"
+                        : "bg-white border border-stone-200 text-stone-500"
                     }`}
                   >
-                    <i className="fa-solid fa-border-all text-xs"></i>
+                    <i className="fa-solid fa-border-all text-lg"></i>
                   </span>
-                  <span
-                    className={`text-[11px] font-semibold truncate w-full text-center ${
-                      categoriaActiva === "" ? "text-violet-700" : "text-stone-600"
-                    }`}
-                  >
+                  <span className={`text-[11px] font-bold truncate w-full text-center ${categoriaActiva === "" ? "text-violet-700" : "text-stone-600"}`}>
                     Todos
                   </span>
                 </button>
-                {categorias.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setCategoriaActiva(c)}
-                    className={`shrink-0 w-16 flex flex-col items-center gap-1 py-1.5 rounded-xl border transition ${
-                      categoriaActiva === c ? "border-violet-500 bg-violet-50" : "border-stone-200 bg-white"
-                    }`}
-                  >
-                    <span
-                      className={`w-9 h-9 rounded-full flex items-center justify-center ${
-                        categoriaActiva === c ? "bg-violet-600 text-white" : "bg-stone-100 text-stone-500"
-                      }`}
-                    >
-                      <i className={`fa-solid ${iconoCategoria(c)} text-xs`}></i>
-                    </span>
-                    <span
-                      className={`text-[11px] font-semibold truncate w-full text-center ${
-                        categoriaActiva === c ? "text-violet-700" : "text-stone-600"
-                      }`}
-                    >
-                      {c}
-                    </span>
-                  </button>
-                ))}
+                {categorias.map((c) => {
+                  const est = estiloCategoria(c);
+                  const activa = categoriaActiva === c;
+                  return (
+                    <button key={c} onClick={() => setCategoriaActiva(c)} className="shrink-0 w-16 flex flex-col items-center gap-1 active:scale-95 transition">
+                      <span
+                        className={`w-[52px] h-[52px] rounded-2xl flex items-center justify-center shadow-sm border ${est.bg} ${est.texto} ${
+                          activa ? est.bordeActivo : est.borde
+                        }`}
+                      >
+                        <i className={`fa-solid ${est.icono} text-lg`}></i>
+                      </span>
+                      <span className={`text-[11px] font-bold truncate w-full text-center ${activa ? "text-violet-700" : "text-stone-600"}`}>{c}</span>
+                    </button>
+                  );
+                })}
               </div>
               <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-white to-transparent"></div>
             </div>
@@ -1125,11 +1113,23 @@ function App() {
       {totalUnidades > 0 && !carritoAbierto && (
         <button
           onClick={() => setCarritoAbierto(true)}
-          className="fixed bottom-4 left-4 right-4 max-w-3xl mx-auto bg-violet-600 text-white rounded-xl py-3.5 px-5 flex items-center justify-between shadow-lg"
+          className="fixed bottom-4 left-4 right-4 max-w-3xl mx-auto bg-gradient-to-r from-violet-600 to-blue-600 text-white rounded-full pl-2.5 pr-2 py-2 flex items-center justify-between gap-2 shadow-lg shadow-violet-600/30 active:scale-[0.98] transition-transform"
         >
-          <span className="font-semibold text-sm">{totalUnidades} {totalUnidades === 1 ? "producto" : "productos"}</span>
-          <span className="font-bold">{formatoMoneda(totalCarrito)}</span>
-          <span className="text-sm underline">Ver carrito</span>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="relative w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+              <i className="fa-solid fa-bag-shopping text-sm"></i>
+              <span className="absolute -top-1 -right-1 bg-white text-violet-700 font-black text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                {totalUnidades}
+              </span>
+            </div>
+            <div className="flex flex-col items-start min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-white/80 leading-none">Mi pedido</span>
+              <span className="text-sm font-extrabold leading-tight">{formatoMoneda(totalCarrito)}</span>
+            </div>
+          </div>
+          <span className="flex items-center gap-1 bg-white text-violet-700 font-bold text-xs px-3.5 py-2 rounded-full shrink-0">
+            Ver pedido <i className="fa-solid fa-arrow-right text-[10px]"></i>
+          </span>
         </button>
       )}
 
