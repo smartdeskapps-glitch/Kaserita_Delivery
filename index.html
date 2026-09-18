@@ -572,6 +572,43 @@ function App() {
     })();
   }, [slug]);
 
+  // El manifest.json estático tiene start_url fijo en "/" -- si alguien
+  // hace "Agregar a pantalla de inicio" desde /demo-qa, el ícono terminaba
+  // abriendo la vitrina sin bodega (la pantalla "pedile a tu bodega el
+  // link..."), no la de esa bodega. Se arma un manifest al vuelo con
+  // start_url = la página actual y se reemplaza el <link rel="manifest">
+  // por una Blob URL con eso, antes de que el usuario llegue a instalarlo.
+  useEffect(() => {
+    if (estadoBodega !== "ok" || !bodega) return;
+    const manifest = {
+      name: `Kaserita Delivery - ${bodega.nombre}`,
+      short_name: bodega.nombre.slice(0, 12),
+      description: "Pedí de tu bodega de confianza y mandá el pedido por WhatsApp.",
+      start_url: `/${slug}`,
+      scope: "/",
+      display: "standalone",
+      orientation: "any",
+      background_color: "#fafaf9",
+      theme_color: "#7c3aed",
+      icons: [
+        { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
+        { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+      ],
+    };
+    const blobUrl = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: "application/json" }));
+    let link = document.querySelector('link[rel="manifest"]');
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "manifest";
+      document.head.appendChild(link);
+    }
+    const anterior = link.href && link.href.startsWith("blob:") ? link.href : null;
+    link.href = blobUrl;
+    return () => {
+      if (anterior) URL.revokeObjectURL(anterior);
+    };
+  }, [estadoBodega, bodega, slug]);
+
   useEffect(() => {
     if (estadoBodega !== "ok" || !bodega) return;
     setCargandoProductos(true);
