@@ -420,6 +420,7 @@ const ETIQUETAS_ESTADO_PEDIDO = {
 
 function PantallaMisPedidos({ cliente, onVolver }) {
   const [pedidos, setPedidos] = useState([]);
+  const [nombresBodegas, setNombresBodegas] = useState({});
   const [cargando, setCargando] = useState(true);
   const [activandoPush, setActivandoPush] = useState(false);
   const [avisoPush, setAvisoPush] = useState("");
@@ -430,9 +431,19 @@ function PantallaMisPedidos({ cliente, onVolver }) {
       .from("pedidos_seguimiento")
       .select("*")
       .order("creado_en", { ascending: false })
-      .then(({ data }) => {
-        setPedidos(data || []);
+      .then(async ({ data }) => {
+        const filas = data || [];
+        setPedidos(filas);
         setCargando(false);
+        // La cuenta es global por teléfono, no por bodega -- si el cliente
+        // compró en más de una, hay que aclarar cuál es cuál.
+        const idsUnicos = [...new Set(filas.map((p) => p.bodega_id))];
+        if (idsUnicos.length > 1) {
+          const { data: bodegas } = await sbClient.rpc("obtener_nombres_bodegas", { p_ids: idsUnicos });
+          const mapa = {};
+          (bodegas || []).forEach((b) => { mapa[b.bodega_id] = b.nombre; });
+          setNombresBodegas(mapa);
+        }
       });
   }, []);
 
@@ -486,7 +497,12 @@ function PantallaMisPedidos({ cliente, onVolver }) {
           {pedidos.map((p) => (
             <div key={p.id} className="bg-white border border-stone-200 rounded-xl p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-mono font-bold text-sm text-stone-800">{p.codigo_corto}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-sm text-stone-800">{p.codigo_corto}</span>
+                  {nombresBodegas[p.bodega_id] && (
+                    <span className="text-[11px] text-stone-400">{nombresBodegas[p.bodega_id]}</span>
+                  )}
+                </div>
                 <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${ETIQUETAS_ESTADO_PEDIDO[p.estado].color}`}>
                   {ETIQUETAS_ESTADO_PEDIDO[p.estado].texto}
                 </span>

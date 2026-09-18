@@ -28,22 +28,30 @@ Deno.serve(async (req) => {
       return new Response("ok (nada que hacer)", { status: 200 });
     }
 
-    const resp = await fetch(
-      `${SUPABASE_URL}/rest/v1/clientes_delivery?id=eq.${fila.cliente_id}&select=push_subscription`,
-      { headers: { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}` } }
-    );
-    const filas = await resp.json();
-    const suscripcion = filas?.[0]?.push_subscription;
+    const headers = { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}` };
+    const [clienteResp, bodegaResp] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/clientes_delivery?id=eq.${fila.cliente_id}&select=push_subscription`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/bodegas?id=eq.${fila.bodega_id}&select=slug`, { headers }),
+    ]);
+    const clienteFilas = await clienteResp.json();
+    const bodegaFilas = await bodegaResp.json();
+    const suscripcion = clienteFilas?.[0]?.push_subscription;
+    const slug = bodegaFilas?.[0]?.slug;
 
     if (!suscripcion) {
       return new Response("ok (el cliente no activó notificaciones)", { status: 200 });
     }
 
+    // El cliente puede tener varias bodegas instaladas como accesos
+    // directos distintos (cada una con su propio start_url) -- si no le
+    // decimos a qué bodega pertenece este pedido, el service worker no
+    // sabe cuál ventana enfocar o abrir al tocar la notificación.
     await webpush.sendNotification(
       suscripcion,
       JSON.stringify({
         title: "¡Tu pedido está listo!",
         body: `Código ${fila.codigo_corto} -- ya podés pasar a retirarlo.`,
+        url: slug ? `/${slug}` : "/",
       })
     );
 
