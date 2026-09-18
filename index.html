@@ -621,7 +621,7 @@ function PantallaMisTiendas({ onVolver }) {
               href={`/${t.slug}`}
               className="flex items-center gap-3 bg-white border border-stone-200 rounded-xl p-3"
             >
-              <div className="w-9 h-9 rounded-full bg-stone-100 overflow-hidden shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-stone-100 overflow-hidden shrink-0">
                 {t.logo_url ? (
                   <img src={t.logo_url} alt={t.nombre} className="w-full h-full object-cover" />
                 ) : (
@@ -630,8 +630,18 @@ function PantallaMisTiendas({ onVolver }) {
                   </div>
                 )}
               </div>
-              <span className="font-semibold text-sm text-stone-800 flex-1">{t.nombre}</span>
-              <i className="fa-solid fa-chevron-right text-stone-300 text-xs"></i>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-sm text-stone-800 truncate">{t.nombre}</p>
+                {t.direccion ? (
+                  <p className="text-[11px] text-stone-400 truncate flex items-center gap-1">
+                    <i className="fa-solid fa-location-dot text-[9px] shrink-0"></i>
+                    <span className="truncate">{t.direccion}</span>
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-stone-300">Sin dirección cargada</p>
+                )}
+              </div>
+              <i className="fa-solid fa-chevron-right text-stone-300 text-xs shrink-0"></i>
             </a>
           ))}
         </div>
@@ -954,7 +964,19 @@ function App() {
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="text-[15px] font-bold text-stone-800 truncate">{bodega.nombre}</h1>
-          <p className="text-xs text-stone-400 truncate">Armá tu pedido y mandalo por WhatsApp</p>
+          {bodega.direccion ? (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bodega.direccion)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-stone-400 truncate flex items-center gap-1 hover:text-violet-600"
+            >
+              <i className="fa-solid fa-location-dot text-[10px] shrink-0"></i>
+              <span className="truncate">{bodega.direccion}</span>
+            </a>
+          ) : (
+            <p className="text-xs text-stone-400 truncate">Armá tu pedido y mandalo por WhatsApp</p>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {(eventoInstalacion || (esIOS && !yaInstalada)) && (
