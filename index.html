@@ -756,42 +756,43 @@ function PantallaMisTiendas({ onVolver }) {
       ) : tiendasFiltradas.length === 0 ? (
         <p className="text-center text-stone-400 py-10">No encontramos ninguna bodega con ese nombre.</p>
       ) : (
-        <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-3">
           {tiendasFiltradas.map((t, i) => (
             <a
               key={t.bodega_id}
               href={`/${t.slug}`}
-              className={`flex items-center gap-3 bg-white rounded-xl p-3 ${
-                i === 0 && !busqueda ? "border-2 border-violet-200 shadow-sm" : "border border-stone-200"
+              className={`relative bg-white rounded-2xl overflow-hidden flex flex-col ${
+                i === 0 && !busqueda ? "border-2 border-violet-300 shadow-sm" : "border border-stone-200"
               }`}
             >
-              <div className="w-11 h-11 rounded-xl bg-stone-100 overflow-hidden shrink-0">
-                {t.logo_url ? (
-                  <img src={t.logo_url} alt={t.nombre} className="w-full h-full object-cover" />
+              {i === 0 && !busqueda && (
+                <span className="absolute top-2 left-2 z-10 bg-white/90 backdrop-blur text-violet-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <i className="fa-solid fa-star text-amber-400 text-[9px]"></i> Habitual
+                </span>
+              )}
+              <div className="h-14 bg-gradient-to-br from-violet-500 to-blue-600"></div>
+              <div className="flex flex-col items-center px-2 pb-3 -mt-7">
+                <div className="w-14 h-14 rounded-full bg-stone-100 border-4 border-white overflow-hidden shadow-sm shrink-0">
+                  {t.logo_url ? (
+                    <img src={t.logo_url} alt={t.nombre} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-violet-600 text-white font-bold text-sm">
+                      {t.nombre?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <p className="mt-1.5 font-semibold text-sm text-stone-800 text-center leading-tight line-clamp-1 w-full">{t.nombre}</p>
+                {t.direccion ? (
+                  <p className="text-[10px] text-stone-400 text-center leading-tight line-clamp-1 w-full mt-0.5">{t.direccion}</p>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-violet-600 text-white font-bold text-xs">
-                    {t.nombre?.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                {i === 0 && !busqueda && (
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-violet-600">Bodega habitual</span>
-                )}
-                <p className="font-semibold text-sm text-stone-800 truncate">{t.nombre}</p>
-                {t.direccion && (
-                  <p className="text-[11px] text-stone-400 truncate flex items-center gap-1">
-                    <i className="fa-solid fa-location-dot text-[9px] shrink-0"></i>
-                    <span className="truncate">{t.direccion}</span>
-                  </p>
+                  <p className="text-[10px] text-stone-300 text-center mt-0.5">Sin dirección cargada</p>
                 )}
                 {ultimoPedidoPorBodega[t.bodega_id] ? (
-                  <p className="text-[11px] text-stone-300">Último pedido: {fechaRelativa(ultimoPedidoPorBodega[t.bodega_id])}</p>
+                  <p className="text-[9px] text-stone-300 mt-1">Último pedido: {fechaRelativa(ultimoPedidoPorBodega[t.bodega_id])}</p>
                 ) : ultimaVisitaPorBodega[t.bodega_id] ? (
-                  <p className="text-[11px] text-stone-300">Visto: {fechaRelativa(ultimaVisitaPorBodega[t.bodega_id])}</p>
+                  <p className="text-[9px] text-stone-300 mt-1">Visto: {fechaRelativa(ultimaVisitaPorBodega[t.bodega_id])}</p>
                 ) : null}
               </div>
-              <i className="fa-solid fa-chevron-right text-stone-300 text-xs shrink-0"></i>
             </a>
           ))}
         </div>
