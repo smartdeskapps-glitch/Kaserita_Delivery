@@ -13,16 +13,18 @@ alter table public.bodegas
   add column if not exists banner_url text;
 
 -- bodegas_delivery: mismo gate de siempre (delivery_habilitado +
--- delivery_permitido), solo se agregan las dos columnas nuevas.
+-- delivery_permitido), solo se agregan las dos columnas nuevas. Van
+-- DESPUÉS de telefono (no antes) porque create or replace view no deja
+-- cambiar la posición de una columna existente, solo agregar al final.
 create or replace view public.bodegas_delivery
 with (security_invoker = false) as
 select
   b.id as bodega_id,
   b.slug,
   b.nombre,
+  u.telefono,
   b.logo_url,
-  b.banner_url,
-  u.telefono
+  b.banner_url
 from bodegas b
 left join lateral (
   select telefono
