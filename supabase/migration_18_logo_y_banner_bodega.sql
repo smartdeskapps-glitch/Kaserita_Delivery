@@ -38,7 +38,11 @@ where b.delivery_habilitado = true
   and b.delivery_permitido = true
   and b.slug is not null;
 
-create or replace function public.obtener_bodega_delivery(p_slug text)
+-- create or replace no deja cambiar las columnas de salida de una función
+-- existente (agregamos logo_url/banner_url) -- hay que borrarla primero.
+drop function if exists public.obtener_bodega_delivery(text);
+
+create function public.obtener_bodega_delivery(p_slug text)
 returns table (bodega_id uuid, slug text, nombre text, telefono text, logo_url text, banner_url text)
 language sql
 stable
@@ -53,7 +57,9 @@ $$;
 grant execute on function public.obtener_bodega_delivery(text) to anon;
 
 -- "Mis tiendas" también puede mostrar el logo de cada bodega visitada.
-create or replace function public.obtener_nombres_bodegas(p_ids uuid[])
+drop function if exists public.obtener_nombres_bodegas(uuid[]);
+
+create function public.obtener_nombres_bodegas(p_ids uuid[])
 returns table (bodega_id uuid, nombre text, slug text, logo_url text)
 language sql
 stable
