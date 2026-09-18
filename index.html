@@ -46,6 +46,25 @@ function formatoMoneda(n) {
   return `S/ ${Number(n || 0).toFixed(2)}`;
 }
 
+// Ícono aproximado por nombre de categoría (texto libre que carga cada
+// bodega) -- no hay un catálogo fijo de categorías, así que se matchea por
+// palabras clave comunes en bodegas/abarrotes y se cae a un ícono genérico.
+function iconoCategoria(nombre) {
+  const n = (nombre || "").toLowerCase();
+  if (/agua|bebida|gaseosa|jugo/.test(n)) return "fa-bottle-water";
+  if (/cerveza|licor|vino/.test(n)) return "fa-wine-bottle";
+  if (/carne|embutido|pollo|res/.test(n)) return "fa-drumstick-bite";
+  if (/lácte|lacte|leche|queso|yogur/.test(n)) return "fa-cheese";
+  if (/pan|panader/.test(n)) return "fa-bread-slice";
+  if (/limpieza|hogar/.test(n)) return "fa-spray-can-sparkles";
+  if (/golosina|snack|dulce|chocolate/.test(n)) return "fa-cookie-bite";
+  if (/fruta|verdura|abarrote/.test(n)) return "fa-basket-shopping";
+  if (/cigarr|tabaco/.test(n)) return "fa-smoking";
+  if (/mascota/.test(n)) return "fa-paw";
+  if (/higiene|cuidado|personal|farmac/.test(n)) return "fa-pump-soap";
+  return "fa-tag";
+}
+
 function getSlugFromPath() {
   return decodeURIComponent(location.pathname.replace(/^\/+|\/+$/g, ""));
 }
@@ -957,26 +976,33 @@ function App() {
             />
           </div>
           {categorias.length > 0 && (
-            <div className="flex gap-1.5 overflow-x-auto -mx-4 px-4 pb-0.5">
-              <button
-                onClick={() => setCategoriaActiva("")}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold ${
-                  categoriaActiva === "" ? "bg-stone-900 text-white" : "bg-stone-100 text-stone-600"
-                }`}
-              >
-                Todos
-              </button>
-              {categorias.map((c) => (
+            <div className="relative -mx-4">
+              <div className="flex gap-2 overflow-x-auto px-4 pb-1" style={{ scrollbarWidth: "none" }}>
                 <button
-                  key={c}
-                  onClick={() => setCategoriaActiva(c)}
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold ${
-                    categoriaActiva === c ? "bg-stone-900 text-white" : "bg-stone-100 text-stone-600"
+                  onClick={() => setCategoriaActiva("")}
+                  className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition ${
+                    categoriaActiva === ""
+                      ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/30"
+                      : "bg-white text-stone-600 border border-stone-200"
                   }`}
                 >
-                  {c}
+                  <i className="fa-solid fa-border-all text-[11px]"></i> Todos
                 </button>
-              ))}
+                {categorias.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setCategoriaActiva(c)}
+                    className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition ${
+                      categoriaActiva === c
+                        ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/30"
+                        : "bg-white text-stone-600 border border-stone-200"
+                    }`}
+                  >
+                    <i className={`fa-solid ${iconoCategoria(c)} text-[11px]`}></i> {c}
+                  </button>
+                ))}
+              </div>
+              <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-white to-transparent"></div>
             </div>
           )}
         </div>
