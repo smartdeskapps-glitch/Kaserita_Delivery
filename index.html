@@ -335,12 +335,41 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver }) {
 }
 
 function ModalCuenta({ onCerrar, onIngreso }) {
-  const [modo, setModo] = useState("login"); // login | registro
+  const [modo, setModo] = useState("login"); // login | registro | recuperar
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
   const [pin, setPin] = useState("");
+  const [pinConfirmar, setPinConfirmar] = useState("");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
+  const [avisoRecuperar, setAvisoRecuperar] = useState("");
+
+  const enviarRecuperar = async (e) => {
+    e.preventDefault();
+    setError("");
+    const tel = telefono.replace(/\D/g, "");
+    if (tel.length < 6) return setError("Ingresá un celular válido.");
+    if (pin.trim().length < 4) return setError("El PIN tiene que tener al menos 4 dígitos.");
+    if (pin.trim() !== pinConfirmar.trim()) return setError("Los dos PIN no coinciden.");
+    setCargando(true);
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/resetear-pin-cliente`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+        body: JSON.stringify({ telefono: tel, nuevo_pin: pin.trim() }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "No se pudo actualizar el PIN.");
+      setAvisoRecuperar(data.mensaje || "Listo, ya podés ingresar con tu PIN nuevo.");
+      setModo("login");
+      setPin("");
+      setPinConfirmar("");
+    } catch (err) {
+      setError(err.message || "Algo salió mal, intentá de nuevo.");
+    } finally {
+      setCargando(false);
+    }
+  };
 
   const enviar = async (e) => {
     e.preventDefault();
@@ -397,56 +426,118 @@ function ModalCuenta({ onCerrar, onIngreso }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h2 className="font-bold text-stone-800">{modo === "login" ? "Ingresar" : "Crear cuenta"}</h2>
+          <h2 className="font-bold text-stone-800">
+            {modo === "login" ? "Ingresar" : modo === "registro" ? "Crear cuenta" : "Recuperar PIN"}
+          </h2>
           <button onClick={onCerrar} className="text-stone-400">
             <i className="fa-solid fa-xmark text-lg"></i>
           </button>
         </div>
-        <p className="text-xs text-stone-500">
-          {modo === "login"
-            ? "Con tu cuenta podés ver el estado de tus pedidos y recibir un aviso cuando estén listos."
-            : "Elegí un PIN fácil de recordar -- lo vas a usar para entrar la próxima vez."}
-        </p>
-        <form onSubmit={enviar} className="space-y-2.5">
-          {modo === "registro" && (
-            <input
-              type="text"
-              placeholder="Tu nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
-            />
-          )}
-          <input
-            type="tel"
-            placeholder="Tu celular"
-            value={telefono}
-            onChange={(e) => setTelefono(e.target.value)}
-            className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
-          />
-          <input
-            type="password"
-            inputMode="numeric"
-            placeholder="PIN (4 dígitos o más)"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
-          />
-          {error && <p className="text-xs text-red-600">{error}</p>}
-          <button
-            type="submit"
-            disabled={cargando}
-            className="w-full py-2.5 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50"
-          >
-            {cargando ? "Un momento..." : modo === "login" ? "Ingresar" : "Crear cuenta"}
-          </button>
-        </form>
-        <button
-          onClick={() => { setModo(modo === "login" ? "registro" : "login"); setError(""); }}
-          className="w-full text-center text-xs text-stone-500 underline"
-        >
-          {modo === "login" ? "¿Primera vez? Creá tu cuenta" : "Ya tengo cuenta, ingresar"}
-        </button>
+
+        {modo === "recuperar" ? (
+          <>
+            <p className="text-xs text-stone-500">
+              Poné tu celular y elegí un PIN nuevo. Ojo: cualquiera que sepa tu celular puede hacer esto, así que no
+              es un método a prueba de todo -- pero te deja volver a entrar sin quedarte afuera para siempre.
+            </p>
+            <form onSubmit={enviarRecuperar} className="space-y-2.5">
+              <input
+                type="tel"
+                placeholder="Tu celular"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+                className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
+              />
+              <input
+                type="password"
+                inputMode="numeric"
+                placeholder="PIN nuevo (4 dígitos o más)"
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
+              />
+              <input
+                type="password"
+                inputMode="numeric"
+                placeholder="Repetí el PIN nuevo"
+                value={pinConfirmar}
+                onChange={(e) => setPinConfirmar(e.target.value)}
+                className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
+              />
+              {error && <p className="text-xs text-red-600">{error}</p>}
+              <button
+                type="submit"
+                disabled={cargando}
+                className="w-full py-2.5 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50"
+              >
+                {cargando ? "Un momento..." : "Actualizar PIN"}
+              </button>
+            </form>
+            <button
+              onClick={() => { setModo("login"); setError(""); }}
+              className="w-full text-center text-xs text-stone-500 underline"
+            >
+              Volver a ingresar
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="text-xs text-stone-500">
+              {modo === "login"
+                ? "Con tu cuenta podés ver el estado de tus pedidos y recibir un aviso cuando estén listos."
+                : "Elegí un PIN fácil de recordar -- lo vas a usar para entrar la próxima vez."}
+            </p>
+            {avisoRecuperar && <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2">{avisoRecuperar}</p>}
+            <form onSubmit={enviar} className="space-y-2.5">
+              {modo === "registro" && (
+                <input
+                  type="text"
+                  placeholder="Tu nombre"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
+                />
+              )}
+              <input
+                type="tel"
+                placeholder="Tu celular"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+                className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
+              />
+              <input
+                type="password"
+                inputMode="numeric"
+                placeholder="PIN (4 dígitos o más)"
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
+              />
+              {error && <p className="text-xs text-red-600">{error}</p>}
+              <button
+                type="submit"
+                disabled={cargando}
+                className="w-full py-2.5 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50"
+              >
+                {cargando ? "Un momento..." : modo === "login" ? "Ingresar" : "Crear cuenta"}
+              </button>
+            </form>
+            {modo === "login" && (
+              <button
+                onClick={() => { setModo("recuperar"); setError(""); setAvisoRecuperar(""); }}
+                className="w-full text-center text-xs text-stone-400 underline"
+              >
+                ¿Olvidaste tu PIN?
+              </button>
+            )}
+            <button
+              onClick={() => { setModo(modo === "login" ? "registro" : "login"); setError(""); }}
+              className="w-full text-center text-xs text-stone-500 underline"
+            >
+              {modo === "login" ? "¿Primera vez? Creá tu cuenta" : "Ya tengo cuenta, ingresar"}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
