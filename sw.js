@@ -15,6 +15,8 @@ self.addEventListener("push", (event) => {
       icon: "/icon-192.png",
       badge: "/icon-192.png",
       data: { url: datos.url },
+      silent: false,
+      vibrate: [200, 100, 200],
     })
   );
 });
