@@ -920,6 +920,11 @@ function App() {
   const [productos, setProductos] = useState([]);
   const [cargandoProductos, setCargandoProductos] = useState(false);
   const [carrito, setCarrito] = useState({}); // { [producto_id]: cantidad }
+  // Combos: paquetes de varios productos a precio especial (ver
+  // migration_25_combos.sql) -- carrito propio, separado del de productos,
+  // porque un combo no es un producto de la tabla "productos".
+  const [combos, setCombos] = useState([]);
+  const [carritoCombos, setCarritoCombos] = useState({}); // { [combo_id]: cantidad }
   const [carritoAbierto, setCarritoAbierto] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
@@ -1143,6 +1148,11 @@ function App() {
         }
         setCargandoProductos(false);
       });
+    sbClient
+      .rpc("obtener_combos_delivery", { p_slug: slug })
+      .then(({ data, error: err }) => {
+        if (!err) setCombos(data || []);
+      });
   }, [estadoBodega, bodega]);
 
   const categorias = useMemo(() => {
@@ -1185,6 +1195,12 @@ function App() {
     return m;
   }, [productos]);
 
+  const combosPorId = useMemo(() => {
+    const m = {};
+    combos.forEach((c) => (m[c.id] = c));
+    return m;
+  }, [combos]);
+
   const itemsCarrito = useMemo(
     () =>
       Object.entries(carrito)
@@ -1194,11 +1210,27 @@ function App() {
     [carrito, productosPorId]
   );
 
-  const totalCarrito = useMemo(
-    () => itemsCarrito.reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0),
-    [itemsCarrito]
+  const itemsCarritoCombos = useMemo(
+    () =>
+      Object.entries(carritoCombos)
+        .filter(([, cant]) => cant > 0)
+        .map(([id, cantidad]) => ({ ...combosPorId[id], cantidad }))
+        .filter((it) => it.id),
+    [carritoCombos, combosPorId]
   );
-  const totalUnidades = useMemo(() => itemsCarrito.reduce((acc, it) => acc + it.cantidad, 0), [itemsCarrito]);
+
+  const totalCarrito = useMemo(
+    () =>
+      itemsCarrito.reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0) +
+      itemsCarritoCombos.reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0),
+    [itemsCarrito, itemsCarritoCombos]
+  );
+  const totalUnidades = useMemo(
+    () =>
+      itemsCarrito.reduce((acc, it) => acc + it.cantidad, 0) +
+      itemsCarritoCombos.reduce((acc, it) => acc + it.cantidad, 0),
+    [itemsCarrito, itemsCarritoCombos]
+  );
 
   const agregarAlCarrito = useCallback((producto) => {
     setCarrito((c) => ({ ...c, [producto.id]: (c[producto.id] || 0) + 1 }));
@@ -1215,17 +1247,40 @@ function App() {
     });
   }, []);
 
+  const agregarComboAlCarrito = useCallback((combo) => {
+    setCarritoCombos((c) => ({ ...c, [combo.id]: (c[combo.id] || 0) + 1 }));
+  }, []);
+
+  const quitarComboDelCarrito = useCallback((combo) => {
+    setCarritoCombos((c) => {
+      const actual = c[combo.id] || 0;
+      if (actual <= 1) {
+        const { [combo.id]: _quitado, ...resto } = c;
+        return resto;
+      }
+      return { ...c, [combo.id]: actual - 1 };
+    });
+  }, []);
+
   const confirmarPedido = async () => {
-    if (itemsCarrito.length === 0) return;
+    if (itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) return;
     setEnviando(true);
     setError("");
     const codigo = generarCodigoCorto();
-    const items = itemsCarrito.map((it) => ({
-      id: it.id,
-      descripcion: it.descripcion,
-      precio_venta: it.precio_venta,
-      cantidad: it.cantidad,
-    }));
+    const items = [
+      ...itemsCarrito.map((it) => ({
+        id: it.id,
+        descripcion: it.descripcion,
+        precio_venta: it.precio_venta,
+        cantidad: it.cantidad,
+      })),
+      ...itemsCarritoCombos.map((it) => ({
+        combo_id: it.id,
+        descripcion: `Combo: ${it.nombre}`,
+        precio_venta: it.precio_venta,
+        cantidad: it.cantidad,
+      })),
+    ];
     const { error: err } = await sbClient.from("pedidos_delivery").insert({
       codigo_corto: codigo,
       bodega_id: bodega.bodega_id,
@@ -1254,6 +1309,7 @@ function App() {
     const whatsappUrl = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
     setPedidoConfirmado({ codigo, whatsappUrl });
     setCarrito({});
+    setCarritoCombos({});
     setCarritoAbierto(false);
   };
 
@@ -1426,6 +1482,48 @@ function App() {
         </div>
       )}
 
+      {combos.length > 0 && !busqueda.trim() && !categoriaActiva && (
+        <div className="pt-4">
+          <p className="px-4 text-sm font-bold text-stone-800 flex items-center gap-1.5 mb-2">
+            <i className="fa-solid fa-gift text-amber-500"></i> Combos con descuento
+          </p>
+          <div className="flex gap-3 overflow-x-auto px-4 pb-1">
+            {combos.map((combo) => {
+              const cantidadCombo = carritoCombos[combo.id] || 0;
+              return (
+                <div key={combo.id} className="shrink-0 w-56 bg-white rounded-2xl border border-amber-200 shadow-sm p-3 flex flex-col gap-1.5">
+                  <p className="text-sm font-bold text-stone-900 line-clamp-1">{combo.nombre}</p>
+                  <p className="text-[11px] text-stone-500 line-clamp-2 flex-1">
+                    Incluye: {(combo.items || []).map((it) => `${it.descripcion} x${it.cantidad}`).join(", ")}
+                  </p>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-base font-black text-amber-600">{formatoMoneda(combo.precio_venta)}</span>
+                    {cantidadCombo === 0 ? (
+                      <button
+                        onClick={() => agregarComboAlCarrito(combo)}
+                        className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-full active:scale-95"
+                      >
+                        Agregar +
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2 bg-amber-50 rounded-full px-1">
+                        <button onClick={() => quitarComboDelCarrito(combo)} className="w-6 h-6 flex items-center justify-center text-amber-700 active:scale-90">
+                          <i className="fa-solid fa-minus text-[10px]"></i>
+                        </button>
+                        <span className="text-xs font-bold text-amber-800 w-4 text-center">{cantidadCombo}</span>
+                        <button onClick={() => agregarComboAlCarrito(combo)} className="w-6 h-6 flex items-center justify-center text-amber-700 active:scale-90">
+                          <i className="fa-solid fa-plus text-[10px]"></i>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {productoDestacado && (
         <div className="px-4 pt-4">
           <div className="relative bg-gradient-to-br from-blue-600 to-violet-700 rounded-[22px] p-4 pr-28 min-h-[168px] flex flex-col justify-between">
@@ -1524,6 +1622,31 @@ function App() {
               </button>
             </div>
             <div className="overflow-y-auto flex-1 px-4 py-3 flex flex-col gap-3">
+              {itemsCarritoCombos.map((it) => (
+                <div key={`combo-${it.id}`} className="flex items-center justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-stone-800 truncate">
+                      <i className="fa-solid fa-gift text-amber-500 text-xs mr-1"></i>Combo: {it.nombre}
+                    </p>
+                    <p className="text-xs text-stone-400">{formatoMoneda(it.precio_venta)} c/u</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => quitarComboDelCarrito(it)}
+                      className="w-7 h-7 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center"
+                    >
+                      <i className="fa-solid fa-minus text-xs"></i>
+                    </button>
+                    <span className="text-sm font-semibold w-4 text-center">{it.cantidad}</span>
+                    <button
+                      onClick={() => agregarComboAlCarrito(it)}
+                      className="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center"
+                    >
+                      <i className="fa-solid fa-plus text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+              ))}
               {itemsCarrito.map((it) => (
                 <div key={it.id} className="flex items-center justify-between gap-2">
                   <div className="flex-1 min-w-0">
@@ -1547,7 +1670,7 @@ function App() {
                   </div>
                 </div>
               ))}
-              {itemsCarrito.length === 0 && <p className="text-center text-stone-400 py-6">Tu carrito está vacío.</p>}
+              {itemsCarrito.length === 0 && itemsCarritoCombos.length === 0 && <p className="text-center text-stone-400 py-6">Tu carrito está vacío.</p>}
             </div>
             <div className="px-4 py-4 border-t border-stone-200">
               {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
@@ -1558,7 +1681,7 @@ function App() {
               {clienteSesion ? (
                 <button
                   onClick={confirmarPedido}
-                  disabled={itemsCarrito.length === 0 || enviando}
+                  disabled={(itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) || enviando}
                   className="w-full py-3 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {enviando ? "Generando..." : (
@@ -1572,7 +1695,7 @@ function App() {
                   <button
                     type="button"
                     onClick={iniciarConGoogle}
-                    disabled={itemsCarrito.length === 0}
+                    disabled={itemsCarrito.length === 0 && itemsCarritoCombos.length === 0}
                     className="w-full py-3 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     <IconGoogle /> Continuar con Google para enviar el pedido
