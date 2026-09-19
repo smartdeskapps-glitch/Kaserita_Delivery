@@ -997,9 +997,13 @@ function App() {
     } catch {
       // ignorado -- en el peor caso, vuelve con el carrito vacío
     }
+    // Nunca window.location.href a secas: después de volver de Google esa URL
+    // queda con parámetros del propio login (token/código) pegados, y si se
+    // reintenta el login mandando esa URL "sucia" como destino, Google la
+    // rechaza. Con origin+pathname siempre se manda la URL limpia del catálogo.
     await sbClient.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.href },
+      options: { redirectTo: window.location.origin + window.location.pathname },
     });
   };
 
@@ -1560,7 +1564,12 @@ function App() {
         <ModalCompletarPerfil
           inicial={completarPerfilGoogle}
           onListo={(cliente) => { setClienteSesion(cliente); setCompletarPerfilGoogle(null); }}
-          onCancelar={async () => { await sbClient.auth.signOut(); setCompletarPerfilGoogle(null); }}
+          onCancelar={async () => {
+            await sbClient.auth.signOut();
+            // Recarga limpia (no solo limpiar el estado local) para no
+            // arrastrar nada de la sesión cancelada al próximo intento.
+            window.location.href = window.location.origin + window.location.pathname;
+          }}
         />
       )}
 
