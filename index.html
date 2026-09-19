@@ -1503,31 +1503,42 @@ function App() {
               {itemsCarrito.length === 0 && <p className="text-center text-stone-400 py-6">Tu carrito está vacío.</p>}
             </div>
             <div className="px-4 py-4 border-t border-stone-200">
-              {!clienteSesion && (
-                <button
-                  type="button"
-                  onClick={() => setModalCuentaAbierto(true)}
-                  className="w-full mb-3 py-2.5 rounded-xl border border-stone-200 text-stone-600 text-xs font-medium flex items-center justify-center gap-2"
-                >
-                  <i className="fa-solid fa-user text-stone-400"></i> Iniciar sesión con Google para seguir tu pedido
-                </button>
-              )}
               {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm text-stone-500">Total</span>
                 <span className="font-bold text-stone-800">{formatoMoneda(totalCarrito)}</span>
               </div>
-              <button
-                onClick={confirmarPedido}
-                disabled={itemsCarrito.length === 0 || enviando}
-                className="w-full py-3 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {enviando ? "Generando..." : (
-                  <>
-                    <i className="fa-brands fa-whatsapp text-lg"></i> Confirmar y enviar por WhatsApp
-                  </>
-                )}
-              </button>
+              {clienteSesion ? (
+                <button
+                  onClick={confirmarPedido}
+                  disabled={itemsCarrito.length === 0 || enviando}
+                  className="w-full py-3 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {enviando ? "Generando..." : (
+                    <>
+                      <i className="fa-brands fa-whatsapp text-lg"></i> Confirmar y enviar por WhatsApp
+                    </>
+                  )}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={iniciarConGoogle}
+                    disabled={itemsCarrito.length === 0}
+                    className="w-full py-3 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <IconGoogle /> Continuar con Google para enviar el pedido
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModalCuentaAbierto(true)}
+                    className="w-full mt-2 py-2 text-center text-xs text-stone-500 underline"
+                  >
+                    o ingresar con celular y PIN
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
