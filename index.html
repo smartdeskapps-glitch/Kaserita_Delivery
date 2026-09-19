@@ -42,6 +42,22 @@ const SUPABASE_URL = "https://hzmrsbeamtbloudmxjrp.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_RHAkd7pZIadDnSQClFdjMQ_lrG3p-gw";
 const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Aviso sonoro para el cliente cuando su pedido pasa a "listo" -- mismo
+// archivo que usa el dueño en la POS del lado de la bodega. Se crea una
+// sola vez (no un Audio nuevo por evento) para no repetir la descarga.
+// Solo suena si el cliente tiene la pestaña abierta; para cuando la tiene
+// cerrada ya existe el push (ver activarNotificaciones/enviar-notificacion-pedido-listo).
+const audioAvisoPedidoListo = new Audio("https://cdn.pixabay.com/audio/2025/01/11/audio_5e34842448.mp3");
+audioAvisoPedidoListo.preload = "auto";
+function sonarAvisoPedidoListo() {
+  try {
+    audioAvisoPedidoListo.currentTime = 0;
+    audioAvisoPedidoListo.play().catch((err) => console.warn("No se pudo reproducir el aviso sonoro:", err.message));
+  } catch (err) {
+    console.warn("No se pudo reproducir el aviso sonoro:", err.message);
+  }
+}
+
 function formatoMoneda(n) {
   return `S/ ${Number(n || 0).toFixed(2)}`;
 }
@@ -970,6 +986,27 @@ function App() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    // Aviso en vivo: mientras el cliente tenga sesión y la pestaña abierta
+    // (en cualquier pantalla, no solo "Mis pedidos"), suena apenas la bodega
+    // marca su pedido como "listo" -- filtrado por RLS al propio cliente_id,
+    // igual que cualquier otra consulta.
+    if (!clienteSesion) return;
+    const canal = sbClient
+      .channel(`cliente-seguimiento-${clienteSesion.id}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "pedidos_seguimiento", filter: `cliente_id=eq.${clienteSesion.id}` },
+        (payload) => {
+          if (payload.new.estado === "listo" && payload.old?.estado !== "listo") {
+            sonarAvisoPedidoListo();
+          }
+        }
+      )
+      .subscribe();
+    return () => { sbClient.removeChannel(canal); };
+  }, [clienteSesion]);
 
   useEffect(() => {
     // El carrito vive solo en memoria (useState), así que un viaje de ida y
