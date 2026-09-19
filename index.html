@@ -1165,12 +1165,18 @@ function App() {
   }, [productos, busqueda, categoriaActiva]);
 
   // Card "destacado" de la pantalla de inicio (estilo hero de app de delivery)
-  // -- solo se muestra en la vista home (sin búsqueda ni categoría activa) y
-  // toma el primer producto con foto, ya que no hay un flag de "destacado" en
-  // la base de datos.
+  // -- solo se muestra en la vista home (sin búsqueda ni categoría activa).
+  // Prioriza el producto que el dueño marcó a mano (es_destacado, elegido
+  // desde "Editar Producto" en el POS); si ninguno está marcado, cae al
+  // comportamiento anterior (el primero con foto) para no dejar la home sin
+  // hero mientras el dueño no elige uno.
   const productoDestacado = useMemo(() => {
     if (busqueda.trim() || categoriaActiva) return null;
-    return productosFiltrados.find((p) => p.foto_url) || null;
+    return (
+      productosFiltrados.find((p) => p.es_destacado && p.foto_url) ||
+      productosFiltrados.find((p) => p.foto_url) ||
+      null
+    );
   }, [busqueda, categoriaActiva, productosFiltrados]);
 
   const productosPorId = useMemo(() => {
