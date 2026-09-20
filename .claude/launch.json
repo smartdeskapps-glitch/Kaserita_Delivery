@@ -2,16 +2,16 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "vite",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173
+    },
+    {
       "name": "static",
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "5500"],
       "port": 5500
-    },
-    {
-      "name": "spa",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["C:\\Users\\DRAMIR~1.DIN\\AppData\\Local\\Temp\\claude\\C--Users-dramirez-DINET-Documents-Kaserita---Delivery\\c30bbd1c-2e53-4dda-830b-a1d82e2cd426\\scratchpad\\spa_server.py"],
-      "port": 8001
     }
   ]
 }
