@@ -743,7 +743,7 @@ function PantallaMisPedidos({ cliente, onVolver }) {
   );
 }
 
-function PantallaMisTiendas({ onVolver }) {
+function PantallaMisTiendas({ onVolver, esInicio = false }) {
   const [tiendas, setTiendas] = useState([]);
   const [ultimoPedidoPorBodega, setUltimoPedidoPorBodega] = useState({});
   const [ultimaVisitaPorBodega, setUltimaVisitaPorBodega] = useState({});
@@ -793,12 +793,14 @@ function PantallaMisTiendas({ onVolver }) {
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-4 pb-16">
       <div className="flex items-center gap-3">
-        <button onClick={onVolver} className="text-stone-500">
-          <i className="fa-solid fa-arrow-left"></i>
-        </button>
+        {!esInicio && (
+          <button onClick={onVolver} className="text-stone-500">
+            <i className="fa-solid fa-arrow-left"></i>
+          </button>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold text-stone-800">Mis tiendas</h1>
+            <h1 className="text-lg font-bold text-stone-800">{esInicio ? "Tus bodegas" : "Mis tiendas"}</h1>
             {tiendas.length > 0 && (
               <span className="bg-violet-100 text-violet-700 text-[11px] font-bold px-2 py-0.5 rounded-full">
                 {tiendas.length} guardada{tiendas.length === 1 ? "" : "s"}
@@ -906,6 +908,7 @@ function App() {
   const [vistaMisTiendas, setVistaMisTiendas] = useState(false);
   const [eventoInstalacion, setEventoInstalacion] = useState(null);
   const [instruccionesIOSAbiertas, setInstruccionesIOSAbiertas] = useState(false);
+  const [ultimaBodega, setUltimaBodega] = useState(null); // { slug, nombre, logo_url }, para la home general
 
   // Safari en iPhone/iPad no tiene beforeinstallprompt -- ahí instalar
   // SIEMPRE es manual (botón Compartir -> Agregar a inicio), no hay forma
@@ -1049,42 +1052,33 @@ function App() {
     })();
   }, [slug]);
 
-  // El manifest.json estático tiene start_url fijo en "/" -- si alguien
-  // hace "Agregar a pantalla de inicio" desde /demo-qa, el ícono terminaba
-  // abriendo la vitrina sin bodega (la pantalla "pedile a tu bodega el
-  // link..."), no la de esa bodega. Se arma un manifest al vuelo con
-  // start_url = la página actual y se reemplaza el <link rel="manifest">
-  // por una Blob URL con eso, antes de que el usuario llegue a instalarlo.
+  // Antes acá se armaba un manifest.json distinto por bodega (start_url =
+  // esa bodega), así que cada bodega que el cliente visitaba terminaba
+  // instalándose como un ícono/app separado en el celular. Ahora se deja el
+  // manifest.json estático de siempre (una sola app "Kaserita", start_url
+  // "/") y en su lugar se recuerda la última bodega vista para que la
+  // pantalla de inicio (sin slug) pueda ofrecer volver a ella con un toque.
   useEffect(() => {
     if (estadoBodega !== "ok" || !bodega) return;
-    const manifest = {
-      name: `Kaserita Delivery - ${bodega.nombre}`,
-      short_name: bodega.nombre.slice(0, 12),
-      description: "Pedí de tu bodega de confianza y mandá el pedido por WhatsApp.",
-      start_url: `/${slug}`,
-      scope: "/",
-      display: "standalone",
-      orientation: "any",
-      background_color: "#fafaf9",
-      theme_color: "#fafaf9",
-      icons: [
-        { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
-        { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
-      ],
-    };
-    const blobUrl = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: "application/json" }));
-    let link = document.querySelector('link[rel="manifest"]');
-    if (!link) {
-      link = document.createElement("link");
-      link.rel = "manifest";
-      document.head.appendChild(link);
+    try {
+      localStorage.setItem(
+        "kd_ultima_bodega",
+        JSON.stringify({ slug, nombre: bodega.nombre, logo_url: bodega.logo_url || null })
+      );
+    } catch {
+      // ignorado -- si localStorage no está disponible, simplemente no se ofrece el atajo
     }
-    const anterior = link.href && link.href.startsWith("blob:") ? link.href : null;
-    link.href = blobUrl;
-    return () => {
-      if (anterior) URL.revokeObjectURL(anterior);
-    };
   }, [estadoBodega, bodega, slug]);
+
+  useEffect(() => {
+    if (slug) return; // el atajo solo hace falta en la home general (sin bodega en la URL)
+    try {
+      const guardada = localStorage.getItem("kd_ultima_bodega");
+      if (guardada) setUltimaBodega(JSON.parse(guardada));
+    } catch {
+      // ignorado -- si el JSON quedó corrupto, simplemente no se ofrece el atajo
+    }
+  }, [slug]);
 
   useEffect(() => {
     // Registra la visita para "Mis tiendas" -- se guarda aunque el cliente
@@ -1280,11 +1274,73 @@ function App() {
 
   if (estadoBodega === "sin-slug") {
     return (
-      <div className="max-w-md mx-auto px-4 py-16 text-center text-stone-500">
-        <i className="fa-solid fa-store text-3xl text-stone-300 mb-3"></i>
-        <p>Este es el catálogo de pedidos de Kaserita.</p>
-        <p className="text-sm mt-1">Pedile a tu bodega el link de su catálogo para empezar a pedir.</p>
-      </div>
+      <>
+        {clienteSesion ? (
+          <div className="max-w-md mx-auto px-4 pt-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-bold text-violet-700">Kaserita</span>
+              <button onClick={salir} className="text-xs text-stone-400 underline">
+                Cerrar sesión
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {clienteSesion ? (
+          <PantallaMisTiendas esInicio />
+        ) : (
+          <div className="max-w-md mx-auto px-4 py-16 text-center text-stone-500 space-y-5">
+            <div>
+              <i className="fa-solid fa-store text-3xl text-stone-300 mb-3"></i>
+              <p>Este es el catálogo de pedidos de Kaserita.</p>
+              <p className="text-sm mt-1">Pedile a tu bodega el link de su catálogo para empezar a pedir.</p>
+            </div>
+            {ultimaBodega && (
+              <a
+                href={`/${ultimaBodega.slug}`}
+                className="flex items-center gap-3 bg-white border border-stone-200 rounded-2xl p-3 text-left"
+              >
+                <div className="w-11 h-11 rounded-full bg-stone-100 overflow-hidden shrink-0">
+                  {ultimaBodega.logo_url ? (
+                    <img src={ultimaBodega.logo_url} alt={ultimaBodega.nombre} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-violet-600 text-white font-bold text-sm">
+                      {ultimaBodega.nombre?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-stone-400">Seguir viendo</p>
+                  <p className="font-semibold text-sm text-stone-800 truncate">{ultimaBodega.nombre}</p>
+                </div>
+                <i className="fa-solid fa-chevron-right text-stone-300"></i>
+              </a>
+            )}
+            <button
+              onClick={() => setModalCuentaAbierto(true)}
+              className="text-sm text-violet-600 font-semibold underline"
+            >
+              Ingresá para ver tus bodegas guardadas
+            </button>
+          </div>
+        )}
+        {modalCuentaAbierto && (
+          <ModalCuenta
+            onCerrar={() => setModalCuentaAbierto(false)}
+            onIngreso={(cliente) => { setClienteSesion(cliente); setModalCuentaAbierto(false); }}
+            onGoogle={iniciarConGoogle}
+          />
+        )}
+        {completarPerfilGoogle && (
+          <ModalCompletarPerfil
+            inicial={completarPerfilGoogle}
+            onListo={(cliente) => { setClienteSesion(cliente); setCompletarPerfilGoogle(null); }}
+            onCancelar={async () => {
+              await sbClient.auth.signOut();
+              window.location.href = window.location.origin + window.location.pathname;
+            }}
+          />
+        )}
+      </>
     );
   }
 

@@ -1,0 +1,15 @@
+﻿Una sola app instalable en vez de una por bodega
+
+Antes, cada bodega visitada armaba su propio manifest.json al vuelo
+(start_url = esa bodega), asi que "Agregar a pantalla de inicio" dejaba
+un icono distinto por cada tienda. Ahora se usa siempre el manifest
+estatico (una sola app "Kaserita", start_url "/"), y la home general
+(sin bodega en la URL) deja de ser una pantalla muerta:
+
+- Si el cliente tiene sesion, muestra "Tus bodegas" (la lista ya
+  existente de bodegas visitadas, ahora tambien accesible desde la home).
+- Si no tiene sesion, ofrece ingresar y, si hay una bodega vista antes
+  en este dispositivo (guardada en localStorage), un atajo directo para
+  volver a ella sin buscar el link.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
