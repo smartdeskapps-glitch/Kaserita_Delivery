@@ -93,6 +93,30 @@ function fechaRelativa(fechaIso) {
   return meses === 1 ? "Hace 1 mes" : `Hace ${meses} meses`;
 }
 
+// "Abierto ahora" / "Cerrado" en base al horario que cargó el dueño desde
+// el POS (bodegas.horario_atencion, un objeto por día de la semana --
+// 0=domingo...6=sábado, igual que Date.getDay()). Sin horario configurado
+// devuelve null -- ahí la vitrina no muestra ningún indicador, para no
+// afirmar algo que el dueño nunca confirmó.
+function estadoAtencionBodega(horario) {
+  if (!horario) return null;
+  const ahora = new Date();
+  const cfg = horario[String(ahora.getDay())];
+  if (!cfg || !cfg.abierto || !cfg.desde || !cfg.hasta) return { abierto: false };
+  const [hDesde, mDesde] = cfg.desde.split(":").map(Number);
+  const [hHasta, mHasta] = cfg.hasta.split(":").map(Number);
+  const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
+  const minutosDesde = hDesde * 60 + mDesde;
+  const minutosHasta = hHasta * 60 + mHasta;
+  // Si "hasta" es menor que "desde" el horario cruza la medianoche (ej.
+  // 18:00 a 02:00) -- se trata como dos tramos en vez de uno solo.
+  const abierto =
+    minutosDesde <= minutosHasta
+      ? minutosAhora >= minutosDesde && minutosAhora < minutosHasta
+      : minutosAhora >= minutosDesde || minutosAhora < minutosHasta;
+  return { abierto };
+}
+
 function getSlugFromPath() {
   return decodeURIComponent(location.pathname.replace(/^\/+|\/+$/g, ""));
 }
@@ -1388,6 +1412,8 @@ function App() {
       });
   }, [estadoBodega, bodega]);
 
+  const estadoHorario = useMemo(() => estadoAtencionBodega(bodega?.horario_atencion), [bodega]);
+
   const categorias = useMemo(() => {
     const set = new Set();
     productos.forEach((p) => {
@@ -1718,7 +1744,19 @@ function App() {
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-[15px] font-bold text-stone-800 truncate">{bodega.nombre}</h1>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <h1 className="text-[15px] font-bold text-stone-800 truncate">{bodega.nombre}</h1>
+            {estadoHorario && (
+              <span
+                className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1 ${
+                  estadoHorario.abierto ? "bg-emerald-50 text-emerald-700" : "bg-stone-100 text-stone-500"
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${estadoHorario.abierto ? "bg-emerald-500" : "bg-stone-400"}`}></span>
+                {estadoHorario.abierto ? "Abierto" : "Cerrado"}
+              </span>
+            )}
+          </div>
           {bodega.direccion ? (
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bodega.direccion)}`}
@@ -2117,6 +2155,12 @@ function App() {
               {itemsCarrito.length === 0 && itemsCarritoCombos.length === 0 && <p className="text-center text-stone-400 py-6">Tu carrito está vacío.</p>}
             </div>
             <div className="px-4 py-4 border-t border-stone-200">
+              {estadoHorario && !estadoHorario.abierto && (
+                <p className="text-xs text-stone-500 bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 mb-3 flex items-center gap-1.5">
+                  <i className="fa-solid fa-clock text-stone-400"></i>
+                  Este local está cerrado ahora -- tu pedido va a esperar hasta que vuelvan a abrir.
+                </p>
+              )}
               {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm text-stone-500">Total</span>
