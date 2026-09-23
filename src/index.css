@@ -1,3 +1,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Oculta la barra de scroll nativa en los carruseles (combos, destacados,
+   categorías) -- el scroll/swipe sigue funcionando igual, solo sin el
+   indicador gris del navegador; en su lugar se usan puntitos propios. */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

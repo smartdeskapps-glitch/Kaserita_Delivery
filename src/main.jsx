@@ -1054,6 +1054,23 @@ function App() {
   const [fotoAmpliada, setFotoAmpliada] = useState(null); // producto
   const [modalTodosCombos, setModalTodosCombos] = useState(false);
   const [modalTodosDestacados, setModalTodosDestacados] = useState(false);
+  // Puntitos de página de los carruseles de combos/destacados -- se
+  // calculan a partir del scroll real (no hay librería de carrusel acá),
+  // redondeando a qué tarjeta completa quedó más visible.
+  const comboScrollRef = useRef(null);
+  const [comboActivo, setComboActivo] = useState(0);
+  const destacadoScrollRef = useRef(null);
+  const [destacadoActivo, setDestacadoActivo] = useState(0);
+  const manejarScrollCombos = () => {
+    const el = comboScrollRef.current;
+    if (!el || el.clientWidth === 0) return;
+    setComboActivo(Math.round(el.scrollLeft / el.clientWidth));
+  };
+  const manejarScrollDestacados = () => {
+    const el = destacadoScrollRef.current;
+    if (!el || el.clientWidth === 0) return;
+    setDestacadoActivo(Math.round(el.scrollLeft / el.clientWidth));
+  };
   const [clienteSesion, setClienteSesion] = useState(null); // fila de clientes_delivery, o null
   const [modalCuentaAbierto, setModalCuentaAbierto] = useState(false);
   // Sesión de Google ya validada por Supabase Auth, pero todavía sin fila en
@@ -1740,7 +1757,7 @@ function App() {
           </div>
           {categorias.length > 0 && (
             <div className="relative -mx-4">
-              <div className="flex gap-3 overflow-x-auto px-4 py-1" style={{ scrollbarWidth: "none" }}>
+              <div className="flex gap-3 overflow-x-auto hide-scrollbar px-4 py-1">
                 <button
                   onClick={() => { setCategoriaActiva(""); setSoloFavoritos(false); }}
                   className="shrink-0 w-16 flex flex-col items-center gap-1 active:scale-95 transition"
@@ -1810,7 +1827,11 @@ function App() {
               </button>
             )}
           </div>
-          <div className="flex overflow-x-auto px-4 pb-1 snap-x snap-mandatory">
+          <div
+            ref={comboScrollRef}
+            onScroll={manejarScrollCombos}
+            className="flex overflow-x-auto hide-scrollbar px-4 pb-1 snap-x snap-mandatory"
+          >
             {combos.map((combo) => (
               <div key={combo.id} className="w-full shrink-0 snap-center pr-3 last:pr-0">
                 <TarjetaCombo
@@ -1824,6 +1845,16 @@ function App() {
               </div>
             ))}
           </div>
+          {combos.length > 1 && (
+            <div className="flex items-center justify-center gap-1.5 pt-2">
+              {combos.map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all ${i === comboActivo ? "w-4 bg-violet-600" : "w-1.5 bg-stone-300"}`}
+                ></span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -1839,7 +1870,11 @@ function App() {
               </button>
             )}
           </div>
-          <div className="flex overflow-x-auto px-4 pb-1 snap-x snap-mandatory">
+          <div
+            ref={destacadoScrollRef}
+            onScroll={manejarScrollDestacados}
+            className="flex overflow-x-auto hide-scrollbar px-4 pb-1 snap-x snap-mandatory"
+          >
             {productosDestacados.map((p) => (
               <div key={p.id} className="w-full shrink-0 snap-center pr-3 last:pr-0">
                 <div className="relative bg-gradient-to-br from-blue-600 to-violet-700 rounded-[22px] p-4 pr-28 min-h-[168px] flex flex-col justify-between">
@@ -1870,6 +1905,16 @@ function App() {
               </div>
             ))}
           </div>
+          {productosDestacados.length > 1 && (
+            <div className="flex items-center justify-center gap-1.5 pt-2">
+              {productosDestacados.map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all ${i === destacadoActivo ? "w-4 bg-violet-600" : "w-1.5 bg-stone-300"}`}
+                ></span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
