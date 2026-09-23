@@ -220,6 +220,73 @@ function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onV
   );
 }
 
+function TarjetaCombo({ combo, cantidadCombo, productosPorId, onAgregar, onQuitar, ancho }) {
+  // Precio "normal" = lo que costaría cada producto suelto, a como está
+  // hoy en la vitrina -- así el %OFF y el "ahorras" salen de datos
+  // reales, nada cargado a mano en el combo.
+  const precioOriginal = (combo.items || []).reduce(
+    (acc, it) => acc + it.cantidad * (productosPorId[it.producto_id]?.precio_venta || 0),
+    0
+  );
+  const ahorro = precioOriginal - combo.precio_venta;
+  const porcentajeOff = precioOriginal > 0 ? Math.round((ahorro / precioOriginal) * 100) : 0;
+  // "Stock limitado": con el stock de hoy de cada producto que lo compone,
+  // ¿para cuántos combos más alcanza? El más chico manda.
+  const stocksLimitantes = (combo.items || [])
+    .map((it) => {
+      const prod = productosPorId[it.producto_id];
+      if (!prod || prod.stock_disponible == null) return null;
+      return Math.floor(prod.stock_disponible / it.cantidad);
+    })
+    .filter((n) => n != null);
+  const maxCombosPosibles = stocksLimitantes.length > 0 ? Math.min(...stocksLimitantes) : null;
+  const stockLimitado = maxCombosPosibles != null && maxCombosPosibles > 0 && maxCombosPosibles <= 3;
+
+  return (
+    <div className={`${ancho || "w-60"} shrink-0 bg-white rounded-2xl border border-amber-200 shadow-sm p-3.5 flex flex-col gap-2`}>
+      <div className="flex items-center justify-between gap-2 min-h-[18px]">
+        {porcentajeOff > 0 ? (
+          <span className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">-{porcentajeOff}% OFF</span>
+        ) : <span></span>}
+        {stockLimitado && <span className="text-[10px] font-semibold text-amber-600">Stock limitado</span>}
+      </div>
+      <p className="text-sm font-bold text-stone-900 leading-snug line-clamp-1">{combo.nombre}</p>
+      <p className="text-[11px] text-stone-500 line-clamp-2 flex-1">
+        {(combo.items || []).map((it) => `${tituloProducto(it.descripcion)} (x${it.cantidad})`).join(", ")}
+      </p>
+      <div className="flex items-end justify-between gap-2 pt-2 border-t border-stone-100">
+        <div className="flex flex-col leading-tight gap-0.5">
+          {porcentajeOff > 0 && <span className="text-[11px] text-stone-400 line-through">{formatoMoneda(precioOriginal)}</span>}
+          <span className="text-base font-black text-amber-600">{formatoMoneda(combo.precio_venta)}</span>
+          {ahorro > 0 && (
+            <span className="w-fit text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+              Ahorras {formatoMoneda(ahorro)}
+            </span>
+          )}
+        </div>
+        {cantidadCombo === 0 ? (
+          <button
+            onClick={() => onAgregar(combo)}
+            className="shrink-0 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-full active:scale-95"
+          >
+            Agregar +
+          </button>
+        ) : (
+          <div className="shrink-0 flex items-center gap-2 bg-amber-50 rounded-full px-1">
+            <button onClick={() => onQuitar(combo)} className="w-6 h-6 flex items-center justify-center text-amber-700 active:scale-90">
+              <i className="fa-solid fa-minus text-[10px]"></i>
+            </button>
+            <span className="text-xs font-bold text-amber-800 w-4 text-center">{cantidadCombo}</span>
+            <button onClick={() => onAgregar(combo)} className="w-6 h-6 flex items-center justify-center text-amber-700 active:scale-90">
+              <i className="fa-solid fa-plus text-[10px]"></i>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function VisorFoto({ producto, onCerrar }) {
   const fotos = [producto.foto_url, ...(producto.fotos_extra || [])].filter(Boolean);
   const [indice, setIndice] = useState(0);
@@ -985,6 +1052,8 @@ function App() {
   const [busqueda, setBusqueda] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState("");
   const [fotoAmpliada, setFotoAmpliada] = useState(null); // producto
+  const [modalTodosCombos, setModalTodosCombos] = useState(false);
+  const [modalTodosDestacados, setModalTodosDestacados] = useState(false);
   const [clienteSesion, setClienteSesion] = useState(null); // fila de clientes_delivery, o null
   const [modalCuentaAbierto, setModalCuentaAbierto] = useState(false);
   // Sesión de Google ya validada por Supabase Auth, pero todavía sin fila en
@@ -1286,19 +1355,18 @@ function App() {
     });
   }, [productos, busqueda, categoriaActiva, soloFavoritos, favoritos]);
 
-  // Card "destacado" de la pantalla de inicio (estilo hero de app de delivery)
-  // -- solo se muestra en la vista home (sin búsqueda ni categoría activa).
-  // Prioriza el producto que el dueño marcó a mano (es_destacado, elegido
-  // desde "Editar Producto" en el POS); si ninguno está marcado, cae al
-  // comportamiento anterior (el primero con foto) para no dejar la home sin
-  // hero mientras el dueño no elige uno.
-  const productoDestacado = useMemo(() => {
-    if (busqueda.trim() || categoriaActiva || soloFavoritos) return null;
-    return (
-      productosFiltrados.find((p) => p.es_destacado && p.foto_url) ||
-      productosFiltrados.find((p) => p.foto_url) ||
-      null
-    );
+  // Carrusel de "destacados" (estilo hero de app de delivery) -- solo se
+  // muestra en la vista home (sin búsqueda ni categoría activa). Usa todos
+  // los productos que el dueño marcó a mano (es_destacado, desde "Editar
+  // Producto" en el POS -- ahora se puede marcar más de uno); si no marcó
+  // ninguno, cae al comportamiento anterior (el primero con foto) para no
+  // dejar la home sin hero mientras el dueño no elige uno.
+  const productosDestacados = useMemo(() => {
+    if (busqueda.trim() || categoriaActiva || soloFavoritos) return [];
+    const marcados = productosFiltrados.filter((p) => p.es_destacado && p.foto_url);
+    if (marcados.length > 0) return marcados;
+    const primero = productosFiltrados.find((p) => p.foto_url);
+    return primero ? [primero] : [];
   }, [busqueda, categoriaActiva, soloFavoritos, productosFiltrados]);
 
   // Agotados: se muestran aparte (no en el grid principal) para poder
@@ -1730,97 +1798,76 @@ function App() {
         </div>
       )}
 
-      {combos.length > 0 && !busqueda.trim() && !categoriaActiva && (
+      {combos.length > 0 && !busqueda.trim() && !categoriaActiva && !soloFavoritos && (
         <div className="pt-4">
-          <p className="px-4 text-sm font-bold text-stone-800 flex items-center gap-1.5 mb-2">
-            <i className="fa-solid fa-gift text-amber-500"></i> Combos con descuento
-          </p>
-          <div className="flex gap-3 overflow-x-auto px-4 pb-1">
-            {combos.map((combo) => {
-              const cantidadCombo = carritoCombos[combo.id] || 0;
-              // Precio "normal" = lo que costaría cada producto suelto, a como
-              // está hoy en la vitrina -- así el % de descuento sale de datos
-              // reales (nada inventado ni cargado a mano en el combo).
-              const precioOriginal = (combo.items || []).reduce(
-                (acc, it) => acc + it.cantidad * (productosPorId[it.producto_id]?.precio_venta || 0),
-                0
-              );
-              const ahorro = precioOriginal - combo.precio_venta;
-              const porcentajeOff = precioOriginal > 0 ? Math.round((ahorro / precioOriginal) * 100) : 0;
-              return (
-                <div key={combo.id} className="shrink-0 w-56 bg-white rounded-2xl border border-amber-200 shadow-sm p-3 flex flex-col gap-1.5 relative">
-                  {porcentajeOff > 0 && (
-                    <span className="absolute top-2.5 right-2.5 bg-rose-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
-                      -{porcentajeOff}% OFF
-                    </span>
-                  )}
-                  <p className="text-sm font-bold text-stone-900 line-clamp-1 pr-16">{combo.nombre}</p>
-                  <p className="text-[11px] text-stone-500 line-clamp-2 flex-1">
-                    Incluye: {(combo.items || []).map((it) => `${tituloProducto(it.descripcion)} x${it.cantidad}`).join(", ")}
-                  </p>
-                  <div className="flex items-center justify-between mt-1">
-                    <div className="flex flex-col leading-tight">
-                      {porcentajeOff > 0 && (
-                        <span className="text-[11px] text-stone-400 line-through">{formatoMoneda(precioOriginal)}</span>
-                      )}
-                      <span className="text-base font-black text-amber-600">{formatoMoneda(combo.precio_venta)}</span>
-                    </div>
-                    {cantidadCombo === 0 ? (
-                      <button
-                        onClick={() => agregarComboAlCarrito(combo)}
-                        className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-full active:scale-95"
-                      >
-                        Agregar +
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-2 bg-amber-50 rounded-full px-1">
-                        <button onClick={() => quitarComboDelCarrito(combo)} className="w-6 h-6 flex items-center justify-center text-amber-700 active:scale-90">
-                          <i className="fa-solid fa-minus text-[10px]"></i>
-                        </button>
-                        <span className="text-xs font-bold text-amber-800 w-4 text-center">{cantidadCombo}</span>
-                        <button onClick={() => agregarComboAlCarrito(combo)} className="w-6 h-6 flex items-center justify-center text-amber-700 active:scale-90">
-                          <i className="fa-solid fa-plus text-[10px]"></i>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="px-4 flex items-center justify-between mb-2">
+            <p className="text-sm font-bold text-stone-800 flex items-center gap-1.5">
+              <i className="fa-solid fa-gift text-amber-500"></i> Combos con descuento
+            </p>
+            {combos.length > 2 && (
+              <button onClick={() => setModalTodosCombos(true)} className="text-xs font-semibold text-violet-600">
+                Ver todos
+              </button>
+            )}
+          </div>
+          <div className="flex gap-3 overflow-x-auto px-4 pb-1 snap-x snap-mandatory">
+            {combos.map((combo) => (
+              <div key={combo.id} className="snap-start">
+                <TarjetaCombo
+                  combo={combo}
+                  cantidadCombo={carritoCombos[combo.id] || 0}
+                  productosPorId={productosPorId}
+                  onAgregar={agregarComboAlCarrito}
+                  onQuitar={quitarComboDelCarrito}
+                />
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {productoDestacado && (
-        <div className="px-4 pt-4">
-          <div className="relative bg-gradient-to-br from-blue-600 to-violet-700 rounded-[22px] p-4 pr-28 min-h-[168px] flex flex-col justify-between">
-            <div className="flex items-center gap-2">
-              <span className="bg-white/15 backdrop-blur text-white text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                <i className="fa-solid fa-star text-amber-300"></i> Destacado
-              </span>
-              {productoDestacado.categoria && (
-                <span className="bg-white/15 backdrop-blur text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
-                  {productoDestacado.categoria}
-                </span>
-              )}
-            </div>
-            <div>
-              <p className="text-white text-lg font-bold leading-tight line-clamp-2">{tituloProducto(productoDestacado.descripcion)}</p>
-              <p className="text-violet-100 text-sm font-semibold mt-1">{formatoMoneda(productoDestacado.precio_venta)}</p>
-            </div>
-            <button
-              onClick={() => agregarAlCarrito(productoDestacado)}
-              className="self-start bg-white text-violet-700 text-xs font-bold px-4 py-2 rounded-full flex items-center gap-1.5 active:scale-95"
-            >
-              Pedir ahora <i className="fa-solid fa-arrow-right text-[10px]"></i>
-            </button>
-            <div className="absolute right-3 bottom-3 w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 bg-white/10">
-              <img
-                src={productoDestacado.foto_url}
-                alt={productoDestacado.descripcion}
-                className="w-full h-full object-cover"
-              />
-            </div>
+      {productosDestacados.length > 0 && (
+        <div className="pt-4">
+          <div className="px-4 flex items-center justify-between mb-2">
+            <p className="text-sm font-bold text-stone-800 flex items-center gap-1.5">
+              <i className="fa-solid fa-star text-amber-500"></i> Destacados
+            </p>
+            {productosDestacados.length > 2 && (
+              <button onClick={() => setModalTodosDestacados(true)} className="text-xs font-semibold text-violet-600">
+                Ver todos
+              </button>
+            )}
+          </div>
+          <div className="flex gap-3 overflow-x-auto px-4 pb-1 snap-x snap-mandatory">
+            {productosDestacados.map((p) => (
+              <div key={p.id} className="shrink-0 w-[86%] max-w-sm snap-start">
+                <div className="relative bg-gradient-to-br from-blue-600 to-violet-700 rounded-[22px] p-4 pr-28 min-h-[168px] flex flex-col justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-amber-400 text-violet-900 text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                      <i className="fa-solid fa-star"></i> Destacado
+                    </span>
+                    {p.categoria && (
+                      <span className="bg-white/15 backdrop-blur text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                        {p.categoria}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-white text-lg font-bold leading-tight line-clamp-2">{tituloProducto(p.descripcion)}</p>
+                    <p className="text-violet-100 text-sm font-semibold mt-1">{formatoMoneda(p.precio_venta)}</p>
+                  </div>
+                  <button
+                    onClick={() => agregarAlCarrito(p)}
+                    className="self-start bg-white text-violet-700 text-xs font-bold px-4 py-2 rounded-full flex items-center gap-1.5 active:scale-95"
+                  >
+                    Pedir ahora <i className="fa-solid fa-arrow-right text-[10px]"></i>
+                  </button>
+                  <div className="absolute right-3 bottom-3 w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 bg-white/10">
+                    <img src={p.foto_url} alt={tituloProducto(p.descripcion)} className="w-full h-full object-cover" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -2031,6 +2078,59 @@ function App() {
 
       {fotoAmpliada && (
         <VisorFoto producto={fotoAmpliada} onCerrar={() => setFotoAmpliada(null)} />
+      )}
+
+      {modalTodosCombos && (
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center sm:justify-center z-30" onClick={() => setModalTodosCombos(false)}>
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
+              <h2 className="font-bold text-stone-800">Todos los combos</h2>
+              <button onClick={() => setModalTodosCombos(false)} className="text-stone-400">
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 p-4 flex flex-col gap-3">
+              {combos.map((combo) => (
+                <TarjetaCombo
+                  key={combo.id}
+                  combo={combo}
+                  cantidadCombo={carritoCombos[combo.id] || 0}
+                  productosPorId={productosPorId}
+                  onAgregar={agregarComboAlCarrito}
+                  onQuitar={quitarComboDelCarrito}
+                  ancho="w-full"
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalTodosDestacados && (
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center sm:justify-center z-30" onClick={() => setModalTodosDestacados(false)}>
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
+              <h2 className="font-bold text-stone-800">Todos los destacados</h2>
+              <button onClick={() => setModalTodosDestacados(false)} className="text-stone-400">
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 p-4 grid grid-cols-2 gap-3">
+              {productosDestacados.map((p) => (
+                <TarjetaProducto
+                  key={p.id}
+                  producto={p}
+                  cantidadEnCarrito={carrito[p.id] || 0}
+                  onAgregar={agregarAlCarrito}
+                  onQuitar={quitarDelCarrito}
+                  onVerFoto={setFotoAmpliada}
+                  esFavorito={favoritos.has(p.id)}
+                  onToggleFavorito={toggleFavorito}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
       {modalCuentaAbierto && (
