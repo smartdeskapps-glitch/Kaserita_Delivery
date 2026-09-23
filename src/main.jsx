@@ -1000,6 +1000,7 @@ function App() {
   // siempre, no una lista que necesite verse desde otro dispositivo.
   const [favoritos, setFavoritos] = useState(() => new Set());
   const [soloFavoritos, setSoloFavoritos] = useState(false);
+  const [avisosSolicitados, setAvisosSolicitados] = useState(() => new Set());
 
   // Safari en iPhone/iPad no tiene beforeinstallprompt -- ahí instalar
   // SIEMPRE es manual (botón Compartir -> Agregar a inicio), no hay forma
@@ -1195,6 +1196,42 @@ function App() {
     });
   }, [slug]);
 
+  // Avisos de reposición ("avisame cuando vuelva a haber X") -- a
+  // diferencia de favoritos, esto sí necesita cuenta: el push llega del
+  // lado del servidor (Edge Function sobre UPDATE de productos), así que
+  // tiene que quedar guardado en la base, no solo en este celular.
+  useEffect(() => {
+    if (estadoBodega !== "ok" || !bodega || !clienteSesion) {
+      setAvisosSolicitados(new Set());
+      return;
+    }
+    sbClient
+      .from("avisos_reposicion")
+      .select("producto_id")
+      .eq("bodega_id", bodega.bodega_id)
+      .then(({ data }) => setAvisosSolicitados(new Set((data || []).map((a) => a.producto_id))));
+  }, [estadoBodega, bodega, clienteSesion]);
+
+  const toggleAvisoReposicion = useCallback(async (productoId) => {
+    if (!clienteSesion || !bodega) return;
+    const yaPedido = avisosSolicitados.has(productoId);
+    if (yaPedido) {
+      await sbClient.from("avisos_reposicion").delete().eq("cliente_id", clienteSesion.id).eq("producto_id", productoId);
+    } else {
+      await sbClient.from("avisos_reposicion").insert({
+        cliente_id: clienteSesion.id,
+        producto_id: productoId,
+        bodega_id: bodega.bodega_id,
+      });
+    }
+    setAvisosSolicitados((prev) => {
+      const nuevo = new Set(prev);
+      if (yaPedido) nuevo.delete(productoId);
+      else nuevo.add(productoId);
+      return nuevo;
+    });
+  }, [clienteSesion, bodega, avisosSolicitados]);
+
   useEffect(() => {
     // Registra la visita para "Mis tiendas" -- se guarda aunque el cliente
     // no llegue a pedir nada, así no "desaparece" una bodega que solo miró.
@@ -1263,6 +1300,20 @@ function App() {
       null
     );
   }, [busqueda, categoriaActiva, soloFavoritos, productosFiltrados]);
+
+  // Agotados: se muestran aparte (no en el grid principal) para poder
+  // ofrecer "avisame cuando vuelva a haber" -- solo en la vista home, con
+  // el mismo criterio de búsqueda que el resto (si el cliente busca algo
+  // puntual, tiene sentido que también le salga si está agotado).
+  const productosAgotados = useMemo(() => {
+    if (categoriaActiva || soloFavoritos) return [];
+    const b = busqueda.trim().toLowerCase();
+    return productos.filter((p) => {
+      if (!(p.stock_disponible != null && p.stock_disponible <= 0)) return false;
+      if (b && !p.descripcion.toLowerCase().includes(b)) return false;
+      return true;
+    });
+  }, [productos, busqueda, categoriaActiva, soloFavoritos]);
 
   const productosPorId = useMemo(() => {
     const m = {};
@@ -1806,6 +1857,52 @@ function App() {
           </div>
         )}
       </main>
+
+      {productosAgotados.length > 0 && (
+        <div className="px-4 pb-4">
+          <p className="text-sm font-bold text-stone-500 flex items-center gap-1.5 mb-2">
+            <i className="fa-solid fa-box-open text-stone-400"></i> Agotados por ahora
+          </p>
+          <div className="bg-white border border-stone-200 rounded-2xl divide-y divide-stone-100">
+            {productosAgotados.map((p) => {
+              const pedido = avisosSolicitados.has(p.id);
+              return (
+                <div key={p.id} className="flex items-center gap-3 p-3">
+                  <div className="w-11 h-11 rounded-xl bg-stone-100 flex items-center justify-center overflow-hidden shrink-0 grayscale opacity-70">
+                    {p.foto_url ? (
+                      <img src={p.foto_url} alt={tituloProducto(p.descripcion)} className="w-full h-full object-cover" />
+                    ) : (
+                      <i className="fa-solid fa-image text-stone-300"></i>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-stone-600 truncate">{tituloProducto(p.descripcion)}</p>
+                    <p className="text-xs text-stone-400">Sin stock</p>
+                  </div>
+                  {clienteSesion ? (
+                    <button
+                      onClick={() => toggleAvisoReposicion(p.id)}
+                      className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 ${
+                        pedido ? "bg-violet-100 text-violet-700" : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                      }`}
+                    >
+                      <i className={`fa-solid ${pedido ? "fa-bell" : "fa-bell-concierge"} text-[10px]`}></i>
+                      {pedido ? "Te avisamos" : "Avisame"}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setModalCuentaAbierto(true)}
+                      className="shrink-0 text-xs font-semibold text-violet-600 underline"
+                    >
+                      Ingresá para pedir aviso
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {totalUnidades > 0 && !carritoAbierto && (
         <button
