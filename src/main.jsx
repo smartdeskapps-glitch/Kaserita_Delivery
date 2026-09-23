@@ -1045,6 +1045,10 @@ function App() {
   // porque un combo no es un producto de la tabla "productos".
   const [combos, setCombos] = useState([]);
   const [carritoCombos, setCarritoCombos] = useState({}); // { [combo_id]: cantidad }
+  // true recién después de intentar restaurar el carrito guardado -- evita
+  // que el efecto de guardado (abajo) pise el localStorage con el carrito
+  // vacío inicial antes de que la restauración llegue a aplicarse.
+  const [carritoListo, setCarritoListo] = useState(false);
   const [carritoAbierto, setCarritoAbierto] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
@@ -1159,32 +1163,43 @@ function App() {
     return () => { sbClient.removeChannel(canal); };
   }, [clienteSesion]);
 
+  // El carrito vive solo en memoria (useState) por defecto, así que
+  // cualquier recarga de página (sin querer, o el viaje de ida y vuelta a
+  // Google para loguearse) lo borraría. Se guarda en localStorage por
+  // bodega y se restaura al entrar, mismo patrón que favoritos.
   useEffect(() => {
-    // El carrito vive solo en memoria (useState), así que un viaje de ida y
-    // vuelta a Google (login) lo perdería -- se guarda antes de salir (ver
-    // iniciarConGoogle) y se recupera acá al volver.
+    if (!slug) return;
     try {
-      const guardado = localStorage.getItem("kd_carrito_pendiente");
-      if (guardado) {
-        const carritoGuardado = JSON.parse(guardado);
-        if (carritoGuardado && Object.keys(carritoGuardado).length > 0) {
-          setCarrito(carritoGuardado);
-          setCarritoAbierto(true);
-        }
-      }
+      const carritoGuardado = localStorage.getItem(`kd_carrito_${slug}`);
+      const combosGuardado = localStorage.getItem(`kd_carrito_combos_${slug}`);
+      if (carritoGuardado) setCarrito(JSON.parse(carritoGuardado));
+      if (combosGuardado) setCarritoCombos(JSON.parse(combosGuardado));
     } catch {
-      // ignorado -- si el JSON está corrupto, simplemente no se restaura nada
+      // ignorado -- si el JSON quedó corrupto, simplemente se empieza con el carrito vacío
     } finally {
-      localStorage.removeItem("kd_carrito_pendiente");
+      setCarritoListo(true);
     }
-  }, []);
+  }, [slug]);
+
+  useEffect(() => {
+    if (!slug || !carritoListo) return;
+    try {
+      localStorage.setItem(`kd_carrito_${slug}`, JSON.stringify(carrito));
+    } catch {
+      // ignorado -- en el peor caso no sobrevive a un reinicio del navegador
+    }
+  }, [carrito, carritoListo, slug]);
+
+  useEffect(() => {
+    if (!slug || !carritoListo) return;
+    try {
+      localStorage.setItem(`kd_carrito_combos_${slug}`, JSON.stringify(carritoCombos));
+    } catch {
+      // ignorado -- en el peor caso no sobrevive a un reinicio del navegador
+    }
+  }, [carritoCombos, carritoListo, slug]);
 
   const iniciarConGoogle = async () => {
-    try {
-      if (Object.keys(carrito).length > 0) localStorage.setItem("kd_carrito_pendiente", JSON.stringify(carrito));
-    } catch {
-      // ignorado -- en el peor caso, vuelve con el carrito vacío
-    }
     // Nunca window.location.href a secas: después de volver de Google esa URL
     // queda con parámetros del propio login (token/código) pegados, y si se
     // reintenta el login mandando esa URL "sucia" como destino, Google la
