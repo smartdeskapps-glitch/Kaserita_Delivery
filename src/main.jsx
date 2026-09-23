@@ -61,6 +61,27 @@ function estiloCategoria(nombre) {
   return { icono: "fa-tag", bg: "bg-stone-100", texto: "text-stone-600", borde: "border-stone-200", bordeActivo: "border-stone-400 ring-2 ring-stone-200" };
 }
 
+// Gradiente de la tarjeta hero de "Destacados" -- mismo criterio que
+// estiloCategoria (por palabras clave), para que un destacado tenga el
+// color de su categoría real en vez de un violeta genérico siempre. Sin
+// categoría o sin match, cae al violeta/azul de siempre.
+function gradienteDestacado(nombre) {
+  const n = (nombre || "").toLowerCase();
+  if (/agua|hidrata/.test(n)) return "from-sky-500 to-cyan-600";
+  if (/gaseosa|bebida|jugo|néctar|nectar/.test(n)) return "from-rose-500 to-pink-600";
+  if (/cerveza|licor|vino/.test(n)) return "from-amber-500 to-orange-600";
+  if (/carne|embutido|pollo|res/.test(n)) return "from-red-500 to-rose-700";
+  if (/lácte|lacte|leche|queso|yogur/.test(n)) return "from-yellow-500 to-amber-600";
+  if (/pan|panader/.test(n)) return "from-orange-400 to-red-500";
+  if (/limpieza|hogar/.test(n)) return "from-emerald-500 to-teal-600";
+  if (/golosina|snack|dulce|chocolate/.test(n)) return "from-fuchsia-500 to-purple-600";
+  if (/fruta|verdura|abarrote/.test(n)) return "from-lime-500 to-green-600";
+  if (/cigarr|tabaco/.test(n)) return "from-stone-500 to-stone-700";
+  if (/mascota/.test(n)) return "from-indigo-500 to-violet-600";
+  if (/higiene|cuidado|personal|farmac/.test(n)) return "from-teal-500 to-cyan-600";
+  return "from-blue-600 to-violet-700";
+}
+
 // Fecha relativa cortita para "Mis tiendas" (Hoy, Ayer, Hace 3 días...) --
 // nada de fechas exactas, es solo una referencia rápida de cuándo compraste ahí.
 function fechaRelativa(fechaIso) {
@@ -1892,10 +1913,10 @@ function App() {
           >
             {productosDestacados.map((p) => (
               <div key={p.id} className="w-full shrink-0 snap-center pr-3 last:pr-0">
-                <div className="relative bg-gradient-to-br from-blue-600 to-violet-700 rounded-[22px] p-4 pr-28 min-h-[168px] flex flex-col justify-between">
+                <div className={`relative bg-gradient-to-br ${gradienteDestacado(p.categoria)} rounded-[22px] p-4 pr-28 min-h-[168px] flex flex-col justify-between`}>
                   <div className="flex items-center gap-2">
-                    <span className="bg-amber-400 text-violet-900 text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                      <i className="fa-solid fa-star"></i> Destacado
+                    <span className="bg-white/90 backdrop-blur text-stone-800 text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                      <i className="fa-solid fa-star text-amber-500"></i> Destacado
                     </span>
                     {p.categoria && (
                       <span className="bg-white/15 backdrop-blur text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
@@ -1905,11 +1926,11 @@ function App() {
                   </div>
                   <div>
                     <p className="text-white text-lg font-bold leading-tight line-clamp-2">{tituloProducto(p.descripcion)}</p>
-                    <p className="text-violet-100 text-sm font-semibold mt-1">{formatoMoneda(p.precio_venta)}</p>
+                    <p className="text-white/85 text-sm font-semibold mt-1">{formatoMoneda(p.precio_venta)}</p>
                   </div>
                   <button
                     onClick={() => agregarAlCarrito(p)}
-                    className="self-start bg-white text-violet-700 text-xs font-bold px-4 py-2 rounded-full flex items-center gap-1.5 active:scale-95"
+                    className="self-start bg-white text-stone-800 text-xs font-bold px-4 py-2 rounded-full flex items-center gap-1.5 active:scale-95"
                   >
                     Pedir ahora <i className="fa-solid fa-arrow-right text-[10px]"></i>
                   </button>
