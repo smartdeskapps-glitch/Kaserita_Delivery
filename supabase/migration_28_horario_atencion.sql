@@ -73,7 +73,12 @@ grant execute on function public.obtener_bodega_delivery(text) to authenticated;
 -- actualizar_mi_delivery (repo Kaserita / POS) -- se le agrega
 -- p_horario_atencion para que el dueño lo pueda guardar desde "Mi Link de
 -- Pedidos" junto con logo/dirección.
+-- Se dropean las dos firmas posibles (la vieja de 5 parámetros, y la
+-- nueva de 6 por si esta migración ya se corrió parcialmente antes y
+-- se está re-ejecutando) para que el script sea repetible sin el error
+-- "function already exists with same argument types".
 drop function if exists public.actualizar_mi_delivery(text, boolean, text, text, text);
+drop function if exists public.actualizar_mi_delivery(text, boolean, text, text, text, jsonb);
 
 create function public.actualizar_mi_delivery(
   p_slug text,
