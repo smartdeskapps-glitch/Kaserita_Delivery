@@ -264,21 +264,21 @@ function TarjetaCombo({ combo, cantidadCombo, productosPorId, onAgregar, onQuita
   const stockLimitado = maxCombosPosibles != null && maxCombosPosibles > 0 && maxCombosPosibles <= 3;
 
   return (
-    <div className={`${ancho || "w-60"} shrink-0 bg-white rounded-2xl border border-amber-200 shadow-sm p-3.5 flex flex-col gap-2`}>
+    <div className={`${ancho || "w-60"} shrink-0 bg-amber-50/50 rounded-2xl border border-amber-200 shadow-sm p-3.5 flex flex-col gap-2`}>
       <div className="flex items-center justify-between gap-2 min-h-[18px]">
         {porcentajeOff > 0 ? (
           <span className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">-{porcentajeOff}% OFF</span>
         ) : <span></span>}
-        {stockLimitado && <span className="text-[10px] font-semibold text-amber-600">Stock limitado</span>}
+        {stockLimitado && <span className="text-[10px] font-semibold text-stone-500">Stock limitado</span>}
       </div>
       <p className="text-sm font-bold text-stone-900 leading-snug line-clamp-1">{combo.nombre}</p>
       <p className="text-[11px] text-stone-500 line-clamp-2 flex-1">
         {(combo.items || []).map((it) => `${tituloProducto(it.descripcion)} (x${it.cantidad})`).join(", ")}
       </p>
-      <div className="flex items-end justify-between gap-2 pt-2 border-t border-stone-100">
+      <div className="flex items-end justify-between gap-2 pt-2 border-t border-amber-200/70">
         <div className="flex flex-col leading-tight gap-0.5">
           {porcentajeOff > 0 && <span className="text-[11px] text-stone-400 line-through">{formatoMoneda(precioOriginal)}</span>}
-          <span className="text-base font-black text-amber-600">{formatoMoneda(combo.precio_venta)}</span>
+          <span className="text-base font-black text-stone-900">{formatoMoneda(combo.precio_venta)}</span>
           {ahorro > 0 && (
             <span className="w-fit text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">
               Ahorras {formatoMoneda(ahorro)}
@@ -288,17 +288,17 @@ function TarjetaCombo({ combo, cantidadCombo, productosPorId, onAgregar, onQuita
         {cantidadCombo === 0 ? (
           <button
             onClick={() => onAgregar(combo)}
-            className="shrink-0 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-full active:scale-95"
+            className="shrink-0 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold px-3 py-1.5 rounded-full active:scale-95"
           >
             Agregar +
           </button>
         ) : (
-          <div className="shrink-0 flex items-center gap-2 bg-amber-50 rounded-full px-1">
-            <button onClick={() => onQuitar(combo)} className="w-6 h-6 flex items-center justify-center text-amber-700 active:scale-90">
+          <div className="shrink-0 flex items-center gap-2 bg-stone-900 rounded-full px-1 py-1">
+            <button onClick={() => onQuitar(combo)} className="w-6 h-6 flex items-center justify-center text-white active:scale-90">
               <i className="fa-solid fa-minus text-[10px]"></i>
             </button>
-            <span className="text-xs font-bold text-amber-800 w-4 text-center">{cantidadCombo}</span>
-            <button onClick={() => onAgregar(combo)} className="w-6 h-6 flex items-center justify-center text-amber-700 active:scale-90">
+            <span className="text-xs font-bold text-white w-4 text-center">{cantidadCombo}</span>
+            <button onClick={() => onAgregar(combo)} className="w-6 h-6 flex items-center justify-center text-white active:scale-90">
               <i className="fa-solid fa-plus text-[10px]"></i>
             </button>
           </div>
