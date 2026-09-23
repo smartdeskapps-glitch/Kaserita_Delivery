@@ -639,6 +639,58 @@ const ETIQUETAS_ESTADO_PEDIDO = {
   cancelado: { texto: "Cancelado", color: "bg-rose-100 text-rose-600" },
 };
 
+// Pasos visuales de "Mis pedidos": el mismo estado de siempre
+// (pendiente/listo/retirado/cancelado) pero mostrado como progreso, no
+// solo como una etiqueta de color -- para que el cliente entienda de un
+// vistazo en qué momento va su pedido, igual que una app de delivery.
+const PASOS_PEDIDO = [
+  { texto: "Enviado", icono: "fa-paper-plane" },
+  { texto: "Preparando", icono: "fa-kitchen-set" },
+  { texto: "Listo", icono: "fa-bell-concierge" },
+  { texto: "Retirado", icono: "fa-bag-shopping" },
+];
+const PASO_ACTUAL_POR_ESTADO = { pendiente: 1, listo: 2, retirado: 3 };
+
+function StepperPedido({ estado }) {
+  if (estado === "cancelado") {
+    return (
+      <div className="flex items-center gap-2 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
+        <i className="fa-solid fa-circle-xmark text-rose-500 text-xs"></i>
+        <span className="text-xs font-semibold text-rose-600">Este pedido fue cancelado</span>
+      </div>
+    );
+  }
+  const actual = PASO_ACTUAL_POR_ESTADO[estado] ?? 0;
+  return (
+    <div className="flex items-start">
+      {PASOS_PEDIDO.map((paso, i) => {
+        const completado = i <= actual;
+        const esActual = i === actual && estado !== "retirado";
+        return (
+          <React.Fragment key={paso.texto}>
+            <div className="flex flex-col items-center gap-1 w-14 shrink-0">
+              <div
+                className={`relative w-7 h-7 rounded-full flex items-center justify-center text-[11px] ${
+                  completado ? "bg-violet-600 text-white" : "bg-stone-100 text-stone-300"
+                }`}
+              >
+                <i className={`fa-solid ${paso.icono}`}></i>
+                {esActual && <span className="absolute inset-0 rounded-full bg-violet-600 animate-ping opacity-40"></span>}
+              </div>
+              <span className={`text-[9px] font-semibold text-center leading-tight ${completado ? "text-violet-700" : "text-stone-400"}`}>
+                {paso.texto}
+              </span>
+            </div>
+            {i < PASOS_PEDIDO.length - 1 && (
+              <div className={`flex-1 h-0.5 mt-3.5 ${i < actual ? "bg-violet-600" : "bg-stone-200"}`}></div>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
 function PantallaMisPedidos({ cliente, onVolver }) {
   const [pedidos, setPedidos] = useState([]);
   const [nombresBodegas, setNombresBodegas] = useState({});
@@ -727,6 +779,9 @@ function PantallaMisPedidos({ cliente, onVolver }) {
                 <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${ETIQUETAS_ESTADO_PEDIDO[p.estado].color}`}>
                   {ETIQUETAS_ESTADO_PEDIDO[p.estado].texto}
                 </span>
+              </div>
+              <div className="py-1">
+                <StepperPedido estado={p.estado} />
               </div>
               <div className="text-xs text-stone-500 space-y-0.5">
                 {(p.items || []).map((it, i) => (
