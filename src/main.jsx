@@ -941,12 +941,86 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
   );
 }
 
+// Kaserita no tiene sus propios códigos QR con un formato especial -- son
+// links comunes (https://.../slug-de-la-bodega). Esto acepta tanto un link
+// completo como el slug pegado a mano, y navega directo al catálogo. La
+// visita queda registrada sola por el useEffect de bodegas_visitadas que
+// ya corre en cualquier página de bodega con sesión iniciada.
+function irAlSlugDesdeTexto(texto) {
+  let destino = (texto || "").trim();
+  if (!destino) return;
+  try {
+    const url = new URL(destino);
+    destino = url.pathname.replace(/^\/+/, "");
+  } catch {
+    destino = destino.replace(/^\/+/, "");
+  }
+  if (!destino) return;
+  window.location.href = `/${destino}`;
+}
+
 function PantallaMisTiendas({ onVolver, esInicio = false }) {
   const [tiendas, setTiendas] = useState([]);
   const [ultimoPedidoPorBodega, setUltimoPedidoPorBodega] = useState({});
   const [ultimaVisitaPorBodega, setUltimaVisitaPorBodega] = useState({});
   const [busqueda, setBusqueda] = useState("");
   const [cargando, setCargando] = useState(true);
+  const [modalPegarLink, setModalPegarLink] = useState(false);
+  const [linkPegado, setLinkPegado] = useState("");
+  const [escaneando, setEscaneando] = useState(false);
+  const [errorCamara, setErrorCamara] = useState("");
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  // BarcodeDetector es nativo del navegador (Chrome/Android) -- nada de
+  // librerías nuevas, pero no existe en Safari/iOS, así que el botón de
+  // escanear solo aparece donde realmente puede funcionar.
+  const soportaEscaneo = typeof window !== "undefined" && "BarcodeDetector" in window;
+
+  const detenerEscaneo = useCallback(() => {
+    setEscaneando(false);
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+  }, []);
+
+  useEffect(() => () => detenerEscaneo(), [detenerEscaneo]);
+
+  const iniciarEscaneo = async () => {
+    setErrorCamara("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      streamRef.current = stream;
+      setEscaneando(true);
+    } catch {
+      setErrorCamara("No se pudo acceder a la cámara. Revisá los permisos, o pegá el link directamente.");
+    }
+  };
+
+  useEffect(() => {
+    if (!escaneando || !videoRef.current || !streamRef.current) return;
+    const video = videoRef.current;
+    video.srcObject = streamRef.current;
+    video.play().catch(() => {});
+    const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+    let activo = true;
+    const detectar = async () => {
+      if (!activo) return;
+      try {
+        const codigos = await detector.detect(video);
+        if (codigos.length > 0) {
+          activo = false;
+          const valor = codigos[0].rawValue;
+          detenerEscaneo();
+          irAlSlugDesdeTexto(valor);
+          return;
+        }
+      } catch {
+        // ignorado -- un frame sin QR legible no es un error, se reintenta solo
+      }
+      if (activo) requestAnimationFrame(detectar);
+    };
+    requestAnimationFrame(detectar);
+    return () => { activo = false; };
+  }, [escaneando, detenerEscaneo]);
 
   useEffect(() => {
     // "Mis tiendas" sale de bodegas_visitadas (cualquier bodega a la que
@@ -1033,45 +1107,159 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
       ) : tiendasFiltradas.length === 0 ? (
         <p className="text-center text-stone-400 py-10">No encontramos ninguna bodega con ese nombre.</p>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {tiendasFiltradas.map((t, i) => (
-            <a
-              key={t.bodega_id}
-              href={`/${t.slug}`}
-              className={`relative bg-white rounded-2xl overflow-hidden flex flex-col ${
-                i === 0 && !busqueda ? "border-2 border-violet-300 shadow-sm" : "border border-stone-200"
-              }`}
-            >
-              {i === 0 && !busqueda && (
-                <span className="absolute top-2 left-2 z-10 bg-white/90 backdrop-blur text-violet-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <i className="fa-solid fa-star text-amber-400 text-[9px]"></i> Habitual
-                </span>
-              )}
-              <div className="h-14 bg-gradient-to-br from-violet-500 to-blue-600"></div>
-              <div className="flex flex-col items-center px-2 pb-3 -mt-7">
-                <div className="w-14 h-14 rounded-full bg-stone-100 border-4 border-white overflow-hidden shadow-sm shrink-0">
-                  {t.logo_url ? (
-                    <img src={t.logo_url} alt={t.nombre} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-violet-600 text-white font-bold text-sm">
-                      {t.nombre?.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+        <div className="space-y-3">
+          {tiendasFiltradas.map((t, i) => {
+            const habitual = i === 0 && !busqueda;
+            const estado = estadoAtencionBodega(t.horario_atencion);
+            return (
+              <div
+                key={t.bodega_id}
+                className={`bg-white rounded-3xl overflow-hidden shadow-sm ${habitual ? "border-2 border-violet-300" : "border border-stone-200"}`}
+              >
+                <div className="h-16 bg-gradient-to-r from-violet-500 to-blue-600 relative px-3 pt-3 flex items-start justify-between">
+                  {habitual ? (
+                    <span className="bg-white/20 backdrop-blur text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                      <i className="fa-solid fa-star text-amber-300 text-[9px]"></i> Habitual
+                    </span>
+                  ) : <span></span>}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const url = `${window.location.origin}/${t.slug}`;
+                      if (navigator.share) {
+                        try { await navigator.share({ title: t.nombre, url }); } catch {}
+                      } else {
+                        try { await navigator.clipboard.writeText(url); } catch {}
+                      }
+                    }}
+                    title="Compartir"
+                    className="w-8 h-8 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white active:scale-90 transition"
+                  >
+                    <i className="fa-solid fa-share-nodes text-xs"></i>
+                  </button>
                 </div>
-                <p className="mt-1.5 font-semibold text-sm text-stone-800 text-center leading-tight line-clamp-1 w-full">{t.nombre}</p>
-                {t.direccion ? (
-                  <p className="text-[10px] text-stone-400 text-center leading-tight line-clamp-1 w-full mt-0.5">{t.direccion}</p>
-                ) : (
-                  <p className="text-[10px] text-stone-300 text-center mt-0.5">Sin dirección cargada</p>
-                )}
-                {ultimoPedidoPorBodega[t.bodega_id] ? (
-                  <p className="text-[9px] text-stone-300 mt-1">Último pedido: {fechaRelativa(ultimoPedidoPorBodega[t.bodega_id])}</p>
-                ) : ultimaVisitaPorBodega[t.bodega_id] ? (
-                  <p className="text-[9px] text-stone-300 mt-1">Visto: {fechaRelativa(ultimaVisitaPorBodega[t.bodega_id])}</p>
-                ) : null}
+                <div className="px-4 pb-4 -mt-8 flex flex-col items-center text-center">
+                  <div className="w-16 h-16 rounded-full bg-white p-1 shadow-md shrink-0">
+                    <div className="w-full h-full rounded-full bg-stone-100 overflow-hidden">
+                      {t.logo_url ? (
+                        <img src={t.logo_url} alt={t.nombre} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-violet-600 text-white font-black text-lg">
+                          {t.nombre?.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <p className="mt-2 font-bold text-stone-900 leading-tight">{t.nombre}</p>
+                  {t.direccion && (
+                    <p className="text-xs text-stone-400 flex items-center justify-center gap-1 mt-1">
+                      <i className="fa-solid fa-location-dot text-[10px] shrink-0"></i>
+                      <span className="line-clamp-1">{t.direccion}</span>
+                    </p>
+                  )}
+                  <div className="mt-2.5 inline-flex items-center gap-1.5 bg-stone-50 border border-stone-100 rounded-full px-3 py-1 text-[11px] max-w-full">
+                    {estado && (
+                      <>
+                        <span className="relative flex h-2 w-2 shrink-0">
+                          {estado.abierto && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
+                          <span className={`relative inline-flex rounded-full h-2 w-2 ${estado.abierto ? "bg-emerald-500" : "bg-stone-300"}`}></span>
+                        </span>
+                        <span className={`font-semibold shrink-0 ${estado.abierto ? "text-emerald-700" : "text-stone-500"}`}>
+                          {estado.abierto ? "Abierto" : "Cerrado"}
+                        </span>
+                        <span className="text-stone-300 shrink-0">•</span>
+                      </>
+                    )}
+                    <span className="text-stone-500 truncate">
+                      {ultimoPedidoPorBodega[t.bodega_id] ? (
+                        <>Último pedido: <strong className="text-stone-700 font-semibold">{fechaRelativa(ultimoPedidoPorBodega[t.bodega_id])}</strong></>
+                      ) : ultimaVisitaPorBodega[t.bodega_id] ? (
+                        <>Visto: <strong className="text-stone-700 font-semibold">{fechaRelativa(ultimaVisitaPorBodega[t.bodega_id])}</strong></>
+                      ) : (
+                        "Sin pedidos todavía"
+                      )}
+                    </span>
+                  </div>
+                  <a
+                    href={`/${t.slug}`}
+                    className="mt-3 w-full h-10 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition"
+                  >
+                    Ver catálogo <i className="fa-solid fa-arrow-right text-[10px]"></i>
+                  </a>
+                </div>
               </div>
-            </a>
-          ))}
+            );
+          })}
+
+          <div className="p-4 rounded-2xl border-2 border-dashed border-stone-200 bg-white text-center">
+            <div className="w-10 h-10 rounded-full bg-violet-50 text-violet-600 mx-auto flex items-center justify-center mb-2">
+              <i className="fa-solid fa-plus"></i>
+            </div>
+            <p className="text-sm font-semibold text-stone-800">¿Compraste en otra bodega?</p>
+            <p className="text-xs text-stone-500 mt-0.5 mb-3">Escaneá su QR o pegá el link para tenerla a mano.</p>
+            <div className="flex items-center justify-center gap-2 flex-wrap">
+              {soportaEscaneo && (
+                <button
+                  type="button"
+                  onClick={iniciarEscaneo}
+                  className="text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 px-3.5 py-1.5 rounded-lg flex items-center gap-1.5"
+                >
+                  <i className="fa-solid fa-qrcode text-[11px]"></i> Escanear QR
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => { setLinkPegado(""); setModalPegarLink(true); }}
+                className="text-xs font-semibold text-stone-600 bg-stone-100 hover:bg-stone-200 px-3.5 py-1.5 rounded-lg flex items-center gap-1.5"
+              >
+                <i className="fa-solid fa-link text-[11px]"></i> Pegar link
+              </button>
+            </div>
+            {errorCamara && <p className="text-[11px] text-rose-600 mt-2">{errorCamara}</p>}
+          </div>
+        </div>
+      )}
+
+      {escaneando && (
+        <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center">
+          <video ref={videoRef} playsInline muted className="absolute inset-0 w-full h-full object-cover"></video>
+          <div className="absolute inset-0 bg-black/30"></div>
+          <div className="relative z-10 w-56 h-56 border-4 border-white/70 rounded-2xl"></div>
+          <p className="relative z-10 text-white text-sm font-semibold mt-4 bg-black/50 px-3 py-1.5 rounded-full">Apuntá al código QR</p>
+          <button
+            onClick={detenerEscaneo}
+            className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/20 backdrop-blur text-white flex items-center justify-center"
+          >
+            <i className="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+      )}
+
+      {modalPegarLink && (
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center sm:justify-center z-50" onClick={() => setModalPegarLink(false)}>
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold text-stone-800">Pegar link de la bodega</h2>
+              <button onClick={() => setModalPegarLink(false)} className="text-stone-400">
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+            <input
+              type="text"
+              value={linkPegado}
+              onChange={(e) => setLinkPegado(e.target.value)}
+              placeholder="https://kaserita-delivery.vercel.app/bodega-demo"
+              className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
+              autoFocus
+            />
+            <button
+              onClick={() => irAlSlugDesdeTexto(linkPegado)}
+              disabled={!linkPegado.trim()}
+              className="w-full py-2.5 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50"
+            >
+              Ir a la tienda
+            </button>
+          </div>
         </div>
       )}
     </div>
