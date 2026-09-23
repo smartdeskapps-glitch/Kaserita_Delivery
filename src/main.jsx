@@ -474,7 +474,7 @@ function ModalCuenta({ onCerrar, onIngreso, onGoogle }) {
     setError("");
     const tel = telefono.replace(/\D/g, "");
     if (tel.length < 6) return setError("Ingresá un celular válido.");
-    if (pin.trim().length < 4) return setError("El PIN tiene que tener al menos 4 dígitos.");
+    if (pin.trim().length < 4 || pin.trim().length > 32) return setError("El PIN tiene que tener entre 4 y 32 caracteres.");
     if (pin.trim() !== pinConfirmar.trim()) return setError("Los dos PIN no coinciden.");
     setCargando(true);
     try {
@@ -501,7 +501,7 @@ function ModalCuenta({ onCerrar, onIngreso, onGoogle }) {
     setError("");
     const tel = telefono.replace(/\D/g, "");
     if (tel.length < 6) return setError("Ingresá un celular válido.");
-    if (pin.trim().length < 4) return setError("El PIN tiene que tener al menos 4 dígitos.");
+    if (pin.trim().length < 4 || pin.trim().length > 32) return setError("El PIN tiene que tener entre 4 y 32 caracteres.");
     setCargando(true);
     try {
       const email = emailAuthDesdeTelefono(tel);
@@ -575,8 +575,9 @@ function ModalCuenta({ onCerrar, onIngreso, onGoogle }) {
               />
               <input
                 type="password"
-                inputMode="numeric"
-                placeholder="PIN nuevo (4 dígitos o más)"
+                maxLength={32}
+                autoComplete="off"
+                placeholder="PIN nuevo (4 a 32 caracteres, con letras o símbolos)"
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
@@ -642,8 +643,8 @@ function ModalCuenta({ onCerrar, onIngreso, onGoogle }) {
               />
               <input
                 type="password"
-                inputMode="numeric"
-                placeholder="PIN (4 dígitos o más)"
+                maxLength={32}
+                placeholder="PIN (4 a 32 caracteres)"
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"

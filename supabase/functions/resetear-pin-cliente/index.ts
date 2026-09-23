@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     const pin = String(nuevo_pin || "").trim();
 
     if (tel.length < 6) return respuesta({ error: "Ingresá un celular válido." }, 400);
-    if (pin.length < 4) return respuesta({ error: "El PIN tiene que tener al menos 4 dígitos." }, 400);
+    if (pin.length < 4 || pin.length > 32) return respuesta({ error: "El PIN tiene que tener entre 4 y 32 caracteres." }, 400);
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 

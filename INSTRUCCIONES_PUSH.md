@@ -7,21 +7,25 @@ aparte en vez de en `supabase/`. Se hacen una sola vez.
 ## 1. Guardar las claves VAPID como secretos
 
 Estas son las claves que identifican a Kaserita Delivery ante los
-navegadores para mandar notificaciones. Ya están generadas:
+navegadores para mandar notificaciones:
 
 ```
-VAPID_PUBLIC_KEY=BFgQP6eqYcP1d8NhXTmDwqebPRpSZD3Be-RSqwIelHbCEEcSMR5WuVgvMStvSCySWhKvR7-a_f4OOcB3VQfhKsU
-VAPID_PRIVATE_KEY=r32Eby2mAEK59m_62mYH9AFHYoTmIsiEGDcayV-0eyQ
+VAPID_PUBLIC_KEY=<la pública, la misma que está en src/main.jsx>
+VAPID_PRIVATE_KEY=<la privada -- NUNCA se escribe en este repo, que es público>
 ```
 
-La pública ya está en el código del frontend (`index.html`), no hace
-falta tocarla. La privada **nunca va en el frontend** -- solo como
-secreto de la función:
+La pública ya está en el código del frontend (`src/main.jsx`), no hace
+falta tocarla. La privada **nunca va en el frontend ni en el repo** --
+solo como secreto de la función:
 
 1. Dashboard de Supabase → **Edge Functions** → **Secrets** (o **Project
    Settings → Edge Functions → Secrets**, según la versión del Dashboard).
-2. Agregar `VAPID_PUBLIC_KEY` y `VAPID_PRIVATE_KEY` con los valores de
-   arriba.
+2. Agregar `VAPID_PUBLIC_KEY` y `VAPID_PRIVATE_KEY`.
+3. Agregar también `WEBHOOK_SECRET` con un texto largo y aleatorio (ver el
+   paso 3: el Database Webhook lo manda en el header `x-webhook-secret` y
+   las funciones rechazan cualquier llamada que no lo traiga -- sin esto,
+   cualquiera con la anon key pública podría llamar a la función y mandar
+   notificaciones falsas).
 
 `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` no hace falta configurarlos:
 Supabase se los da automáticamente a toda función.
@@ -47,7 +51,9 @@ un pedido como "listo" -- no se puede crear por SQL Editor.
 3. Eventos: solo **Update**.
 4. Tipo: **Supabase Edge Functions**.
 5. Función: `enviar-notificacion-pedido-listo`.
-6. Guardar.
+6. En **HTTP Headers**, agregar `x-webhook-secret` con el mismo valor que
+   el secreto `WEBHOOK_SECRET` del paso 1.
+7. Guardar.
 
 ## Cómo probarlo de punta a punta
 
@@ -78,7 +84,9 @@ haber corrido `supabase/migration_27_avisos_reposicion_stock.sql`.
 7. Eventos: solo **Update**.
 8. Tipo: **Supabase Edge Functions**.
 9. Función: `avisar-reposicion-stock`.
-10. Guardar.
+10. En **HTTP Headers**, agregar `x-webhook-secret` con el mismo valor que
+    el secreto `WEBHOOK_SECRET` del paso 1.
+11. Guardar.
 
 Para probarlo: en la vitrina, con un producto en 0 de stock, tocar
 "Avisame" (pide iniciar sesión si no hay cuenta). En el POS, actualizar
