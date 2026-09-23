@@ -153,28 +153,28 @@ function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onV
     <div className="bg-white rounded-[26px] border border-stone-100 shadow-sm p-2 flex flex-col">
       <div
         onClick={producto.foto_url ? () => onVerFoto(producto) : undefined}
-        className={`aspect-[4/5] rounded-[18px] bg-stone-100 flex items-center justify-center overflow-hidden ${producto.foto_url ? "cursor-zoom-in" : ""}`}
+        className={`relative aspect-[4/5] rounded-[18px] bg-stone-100 flex items-center justify-center overflow-hidden ${producto.foto_url ? "cursor-zoom-in" : ""}`}
       >
+        {stockPoco && (
+          <span className="absolute top-1.5 left-1.5 z-10 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide">
+            Pocas unidades
+          </span>
+        )}
         {producto.foto_url ? (
-          <img src={producto.foto_url} alt={producto.descripcion} className="w-full h-full object-cover" />
+          <img src={producto.foto_url} alt={tituloProducto(producto.descripcion)} className="w-full h-full object-cover" />
         ) : (
           <i className="fa-solid fa-image text-stone-300 text-3xl"></i>
         )}
       </div>
       <div className="px-1.5 pt-3 pb-1 flex flex-col gap-1 flex-1">
-        <div className="flex items-center gap-1.5">
-          <p className="text-[15px] font-bold text-stone-800 leading-tight line-clamp-2">{tituloProducto(producto.descripcion)}</p>
-          {stockPoco && <i className="fa-solid fa-circle-exclamation text-amber-500 text-xs shrink-0"></i>}
-        </div>
+        <p className="text-[15px] font-bold text-stone-800 leading-tight line-clamp-2">{tituloProducto(producto.descripcion)}</p>
         {producto.categoria && <p className="text-xs text-stone-400 line-clamp-1">{producto.categoria}</p>}
 
         <div className="mt-auto pt-2.5 border-t border-stone-100 flex flex-col gap-2">
           <div className="flex items-center justify-between gap-1.5">
             <span className="text-sm font-bold text-violet-700">{formatoMoneda(producto.precio_venta)}</span>
-            {producto.stock_disponible != null && (
-              <span
-                className={`flex items-center gap-1 text-[11px] font-semibold shrink-0 ${stockPoco ? "text-amber-600" : "text-stone-400"}`}
-              >
+            {producto.stock_disponible != null && !stockPoco && (
+              <span className="flex items-center gap-1 text-[11px] font-semibold shrink-0 text-stone-400">
                 <i className="fa-solid fa-box text-[10px]"></i>
                 {producto.stock_disponible}
               </span>
@@ -1523,14 +1523,33 @@ function App() {
           <div className="flex gap-3 overflow-x-auto px-4 pb-1">
             {combos.map((combo) => {
               const cantidadCombo = carritoCombos[combo.id] || 0;
+              // Precio "normal" = lo que costaría cada producto suelto, a como
+              // está hoy en la vitrina -- así el % de descuento sale de datos
+              // reales (nada inventado ni cargado a mano en el combo).
+              const precioOriginal = (combo.items || []).reduce(
+                (acc, it) => acc + it.cantidad * (productosPorId[it.producto_id]?.precio_venta || 0),
+                0
+              );
+              const ahorro = precioOriginal - combo.precio_venta;
+              const porcentajeOff = precioOriginal > 0 ? Math.round((ahorro / precioOriginal) * 100) : 0;
               return (
-                <div key={combo.id} className="shrink-0 w-56 bg-white rounded-2xl border border-amber-200 shadow-sm p-3 flex flex-col gap-1.5">
-                  <p className="text-sm font-bold text-stone-900 line-clamp-1">{combo.nombre}</p>
+                <div key={combo.id} className="shrink-0 w-56 bg-white rounded-2xl border border-amber-200 shadow-sm p-3 flex flex-col gap-1.5 relative">
+                  {porcentajeOff > 0 && (
+                    <span className="absolute top-2.5 right-2.5 bg-rose-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
+                      -{porcentajeOff}% OFF
+                    </span>
+                  )}
+                  <p className="text-sm font-bold text-stone-900 line-clamp-1 pr-16">{combo.nombre}</p>
                   <p className="text-[11px] text-stone-500 line-clamp-2 flex-1">
-                    Incluye: {(combo.items || []).map((it) => `${it.descripcion} x${it.cantidad}`).join(", ")}
+                    Incluye: {(combo.items || []).map((it) => `${tituloProducto(it.descripcion)} x${it.cantidad}`).join(", ")}
                   </p>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-base font-black text-amber-600">{formatoMoneda(combo.precio_venta)}</span>
+                    <div className="flex flex-col leading-tight">
+                      {porcentajeOff > 0 && (
+                        <span className="text-[11px] text-stone-400 line-through">{formatoMoneda(precioOriginal)}</span>
+                      )}
+                      <span className="text-base font-black text-amber-600">{formatoMoneda(combo.precio_venta)}</span>
+                    </div>
                     {cantidadCombo === 0 ? (
                       <button
                         onClick={() => agregarComboAlCarrito(combo)}
