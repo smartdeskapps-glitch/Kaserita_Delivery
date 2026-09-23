@@ -27,6 +27,18 @@ function formatoMoneda(n) {
   return `S/ ${Number(n || 0).toFixed(2)}`;
 }
 
+// Los nombres de producto vienen tal cual los cargó la bodega en el POS,
+// normalmente TODO EN MAYÚSCULAS (así se ingresan ahí) -- se ven "a los
+// gritos" en una vitrina para el cliente. Esto es solo para mostrar acá,
+// no toca la descripción real (el POS, el mensaje de WhatsApp y el
+// historial de la bodega la siguen viendo como la cargaron).
+function tituloProducto(texto) {
+  if (!texto) return "";
+  return texto
+    .toLowerCase()
+    .replace(/(^|[\s/(-])([a-záéíóúñ])/g, (_, sep, letra) => sep + letra.toUpperCase());
+}
+
 // Ícono + color aproximados por nombre de categoría (texto libre que carga
 // cada bodega) -- no hay un catálogo fijo de categorías, así que se matchea
 // por palabras clave comunes en bodegas/abarrotes y se cae a un estilo
@@ -151,17 +163,17 @@ function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onV
       </div>
       <div className="px-1.5 pt-3 pb-1 flex flex-col gap-1 flex-1">
         <div className="flex items-center gap-1.5">
-          <p className="text-[15px] font-bold text-stone-800 leading-tight line-clamp-1">{producto.descripcion}</p>
+          <p className="text-[15px] font-bold text-stone-800 leading-tight line-clamp-2">{tituloProducto(producto.descripcion)}</p>
           {stockPoco && <i className="fa-solid fa-circle-exclamation text-amber-500 text-xs shrink-0"></i>}
         </div>
         {producto.categoria && <p className="text-xs text-stone-400 line-clamp-1">{producto.categoria}</p>}
 
-        <div className="mt-auto pt-2.5 border-t border-stone-100 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
+        <div className="mt-auto pt-2.5 border-t border-stone-100 flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-1.5">
             <span className="text-sm font-bold text-violet-700">{formatoMoneda(producto.precio_venta)}</span>
             {producto.stock_disponible != null && (
               <span
-                className={`flex items-center gap-1 text-[11px] font-semibold ${stockPoco ? "text-amber-600" : "text-stone-400"}`}
+                className={`flex items-center gap-1 text-[11px] font-semibold shrink-0 ${stockPoco ? "text-amber-600" : "text-stone-400"}`}
               >
                 <i className="fa-solid fa-box text-[10px]"></i>
                 {producto.stock_disponible}
@@ -170,17 +182,17 @@ function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onV
           </div>
 
           {cantidadEnCarrito > 0 ? (
-            <div className="flex items-center gap-1.5 bg-stone-50 rounded-full p-1">
+            <div className="flex items-center justify-between gap-1.5 bg-stone-50 rounded-full p-1">
               <button
                 onClick={() => onQuitar(producto)}
-                className="w-6 h-6 rounded-full bg-white shadow-sm text-stone-600 flex items-center justify-center active:scale-95"
+                className="w-7 h-7 rounded-full bg-white shadow-sm text-stone-600 flex items-center justify-center active:scale-95"
               >
                 <i className="fa-solid fa-minus text-[10px]"></i>
               </button>
-              <span className="text-sm font-semibold w-4 text-center">{cantidadEnCarrito}</span>
+              <span className="text-sm font-semibold">{cantidadEnCarrito}</span>
               <button
                 onClick={() => onAgregar(producto)}
-                className="w-6 h-6 rounded-full bg-violet-600 text-white flex items-center justify-center active:scale-95"
+                className="w-7 h-7 rounded-full bg-violet-600 text-white flex items-center justify-center active:scale-95"
               >
                 <i className="fa-solid fa-plus text-[10px]"></i>
               </button>
@@ -188,7 +200,7 @@ function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onV
           ) : (
             <button
               onClick={() => onAgregar(producto)}
-              className="pl-3 pr-2.5 py-1.5 rounded-full bg-violet-600 text-white text-xs font-semibold flex items-center gap-1 active:scale-95"
+              className="w-full py-1.5 rounded-full bg-violet-600 text-white text-xs font-semibold flex items-center justify-center gap-1 active:scale-95"
             >
               Agregar <i className="fa-solid fa-plus text-[10px]"></i>
             </button>
@@ -242,7 +254,7 @@ function VisorFoto({ producto, onCerrar }) {
           )}
           <img
             src={fotos[indice]}
-            alt={producto.descripcion}
+            alt={tituloProducto(producto.descripcion)}
             className="max-w-full max-h-[65vh] rounded-xl object-contain shadow-2xl"
           />
           {fotos.length > 1 && (
@@ -265,7 +277,7 @@ function VisorFoto({ producto, onCerrar }) {
             ))}
           </div>
         )}
-        <p className="text-white text-sm font-semibold text-center">{producto.descripcion}</p>
+        <p className="text-white text-sm font-semibold text-center">{tituloProducto(producto.descripcion)}</p>
         {producto.descripcion_larga && (
           <p className="text-white/70 text-xs text-center max-w-sm whitespace-pre-line">{producto.descripcion_larga}</p>
         )}
@@ -719,7 +731,7 @@ function PantallaMisPedidos({ cliente, onVolver }) {
               <div className="text-xs text-stone-500 space-y-0.5">
                 {(p.items || []).map((it, i) => (
                   <div key={i} className="flex items-center justify-between gap-2">
-                    <span>{it.cantidad} x {it.descripcion}</span>
+                    <span>{it.cantidad} x {it.combo_id ? it.descripcion : tituloProducto(it.descripcion)}</span>
                     <span className="shrink-0">{formatoMoneda(it.precio_venta * it.cantidad)}</span>
                   </div>
                 ))}
@@ -1559,7 +1571,7 @@ function App() {
               )}
             </div>
             <div>
-              <p className="text-white text-lg font-bold leading-tight line-clamp-2">{productoDestacado.descripcion}</p>
+              <p className="text-white text-lg font-bold leading-tight line-clamp-2">{tituloProducto(productoDestacado.descripcion)}</p>
               <p className="text-violet-100 text-sm font-semibold mt-1">{formatoMoneda(productoDestacado.precio_venta)}</p>
             </div>
             <button
@@ -1671,7 +1683,7 @@ function App() {
               {itemsCarrito.map((it) => (
                 <div key={it.id} className="flex items-center justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-stone-800 truncate">{it.descripcion}</p>
+                    <p className="text-sm font-medium text-stone-800 truncate">{tituloProducto(it.descripcion)}</p>
                     <p className="text-xs text-stone-400">{formatoMoneda(it.precio_venta)} c/u</p>
                   </div>
                   <div className="flex items-center gap-2">
