@@ -147,7 +147,7 @@ function armarMensajeWhatsapp({ bodegaNombre, items, total, codigo }) {
   ].join("\n");
 }
 
-function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onVerFoto }) {
+function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onVerFoto, esFavorito, onToggleFavorito }) {
   const stockPoco = producto.stock_disponible != null && producto.stock_disponible <= 3;
   return (
     <div className="bg-white rounded-[26px] border border-stone-100 shadow-sm p-2 flex flex-col">
@@ -159,6 +159,15 @@ function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onV
           <span className="absolute top-1.5 left-1.5 z-10 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide">
             Pocas unidades
           </span>
+        )}
+        {onToggleFavorito && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleFavorito(producto.id); }}
+            aria-label={esFavorito ? "Quitar de favoritos" : "Agregar a favoritos"}
+            className="absolute top-1.5 right-1.5 z-10 w-7 h-7 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-sm active:scale-90 transition"
+          >
+            <i className={`${esFavorito ? "fa-solid text-rose-500" : "fa-regular text-stone-400"} fa-heart text-sm`}></i>
+          </button>
         )}
         {producto.foto_url ? (
           <img src={producto.foto_url} alt={tituloProducto(producto.descripcion)} className="w-full h-full object-cover" />
@@ -691,7 +700,7 @@ function StepperPedido({ estado }) {
   );
 }
 
-function PantallaMisPedidos({ cliente, onVolver }) {
+function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido }) {
   const [pedidos, setPedidos] = useState([]);
   const [nombresBodegas, setNombresBodegas] = useState({});
   const [cargando, setCargando] = useState(true);
@@ -797,11 +806,21 @@ function PantallaMisPedidos({ cliente, onVolver }) {
                   {formatoMoneda((p.items || []).reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0))}
                 </span>
               </div>
-              {(p.estado === "pendiente" || p.estado === "listo") && (
-                <button onClick={() => cancelar(p.id)} className="text-xs text-rose-600 underline">
-                  Cancelar pedido
-                </button>
-              )}
+              <div className="flex items-center justify-between gap-2 pt-0.5">
+                {(p.estado === "pendiente" || p.estado === "listo") ? (
+                  <button onClick={() => cancelar(p.id)} className="text-xs text-rose-600 underline">
+                    Cancelar pedido
+                  </button>
+                ) : <span></span>}
+                {p.bodega_id === bodegaActualId && (
+                  <button
+                    onClick={() => onRepetirPedido(p)}
+                    className="text-xs font-semibold text-violet-700 bg-violet-50 hover:bg-violet-100 rounded-full px-3 py-1.5 flex items-center gap-1.5"
+                  >
+                    <i className="fa-solid fa-rotate-right text-[10px]"></i> Pedir de nuevo
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -976,6 +995,11 @@ function App() {
   const [eventoInstalacion, setEventoInstalacion] = useState(null);
   const [instruccionesIOSAbiertas, setInstruccionesIOSAbiertas] = useState(false);
   const [ultimaBodega, setUltimaBodega] = useState(null); // { slug, nombre, logo_url }, para la home general
+  // Favoritos: solo local al celular (localStorage por bodega), no hace
+  // falta cuenta ni tabla nueva -- es para encontrar rápido lo de
+  // siempre, no una lista que necesite verse desde otro dispositivo.
+  const [favoritos, setFavoritos] = useState(() => new Set());
+  const [soloFavoritos, setSoloFavoritos] = useState(false);
 
   // Safari en iPhone/iPad no tiene beforeinstallprompt -- ahí instalar
   // SIEMPRE es manual (botón Compartir -> Agregar a inicio), no hay forma
@@ -1148,6 +1172,30 @@ function App() {
   }, [slug]);
 
   useEffect(() => {
+    if (!slug) return;
+    try {
+      const guardados = localStorage.getItem(`kd_favoritos_${slug}`);
+      setFavoritos(new Set(guardados ? JSON.parse(guardados) : []));
+    } catch {
+      setFavoritos(new Set());
+    }
+  }, [slug]);
+
+  const toggleFavorito = useCallback((productoId) => {
+    setFavoritos((prev) => {
+      const nuevo = new Set(prev);
+      if (nuevo.has(productoId)) nuevo.delete(productoId);
+      else nuevo.add(productoId);
+      try {
+        localStorage.setItem(`kd_favoritos_${slug}`, JSON.stringify([...nuevo]));
+      } catch {
+        // ignorado -- en el peor caso el favorito no sobrevive a un reinicio del navegador
+      }
+      return nuevo;
+    });
+  }, [slug]);
+
+  useEffect(() => {
     // Registra la visita para "Mis tiendas" -- se guarda aunque el cliente
     // no llegue a pedir nada, así no "desaparece" una bodega que solo miró.
     if (estadoBodega !== "ok" || !bodega || !clienteSesion) return;
@@ -1194,11 +1242,12 @@ function App() {
     const b = busqueda.trim().toLowerCase();
     return productos.filter((p) => {
       if (p.stock_disponible != null && p.stock_disponible <= 0) return false;
+      if (soloFavoritos && !favoritos.has(p.id)) return false;
       if (categoriaActiva && p.categoria !== categoriaActiva) return false;
       if (b && !p.descripcion.toLowerCase().includes(b)) return false;
       return true;
     });
-  }, [productos, busqueda, categoriaActiva]);
+  }, [productos, busqueda, categoriaActiva, soloFavoritos, favoritos]);
 
   // Card "destacado" de la pantalla de inicio (estilo hero de app de delivery)
   // -- solo se muestra en la vista home (sin búsqueda ni categoría activa).
@@ -1207,13 +1256,13 @@ function App() {
   // comportamiento anterior (el primero con foto) para no dejar la home sin
   // hero mientras el dueño no elige uno.
   const productoDestacado = useMemo(() => {
-    if (busqueda.trim() || categoriaActiva) return null;
+    if (busqueda.trim() || categoriaActiva || soloFavoritos) return null;
     return (
       productosFiltrados.find((p) => p.es_destacado && p.foto_url) ||
       productosFiltrados.find((p) => p.foto_url) ||
       null
     );
-  }, [busqueda, categoriaActiva, productosFiltrados]);
+  }, [busqueda, categoriaActiva, soloFavoritos, productosFiltrados]);
 
   const productosPorId = useMemo(() => {
     const m = {};
@@ -1287,6 +1336,39 @@ function App() {
       return { ...c, [combo.id]: actual - 1 };
     });
   }, []);
+
+  // "Pedir de nuevo" desde el historial -- solo tiene sentido para un
+  // pedido de la MISMA bodega que se está viendo (PantallaMisPedidos.js
+  // ya filtra el botón por eso), así que acá se valida contra el
+  // catálogo cargado ahora mismo: un producto pudo dejar de existir o
+  // quedarse sin stock desde que se hizo ese pedido.
+  const repetirPedido = useCallback((pedido) => {
+    const nuevoCarrito = {};
+    const nuevoCarritoCombos = {};
+    let saltados = 0;
+    (pedido.items || []).forEach((it) => {
+      if (it.combo_id) {
+        if (combosPorId[it.combo_id]) {
+          nuevoCarritoCombos[it.combo_id] = (nuevoCarritoCombos[it.combo_id] || 0) + it.cantidad;
+        } else {
+          saltados++;
+        }
+      } else if (it.id) {
+        const prod = productosPorId[it.id];
+        const sinStock = prod?.stock_disponible != null && prod.stock_disponible <= 0;
+        if (prod && !sinStock) {
+          nuevoCarrito[it.id] = (nuevoCarrito[it.id] || 0) + it.cantidad;
+        } else {
+          saltados++;
+        }
+      }
+    });
+    setCarrito(nuevoCarrito);
+    setCarritoCombos(nuevoCarritoCombos);
+    setError(saltados > 0 ? `${saltados} producto${saltados === 1 ? "" : "s"} de ese pedido ya no ${saltados === 1 ? "está disponible" : "están disponibles"} y no se agregó al carrito.` : "");
+    setVistaMisPedidos(false);
+    setCarritoAbierto(true);
+  }, [productosPorId, combosPorId]);
 
   const confirmarPedido = async () => {
     if (itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) return;
@@ -1437,7 +1519,14 @@ function App() {
   }
 
   if (vistaMisPedidos && clienteSesion) {
-    return <PantallaMisPedidos cliente={clienteSesion} onVolver={() => setVistaMisPedidos(false)} />;
+    return (
+      <PantallaMisPedidos
+        cliente={clienteSesion}
+        onVolver={() => setVistaMisPedidos(false)}
+        bodegaActualId={bodega?.bodega_id}
+        onRepetirPedido={repetirPedido}
+      />
+    );
   }
 
   if (vistaMisTiendas && clienteSesion) {
@@ -1533,25 +1622,45 @@ function App() {
           {categorias.length > 0 && (
             <div className="relative -mx-4">
               <div className="flex gap-3 overflow-x-auto px-4 py-1" style={{ scrollbarWidth: "none" }}>
-                <button onClick={() => setCategoriaActiva("")} className="shrink-0 w-16 flex flex-col items-center gap-1 active:scale-95 transition">
+                <button
+                  onClick={() => { setCategoriaActiva(""); setSoloFavoritos(false); }}
+                  className="shrink-0 w-16 flex flex-col items-center gap-1 active:scale-95 transition"
+                >
                   <span
                     className={`w-[52px] h-[52px] rounded-2xl flex items-center justify-center shadow-sm ${
-                      categoriaActiva === ""
+                      categoriaActiva === "" && !soloFavoritos
                         ? "bg-gradient-to-br from-violet-500 to-blue-600 text-white"
                         : "bg-white border border-stone-200 text-stone-500"
                     }`}
                   >
                     <i className="fa-solid fa-border-all text-lg"></i>
                   </span>
-                  <span className={`text-[11px] font-bold truncate w-full text-center ${categoriaActiva === "" ? "text-violet-700" : "text-stone-600"}`}>
+                  <span className={`text-[11px] font-bold truncate w-full text-center ${categoriaActiva === "" && !soloFavoritos ? "text-violet-700" : "text-stone-600"}`}>
                     Todos
                   </span>
                 </button>
+                {favoritos.size > 0 && (
+                  <button
+                    onClick={() => { setSoloFavoritos((v) => !v); setCategoriaActiva(""); }}
+                    className="shrink-0 w-16 flex flex-col items-center gap-1 active:scale-95 transition"
+                  >
+                    <span
+                      className={`w-[52px] h-[52px] rounded-2xl flex items-center justify-center shadow-sm border ${
+                        soloFavoritos ? "bg-rose-500 border-rose-500 text-white" : "bg-rose-50 border-rose-200 text-rose-500"
+                      }`}
+                    >
+                      <i className="fa-solid fa-heart text-lg"></i>
+                    </span>
+                    <span className={`text-[11px] font-bold truncate w-full text-center ${soloFavoritos ? "text-rose-600" : "text-stone-600"}`}>
+                      Favoritos
+                    </span>
+                  </button>
+                )}
                 {categorias.map((c) => {
                   const est = estiloCategoria(c);
                   const activa = categoriaActiva === c;
                   return (
-                    <button key={c} onClick={() => setCategoriaActiva(c)} className="shrink-0 w-16 flex flex-col items-center gap-1 active:scale-95 transition">
+                    <button key={c} onClick={() => { setCategoriaActiva(c); setSoloFavoritos(false); }} className="shrink-0 w-16 flex flex-col items-center gap-1 active:scale-95 transition">
                       <span
                         className={`w-[52px] h-[52px] rounded-2xl flex items-center justify-center shadow-sm border ${est.bg} ${est.texto} ${
                           activa ? est.bordeActivo : est.borde
@@ -1672,9 +1781,9 @@ function App() {
           <p className="text-center text-stone-400 py-10">Esta bodega todavía no tiene productos publicados.</p>
         ) : productosFiltrados.length === 0 ? (
           <div className="text-center text-stone-400 py-10">
-            <p>No encontramos productos con ese criterio.</p>
+            <p>{soloFavoritos ? "Todavía no marcaste ningún favorito." : "No encontramos productos con ese criterio."}</p>
             <button
-              onClick={() => { setBusqueda(""); setCategoriaActiva(""); }}
+              onClick={() => { setBusqueda(""); setCategoriaActiva(""); setSoloFavoritos(false); }}
               className="text-violet-600 text-sm font-semibold underline mt-2"
             >
               Limpiar filtros
@@ -1690,6 +1799,8 @@ function App() {
                 onAgregar={agregarAlCarrito}
                 onQuitar={quitarDelCarrito}
                 onVerFoto={setFotoAmpliada}
+                esFavorito={favoritos.has(p.id)}
+                onToggleFavorito={toggleFavorito}
               />
             ))}
           </div>
