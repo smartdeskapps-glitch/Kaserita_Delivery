@@ -1810,15 +1810,16 @@ function App() {
               </button>
             )}
           </div>
-          <div className="flex gap-3 overflow-x-auto px-4 pb-1 snap-x snap-mandatory">
+          <div className="flex overflow-x-auto px-4 pb-1 snap-x snap-mandatory">
             {combos.map((combo) => (
-              <div key={combo.id} className="snap-start">
+              <div key={combo.id} className="w-full shrink-0 snap-center pr-3 last:pr-0">
                 <TarjetaCombo
                   combo={combo}
                   cantidadCombo={carritoCombos[combo.id] || 0}
                   productosPorId={productosPorId}
                   onAgregar={agregarComboAlCarrito}
                   onQuitar={quitarComboDelCarrito}
+                  ancho="w-full"
                 />
               </div>
             ))}
@@ -1838,9 +1839,9 @@ function App() {
               </button>
             )}
           </div>
-          <div className="flex gap-3 overflow-x-auto px-4 pb-1 snap-x snap-mandatory">
+          <div className="flex overflow-x-auto px-4 pb-1 snap-x snap-mandatory">
             {productosDestacados.map((p) => (
-              <div key={p.id} className="shrink-0 w-[86%] max-w-sm snap-start">
+              <div key={p.id} className="w-full shrink-0 snap-center pr-3 last:pr-0">
                 <div className="relative bg-gradient-to-br from-blue-600 to-violet-700 rounded-[22px] p-4 pr-28 min-h-[168px] flex flex-col justify-between">
                   <div className="flex items-center gap-2">
                     <span className="bg-amber-400 text-violet-900 text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
