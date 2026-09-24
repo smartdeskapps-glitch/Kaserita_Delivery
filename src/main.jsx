@@ -2181,13 +2181,6 @@ function App() {
                   >
                     <IconGoogle /> Continuar con Google para enviar el pedido
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setModalCuentaAbierto(true)}
-                    className="w-full mt-2 py-2 text-center text-xs text-stone-500 underline"
-                  >
-                    o ingresar con celular y PIN
-                  </button>
                 </>
               )}
             </div>
