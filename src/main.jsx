@@ -625,8 +625,8 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
   const [activandoPush, setActivandoPush] = useState(false);
   const [avisoPush, setAvisoPush] = useState("");
 
-  const cargar = useCallback(() => {
-    setCargando(true);
+  const cargar = useCallback((silencioso = false) => {
+    if (!silencioso) setCargando(true);
     sbClient
       .from("pedidos_seguimiento")
       .select("*")
@@ -648,6 +648,32 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
   }, []);
 
   useEffect(() => { cargar(); }, [cargar]);
+
+  // En vivo: cualquier cambio en los pedidos de este cliente (la bodega lo
+  // marca listo, retirado o cancelado; o él mismo hace uno nuevo) refresca
+  // la lista sin recargar. Los celulares suspenden la conexión con la
+  // pestaña en segundo plano y se pierden eventos, así que además se
+  // vuelve a leer al regresar a la pestaña o al recuperar internet.
+  useEffect(() => {
+    const canal = sbClient
+      .channel(`mis-pedidos-${cliente.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pedidos_seguimiento", filter: `cliente_id=eq.${cliente.id}` },
+        () => cargar(true)
+      )
+      .subscribe();
+    const alVolver = () => {
+      if (document.visibilityState === "visible") cargar(true);
+    };
+    document.addEventListener("visibilitychange", alVolver);
+    window.addEventListener("online", alVolver);
+    return () => {
+      sbClient.removeChannel(canal);
+      document.removeEventListener("visibilitychange", alVolver);
+      window.removeEventListener("online", alVolver);
+    };
+  }, [cliente.id, cargar]);
 
   const activarPush = async () => {
     setAvisoPush("");
