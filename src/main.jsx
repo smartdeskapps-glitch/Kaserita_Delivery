@@ -1774,7 +1774,7 @@ function App() {
       </header>
 
       {productos.length > 0 && (
-        <div className="px-4 pt-3 pb-2 bg-white border-b border-stone-200 sticky top-0 z-10 space-y-2.5">
+        <div className="px-4 pt-3 pb-2 bg-white border-b border-stone-200 sticky top-0 z-20 space-y-2.5">
           <div className="relative">
             <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm"></i>
             <input
