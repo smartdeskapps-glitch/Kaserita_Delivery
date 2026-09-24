@@ -121,13 +121,6 @@ function getSlugFromPath() {
   return decodeURIComponent(location.pathname.replace(/^\/+|\/+$/g, ""));
 }
 
-// Mismo truco que ya usa Kaserita (POS) para el login de cajeros: un
-// email sintético a partir de un dato propio + el PIN como contraseña de
-// Supabase Auth. No pasa por SMS/WhatsApp -- el celular acá es solo un
-// identificador, no se verifica que sea realmente suyo.
-const emailAuthDesdeTelefono = (telefono) => `cliente_${(telefono || "").replace(/\D/g, "")}@kaserita.app`;
-const passwordAuthDesdePin = (pin) => `kst-${(pin || "").trim()}`;
-
 // Clave pública VAPID para las notificaciones push -- es pública a
 // propósito (identifica al remitente ante el navegador), la privada vive
 // solo en la función de servidor que manda el push.
@@ -459,91 +452,7 @@ function IconGoogle() {
   );
 }
 
-function ModalCuenta({ onCerrar, onIngreso, onGoogle }) {
-  const [modo, setModo] = useState("login"); // login | registro | recuperar
-  const [nombre, setNombre] = useState("");
-  const [telefono, setTelefono] = useState("");
-  const [pin, setPin] = useState("");
-  const [pinConfirmar, setPinConfirmar] = useState("");
-  const [cargando, setCargando] = useState(false);
-  const [error, setError] = useState("");
-  const [avisoRecuperar, setAvisoRecuperar] = useState("");
-
-  const enviarRecuperar = async (e) => {
-    e.preventDefault();
-    setError("");
-    const tel = telefono.replace(/\D/g, "");
-    if (tel.length < 6) return setError("Ingresá un celular válido.");
-    if (pin.trim().length < 4 || pin.trim().length > 32) return setError("El PIN tiene que tener entre 4 y 32 caracteres.");
-    if (pin.trim() !== pinConfirmar.trim()) return setError("Los dos PIN no coinciden.");
-    setCargando(true);
-    try {
-      const resp = await fetch(`${SUPABASE_URL}/functions/v1/resetear-pin-cliente`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
-        body: JSON.stringify({ telefono: tel, nuevo_pin: pin.trim() }),
-      });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || "No se pudo actualizar el PIN.");
-      setAvisoRecuperar(data.mensaje || "Listo, ya podés ingresar con tu PIN nuevo.");
-      setModo("login");
-      setPin("");
-      setPinConfirmar("");
-    } catch (err) {
-      setError(err.message || "Algo salió mal, intentá de nuevo.");
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  const enviar = async (e) => {
-    e.preventDefault();
-    setError("");
-    const tel = telefono.replace(/\D/g, "");
-    if (tel.length < 6) return setError("Ingresá un celular válido.");
-    if (pin.trim().length < 4 || pin.trim().length > 32) return setError("El PIN tiene que tener entre 4 y 32 caracteres.");
-    setCargando(true);
-    try {
-      const email = emailAuthDesdeTelefono(tel);
-      const password = passwordAuthDesdePin(pin);
-
-      if (modo === "registro") {
-        if (!nombre.trim()) throw new Error("Ingresá tu nombre.");
-        const { error: errSignUp } = await sbClient.auth.signUp({ email, password });
-        if (errSignUp) {
-          throw new Error(
-            /already registered|already exists/i.test(errSignUp.message)
-              ? "Ese celular ya tiene una cuenta. Ingresá con tu PIN."
-              : errSignUp.message
-          );
-        }
-        const { data: userData } = await sbClient.auth.getUser();
-        const { data: cliente, error: errInsert } = await sbClient
-          .from("clientes_delivery")
-          .insert({ auth_id: userData.user.id, nombre: nombre.trim(), telefono: tel })
-          .select()
-          .single();
-        if (errInsert) {
-          await sbClient.auth.signOut();
-          throw new Error(
-            /duplicate/i.test(errInsert.message) ? "Ese celular ya tiene una cuenta." : "No se pudo crear tu cuenta."
-          );
-        }
-        onIngreso(cliente);
-      } else {
-        const { error: errSignIn } = await sbClient.auth.signInWithPassword({ email, password });
-        if (errSignIn) throw new Error("Celular o PIN incorrecto.");
-        const { data: cliente, error: errCliente } = await sbClient.from("clientes_delivery").select("*").single();
-        if (errCliente || !cliente) throw new Error("No se pudo cargar tu cuenta.");
-        onIngreso(cliente);
-      }
-    } catch (err) {
-      setError(err.message || "Algo salió mal, intentá de nuevo.");
-    } finally {
-      setCargando(false);
-    }
-  };
-
+function ModalCuenta({ onCerrar, onGoogle }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center sm:justify-center z-30" onClick={onCerrar}>
       <div
@@ -551,129 +460,25 @@ function ModalCuenta({ onCerrar, onIngreso, onGoogle }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h2 className="font-bold text-stone-800">
-            {modo === "login" ? "Ingresar" : modo === "registro" ? "Crear cuenta" : "Recuperar PIN"}
-          </h2>
+          <h2 className="font-bold text-stone-800">Ingresar</h2>
           <button onClick={onCerrar} className="text-stone-400">
             <i className="fa-solid fa-xmark text-lg"></i>
           </button>
         </div>
-
-        {modo === "recuperar" ? (
-          <>
-            <p className="text-xs text-stone-500">
-              Poné tu celular y elegí un PIN nuevo. Ojo: cualquiera que sepa tu celular puede hacer esto, así que no
-              es un método a prueba de todo -- pero te deja volver a entrar sin quedarte afuera para siempre.
-            </p>
-            <form onSubmit={enviarRecuperar} className="space-y-2.5">
-              <input
-                type="tel"
-                placeholder="Tu celular"
-                value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
-                className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
-              />
-              <input
-                type="password"
-                maxLength={32}
-                autoComplete="off"
-                placeholder="PIN nuevo (4 a 32 caracteres, con letras o símbolos)"
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
-              />
-              <input
-                type="password"
-                inputMode="numeric"
-                placeholder="Repetí el PIN nuevo"
-                value={pinConfirmar}
-                onChange={(e) => setPinConfirmar(e.target.value)}
-                className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
-              />
-              {error && <p className="text-xs text-red-600">{error}</p>}
-              <button
-                type="submit"
-                disabled={cargando}
-                className="w-full py-2.5 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50"
-              >
-                {cargando ? "Un momento..." : "Actualizar PIN"}
-              </button>
-            </form>
-            <button
-              onClick={() => { setModo("login"); setError(""); }}
-              className="w-full text-center text-xs text-stone-500 underline"
-            >
-              Volver a ingresar
-            </button>
-          </>
-        ) : (
-          <>
-            <p className="text-xs text-stone-500">
-              {modo === "login"
-                ? "Con tu cuenta podés ver el estado de tus pedidos y recibir un aviso cuando estén listos."
-                : "Elegí un PIN fácil de recordar -- lo vas a usar para entrar la próxima vez."}
-            </p>
-            {avisoRecuperar && <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2">{avisoRecuperar}</p>}
-            <button
-              type="button"
-              onClick={onGoogle}
-              className="w-full py-2.5 rounded-xl border border-stone-200 text-stone-700 font-semibold text-sm flex items-center justify-center gap-2"
-            >
-              <IconGoogle /> Continuar con Google
-            </button>
-            <div className="flex items-center gap-2 text-[11px] text-stone-400">
-              <div className="flex-1 h-px bg-stone-200"></div> o con tu celular <div className="flex-1 h-px bg-stone-200"></div>
-            </div>
-            <form onSubmit={enviar} className="space-y-2.5">
-              {modo === "registro" && (
-                <input
-                  type="text"
-                  placeholder="Tu nombre"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
-                />
-              )}
-              <input
-                type="tel"
-                placeholder="Tu celular"
-                value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
-                className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
-              />
-              <input
-                type="password"
-                maxLength={32}
-                placeholder="PIN (4 a 32 caracteres)"
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
-              />
-              {error && <p className="text-xs text-red-600">{error}</p>}
-              <button
-                type="submit"
-                disabled={cargando}
-                className="w-full py-2.5 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50"
-              >
-                {cargando ? "Un momento..." : modo === "login" ? "Ingresar" : "Crear cuenta"}
-              </button>
-            </form>
-            {modo === "login" && (
-              <button
-                onClick={() => { setModo("recuperar"); setError(""); setAvisoRecuperar(""); }}
-                className="w-full text-center text-xs text-stone-400 underline"
-              >
-                ¿Olvidaste tu PIN?
-              </button>
-            )}
-            <button
-              onClick={() => { setModo(modo === "login" ? "registro" : "login"); setError(""); }}
-              className="w-full text-center text-xs text-stone-500 underline"
-            >
-              {modo === "login" ? "¿Primera vez? Creá tu cuenta" : "Ya tengo cuenta, ingresar"}
-            </button>
-          </>
-        )}
+        <p className="text-xs text-stone-500">
+          Con tu cuenta podés ver el estado de tus pedidos, guardar tus favoritos y recibir un aviso cuando tu pedido
+          esté listo.
+        </p>
+        <button
+          type="button"
+          onClick={onGoogle}
+          className="w-full py-2.5 rounded-xl border border-stone-200 text-stone-700 font-semibold text-sm flex items-center justify-center gap-2"
+        >
+          <IconGoogle /> Continuar con Google
+        </button>
+        <p className="text-[11px] text-stone-400 text-center">
+          Entrás con tu cuenta de Google: no hace falta crear ni recordar ningún PIN.
+        </p>
       </div>
     </div>
   );
@@ -1862,7 +1667,6 @@ function App() {
         {modalCuentaAbierto && (
           <ModalCuenta
             onCerrar={() => setModalCuentaAbierto(false)}
-            onIngreso={(cliente) => { setClienteSesion(cliente); setModalCuentaAbierto(false); }}
             onGoogle={iniciarConGoogle}
           />
         )}
@@ -2451,7 +2255,6 @@ function App() {
       {modalCuentaAbierto && (
         <ModalCuenta
           onCerrar={() => setModalCuentaAbierto(false)}
-          onIngreso={(cliente) => { setClienteSesion(cliente); setModalCuentaAbierto(false); }}
           onGoogle={iniciarConGoogle}
         />
       )}
