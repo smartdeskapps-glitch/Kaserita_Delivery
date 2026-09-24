@@ -124,7 +124,7 @@ function getSlugFromPath() {
 // Clave pública VAPID para las notificaciones push -- es pública a
 // propósito (identifica al remitente ante el navegador), la privada vive
 // solo en la función de servidor que manda el push.
-const VAPID_PUBLIC_KEY = "BFgQP6eqYcP1d8NhXTmDwqebPRpSZD3Be-RSqwIelHbCEEcSMR5WuVgvMStvSCySWhKvR7-a_f4OOcB3VQfhKsU";
+const VAPID_PUBLIC_KEY = "BOygmWrwaP8XjdL9v-VzAC7ADw36O_W7JcXPitn8nDU_bs6f3ZylCxo4lu2D46ksneRKmBvneNJyDiPxn4EK13k";
 
 function base64UrlAUint8Array(base64Url) {
   const relleno = "=".repeat((4 - (base64Url.length % 4)) % 4);
