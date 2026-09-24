@@ -138,14 +138,31 @@ function base64UrlAUint8Array(base64Url) {
 // Pide permiso de notificaciones, suscribe al navegador al push, y guarda
 // la suscripción en la cuenta del cliente -- de ahí la lee la función de
 // servidor cuando la bodega marca un pedido como listo.
-async function activarNotificaciones(clienteId) {
+function mismaClaveVapid(suscripcion) {
+  const actual = suscripcion.options && suscripcion.options.applicationServerKey;
+  if (!actual) return false;
+  const a = new Uint8Array(actual);
+  const b = base64UrlAUint8Array(VAPID_PUBLIC_KEY);
+  return a.length === b.length && a.every((v, idx) => v === b[idx]);
+}
+
+// Con silencioso = true no pide permiso: solo renueva la suscripción de quien
+// ya lo había dado (por ejemplo, tras cambiar las claves del servidor).
+async function activarNotificaciones(clienteId, silencioso = false) {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    if (silencioso) return;
     throw new Error("Este navegador no soporta notificaciones push.");
   }
+  if (silencioso && Notification.permission !== "granted") return;
   const registro = await navigator.serviceWorker.register("/sw.js");
-  const permiso = await Notification.requestPermission();
+  const permiso = silencioso ? "granted" : await Notification.requestPermission();
   if (permiso !== "granted") throw new Error("No diste permiso para las notificaciones.");
   let suscripcion = await registro.pushManager.getSubscription();
+  // Una suscripción hecha con otra clave del servidor ya no sirve: se rehace.
+  if (suscripcion && !mismaClaveVapid(suscripcion)) {
+    await suscripcion.unsubscribe();
+    suscripcion = null;
+  }
   if (!suscripcion) {
     suscripcion = await registro.pushManager.subscribe({
       userVisibleOnly: true,
@@ -1205,6 +1222,11 @@ function App() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (!clienteSesion) return;
+    activarNotificaciones(clienteSesion.id, true).catch(() => {});
+  }, [clienteSesion?.id]);
 
   useEffect(() => {
     // Aviso en vivo: mientras el cliente tenga sesión y la pestaña abierta
