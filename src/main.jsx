@@ -3721,9 +3721,9 @@ function App() {
                     disabled={(itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) || enviando || !!problemaEntrega}
                     className="flex-1 h-[54px] rounded-full bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white font-bold text-[15px] disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {enviando ? "Generando..." : (
+                    {enviando ? "Enviando pedido..." : (
                       <>
-                        <i className="fa-brands fa-whatsapp text-xl"></i> Enviar por WhatsApp
+                        <i className="fa-solid fa-bag-shopping text-lg"></i> Realizar pedido
                       </>
                     )}
                   </button>
