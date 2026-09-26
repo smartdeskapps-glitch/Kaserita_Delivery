@@ -1925,7 +1925,7 @@ function App() {
     }
     setEnviando(true);
     setError("");
-    const codigo = generarCodigoCorto();
+    let codigo = generarCodigoCorto();
     const items = [
       ...itemsCarrito.map((it) => ({
         id: it.id,
@@ -1940,8 +1940,8 @@ function App() {
         cantidad: it.cantidad,
       })),
     ];
-    const { error: err } = await sbClient.from("pedidos_delivery").insert({
-      codigo_corto: codigo,
+    const insertarPedido = (codigoPedido) => sbClient.from("pedidos_delivery").insert({
+      codigo_corto: codigoPedido,
       bodega_id: bodega.bodega_id,
       items,
       cliente_id: clienteSesion?.id || null,
@@ -1957,6 +1957,13 @@ function App() {
           }
         : {}),
     });
+    let { error: err } = await insertarPedido(codigo);
+    // 23505 = otro cliente generó justo el mismo código corto (es único):
+    // se reintenta con uno nuevo en vez de mostrarle un error.
+    for (let intento = 0; intento < 3 && err?.code === "23505"; intento++) {
+      codigo = generarCodigoCorto();
+      ({ error: err } = await insertarPedido(codigo));
+    }
     setEnviando(false);
     if (err) {
       const msg = err.message || "";
