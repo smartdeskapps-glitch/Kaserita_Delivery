@@ -75,10 +75,12 @@ Deno.serve(async (req) => {
     }
 
     const conDomicilio = !!bodega.delivery_domicilio;
-    const titulo =
-      fila.tipo === "domicilio"
-        ? `${bodega.nombre} ahora tiene entrega a domicilio`
-        : `¡${bodega.nombre} ya recibe pedidos!`;
+    // Si la tienda ofrece domicilio (o el aviso es justo por eso), el título
+    // lo dice: "ya cuenta con delivery". Si no, es el aviso simple de pedidos.
+    const anunciaDelivery = fila.tipo === "domicilio" || (fila.tipo === "manual" && conDomicilio);
+    const titulo = anunciaDelivery
+      ? `${bodega.nombre} ya cuenta con delivery`
+      : `¡${bodega.nombre} ya recibe pedidos!`;
     const cuerpo =
       fila.tipo === "domicilio"
         ? "Pide desde tu casa: marca tu ubicación y te lo llevan."
