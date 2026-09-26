@@ -43,7 +43,8 @@ Supabase se los da automáticamente a toda función.
 ## 3. Crear el Database Webhook
 
 Esto es lo que hace que la función se dispare sola cuando la bodega marca
-un pedido como "listo" -- no se puede crear por SQL Editor.
+un pedido como "listo" o "en camino" (entrega a domicilio) -- no se puede
+crear por SQL Editor. Es un solo webhook para los dos avisos.
 
 1. Dashboard de Supabase → **Database** → **Webhooks** → **Create a new
    webhook**.

@@ -5,10 +5,18 @@
 // No se puede crear ese webhook por SQL -- ver INSTRUCCIONES_PUSH.md en
 // este mismo repo para los pasos exactos.
 //
-// Qué hace: si el UPDATE dejó estado = 'listo', busca la suscripción push
-// guardada del cliente (clientes_delivery.push_subscription) y le manda
-// la notificación. Si el cliente nunca activó las notificaciones, no
-// hace nada (no es un error).
+// Qué hace: si el UPDATE cambió el estado a 'listo' o a 'en_camino', busca
+// la suscripción push guardada del cliente
+// (clientes_delivery.push_subscription) y le manda la notificación. Si el
+// cliente nunca activó las notificaciones, no hace nada (no es un error).
+// Es el mismo webhook de siempre (UPDATE sobre pedidos_seguimiento): no hace
+// falta crear otro para 'en_camino'.
+//   - 'listo' + retiro     -> "ya podés pasar a retirarlo".
+//   - 'listo' + domicilio  -> "en breve sale a tu dirección".
+//   - 'en_camino'          -> "tu pedido va en camino".
+// Solo avisa cuando el estado CAMBIÓ (old_record vs record): el webhook se
+// dispara con cualquier UPDATE de la fila, y sin esa comparación un cambio
+// cualquiera sobre un pedido ya "listo" repetiría el aviso.
 
 import webpush from "npm:web-push@3.6.7";
 
@@ -33,8 +41,12 @@ Deno.serve(async (req) => {
     const payload = await req.json();
     const fila = payload.record;
 
-    if (!fila || fila.estado !== "listo") {
+    if (!fila || (fila.estado !== "listo" && fila.estado !== "en_camino")) {
       return new Response("ok (nada que hacer)", { status: 200 });
+    }
+    const anterior = payload.old_record?.estado;
+    if (anterior !== undefined && anterior === fila.estado) {
+      return new Response("ok (el estado no cambió)", { status: 200 });
     }
 
     if (!ES_UUID.test(String(fila.cliente_id)) || !ES_UUID.test(String(fila.bodega_id))) {
@@ -44,12 +56,13 @@ Deno.serve(async (req) => {
     const headers = { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}` };
     const [clienteResp, bodegaResp] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/clientes_delivery?id=eq.${fila.cliente_id}&select=push_subscription`, { headers }),
-      fetch(`${SUPABASE_URL}/rest/v1/bodegas?id=eq.${fila.bodega_id}&select=slug`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/bodegas?id=eq.${fila.bodega_id}&select=slug,nombre`, { headers }),
     ]);
     const clienteFilas = await clienteResp.json();
     const bodegaFilas = await bodegaResp.json();
     const suscripcion = clienteFilas?.[0]?.push_subscription;
     const slug = bodegaFilas?.[0]?.slug;
+    const nombreBodega = bodegaFilas?.[0]?.nombre;
 
     if (!suscripcion) {
       return new Response("ok (el cliente no activó notificaciones)", { status: 200 });
@@ -59,16 +72,25 @@ Deno.serve(async (req) => {
     // directos distintos (cada una con su propio start_url) -- si no le
     // decimos a qué bodega pertenece este pedido, el service worker no
     // sabe cuál ventana enfocar o abrir al tocar la notificación.
+    let title = "¡Tu pedido está listo!";
+    let body = `Código ${fila.codigo_corto} -- ya podés pasar a retirarlo.`;
+    if (fila.estado === "en_camino") {
+      title = "¡Tu pedido va en camino!";
+      body = `Código ${fila.codigo_corto} -- ${nombreBodega || "la tienda"} ya lo envió a tu dirección.`;
+    } else if (fila.tipo_entrega === "domicilio") {
+      body = `Código ${fila.codigo_corto} -- en breve sale hacia tu dirección.`;
+    }
+
     await webpush.sendNotification(
       suscripcion,
       JSON.stringify({
-        title: "¡Tu pedido está listo!",
-        body: `Código ${fila.codigo_corto} -- ya podés pasar a retirarlo.`,
+        title,
+        body,
         url: slug ? `/${slug}` : "/",
       })
     );
 
-    return new Response("ok (push enviado)", { status: 200 });
+    return new Response(`ok (push enviado: ${fila.estado})`, { status: 200 });
   } catch (err) {
     console.error(err);
     return new Response(String(err), { status: 500 });
