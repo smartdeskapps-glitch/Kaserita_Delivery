@@ -1931,6 +1931,7 @@ function App() {
   // vacío inicial antes de que la restauración llegue a aplicarse.
   const [carritoListo, setCarritoListo] = useState(false);
   const [carritoAbierto, setCarritoAbierto] = useState(false);
+  const [confirmarVaciarAbierto, setConfirmarVaciarAbierto] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
   const [pedidoConfirmado, setPedidoConfirmado] = useState(null); // { codigo, whatsappUrl, domicilio }
@@ -2580,8 +2581,10 @@ function App() {
     );
   };
 
-  const vaciarPedido = () => {
-    if (!window.confirm("¿Vaciar tu pedido?")) return;
+  // "Vaciar" abre un cuadro propio de confirmación (antes era el confirm() del navegador).
+  const vaciarPedido = () => setConfirmarVaciarAbierto(true);
+  const vaciarPedidoConfirmado = () => {
+    setConfirmarVaciarAbierto(false);
     setCarrito({});
     setCarritoCombos({});
     setCarritoAbierto(false);
@@ -3713,6 +3716,69 @@ function App() {
             window.location.href = window.location.origin + window.location.pathname;
           }}
         />
+      )}
+
+      {confirmarVaciarAbierto && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-6 bg-[#1c1830]/45 backdrop-blur-[3px]"
+          onClick={() => setConfirmarVaciarAbierto(false)}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="vaciar-titulo"
+            onClick={(e) => e.stopPropagation()}
+            className="kd-pop w-full max-w-sm bg-white rounded-[28px] px-[18px] pt-[22px] pb-[18px] flex flex-col items-center text-center gap-2 shadow-[0_24px_50px_-18px_rgba(28,24,48,0.5)]"
+          >
+            <span className="w-[52px] h-[52px] rounded-full bg-[#fff1f3] text-[#e11d48] flex items-center justify-center">
+              <i className="fa-solid fa-trash-can text-xl"></i>
+            </span>
+            <h3 id="vaciar-titulo" className="text-[18px] font-extrabold text-[#1c1830]">¿Vaciar tu pedido?</h3>
+            <div className="w-full flex items-center gap-2.5 bg-[#f4eefe] rounded-[18px] px-3 py-2.5 mt-1.5 mb-1 text-left">
+              <div className="flex shrink-0">
+                {[
+                  ...itemsCarrito.map((it) => ({ clave: `p-${it.id}`, foto: it.foto_url })),
+                  ...itemsCarritoCombos.map((it) => ({ clave: `c-${it.id}`, combo: true })),
+                ]
+                  .slice(0, 4)
+                  .map((it, i) => (
+                    <span
+                      key={it.clave}
+                      className={`w-[30px] h-[30px] rounded-full border-2 border-white bg-[#ece0fd] overflow-hidden flex items-center justify-center text-[#6105dc] ${i > 0 ? "-ml-[9px]" : ""}`}
+                    >
+                      {it.foto ? (
+                        <img src={it.foto} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <i className={`fa-solid ${it.combo ? "fa-gift" : "fa-image"} text-[11px]`}></i>
+                      )}
+                    </span>
+                  ))}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[12.5px] font-bold text-[#1c1830] leading-tight">
+                  {itemsCarrito.length + itemsCarritoCombos.length === 1
+                    ? "1 producto"
+                    : `${itemsCarrito.length + itemsCarritoCombos.length} productos`}
+                </p>
+                <p className="text-[11.5px] text-[#78729a]">{formatoMoneda(totalCarrito)} en total</p>
+              </div>
+            </div>
+            <div className="w-full flex gap-2">
+              <button
+                onClick={() => setConfirmarVaciarAbierto(false)}
+                className="flex-1 h-[46px] rounded-full bg-[#f4eefe] text-[#4d04b0] text-sm font-bold active:scale-[0.98] transition-transform"
+              >
+                Mejor no
+              </button>
+              <button
+                onClick={vaciarPedidoConfirmado}
+                className="flex-1 h-[46px] rounded-full bg-[#e11d48] text-white text-sm font-bold active:scale-[0.98] transition-transform"
+              >
+                Sí, vaciar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {instruccionesIOSAbiertas && (
