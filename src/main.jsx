@@ -2429,22 +2429,40 @@ function App() {
               ))}
               {itemsCarrito.length === 0 && itemsCarritoCombos.length === 0 && <p className="text-center text-stone-400 py-6">Tu carrito está vacío.</p>}
 
-              {entregaDisponible && (itemsCarrito.length > 0 || itemsCarritoCombos.length > 0) && (
+              {(itemsCarrito.length > 0 || itemsCarritoCombos.length > 0) && (
                 <div className="flex flex-col gap-3 pt-3 border-t border-stone-100">
+                  <p className="text-xs font-semibold text-stone-600 -mb-1">¿Cómo quieres recibir tu pedido?</p>
                   <div className="grid grid-cols-2 gap-1 bg-stone-100 rounded-xl p-1">
-                    {[["retiro", "Retiro en tienda", "fa-store"], ["domicilio", "A domicilio", "fa-motorcycle"]].map(([id, texto, icono]) => (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => { setTipoEntrega(id); setError(""); }}
-                        className={`py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
-                          tipoEntrega === id ? "bg-violet-600 text-white" : "text-stone-500"
-                        }`}
-                      >
-                        <i className={`fa-solid ${icono}`}></i> {texto}
-                      </button>
-                    ))}
+                    {[["retiro", "Retiro en tienda", "fa-store"], ["domicilio", "A domicilio", "fa-motorcycle"]].map(([id, texto, icono]) => {
+                      const deshabilitado = id === "domicilio" && !entregaDisponible;
+                      const seleccionado = (esDomicilio ? "domicilio" : "retiro") === id;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          disabled={deshabilitado}
+                          onClick={() => { setTipoEntrega(id); setError(""); }}
+                          className={`py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                            seleccionado ? "bg-violet-600 text-white" : deshabilitado ? "text-stone-300 cursor-not-allowed" : "text-stone-500"
+                          }`}
+                        >
+                          <i className={`fa-solid ${icono}`}></i> {texto}
+                        </button>
+                      );
+                    })}
                   </div>
+                  {!entregaDisponible && (
+                    <p className="text-[11px] text-stone-400 -mt-1">Este local no tiene entrega a domicilio por ahora.</p>
+                  )}
+                  {!esDomicilio && (
+                    <p className="text-xs text-stone-500 bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 flex items-start gap-1.5">
+                      <i className="fa-solid fa-store text-stone-400 mt-0.5"></i>
+                      <span>
+                        Retiras tu pedido en <strong>{bodega.nombre}</strong>
+                        {bodega.direccion ? ` (${bodega.direccion})` : ""} y pagas en caja.
+                      </span>
+                    </p>
+                  )}
 
                   {esDomicilio && (
                     <div className="flex flex-col gap-2.5">
