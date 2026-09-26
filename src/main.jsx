@@ -1845,8 +1845,8 @@ function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarD
 function BarraNavegacion({ activa, contadorPedidos, onInicio, onTiendas, onPedidos, onPerfil }) {
   const tabs = [
     { id: "inicio", icono: "fa-house", texto: "Inicio", onClick: onInicio },
-    { id: "tiendas", icono: "fa-store", texto: "Mis tiendas", onClick: onTiendas },
     { id: "pedidos", icono: "fa-receipt", texto: "Pedidos", contador: contadorPedidos, onClick: onPedidos },
+    { id: "tiendas", icono: "fa-store", texto: "Mis tiendas", onClick: onTiendas },
     { id: "perfil", icono: "fa-user", texto: "Perfil", onClick: onPerfil },
   ];
   return (
