@@ -186,10 +186,28 @@ function generarCodigoCorto() {
   return codigo;
 }
 
-function armarMensajeWhatsapp({ bodegaNombre, items, total, codigo }) {
+function armarMensajeWhatsapp({ bodegaNombre, items, total, codigo, entrega }) {
   const lineas = items.map(
     (it) => `• ${it.cantidad} x ${it.descripcion} — ${formatoMoneda(it.precio_venta * it.cantidad)}`
   );
+  if (entrega) {
+    return [
+      `Hola ${bodegaNombre}! Quiero hacer este pedido A DOMICILIO:`,
+      "",
+      ...lineas,
+      "",
+      `Productos: ${formatoMoneda(total)}`,
+      `Envío: ${formatoMoneda(entrega.costoEnvio)}`,
+      `Total a pagar: ${formatoMoneda(total + entrega.costoEnvio)}`,
+      `Pago al recibir: ${TEXTO_MEDIO_PAGO[entrega.medioPago] || entrega.medioPago}${entrega.pagaCon ? ` (pago con ${formatoMoneda(entrega.pagaCon)})` : ""}`,
+      "",
+      `Referencia: ${entrega.referencia}`,
+      `Teléfono: ${entrega.telefono}`,
+      `Ubicación: ${enlaceMapa(entrega.lat, entrega.lng)}`,
+      "",
+      `Código de referencia: ${codigo}`,
+    ].join("\n");
+  }
   return [
     `Hola ${bodegaNombre}! Quiero hacer este pedido:`,
     "",
@@ -417,7 +435,7 @@ function VisorFoto({ producto, onCerrar }) {
   );
 }
 
-function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver }) {
+function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, domicilio }) {
   const [copiado, setCopiado] = useState(false);
   const copiarCodigo = async () => {
     try {
@@ -433,8 +451,17 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver }) {
       </div>
       <h1 className="text-lg font-bold text-stone-800">¡Tu pedido está listo!</h1>
       <p className="text-sm text-stone-500">
-        Mandá el mensaje por WhatsApp a <strong>{bodega.nombre}</strong>. Mostrá este código
-        en caja para que carguen tu pedido al instante.
+        {domicilio ? (
+          <>
+            Mandá el mensaje por WhatsApp a <strong>{bodega.nombre}</strong>: lleva tu ubicación y el detalle
+            para que te lo lleven a tu puerta. Tené el dinero listo para pagar al recibir.
+          </>
+        ) : (
+          <>
+            Mandá el mensaje por WhatsApp a <strong>{bodega.nombre}</strong>. Mostrá este código
+            en caja para que carguen tu pedido al instante.
+          </>
+        )}
       </p>
       <button
         onClick={copiarCodigo}
@@ -576,12 +603,131 @@ function ModalCompletarPerfil({ inicial, onListo, onCancelar }) {
   );
 }
 
+// ---------------------------------------------------------------
+// Entrega a domicilio: el local reparte con su propio repartidor. El
+// cliente marca su ubicación (GPS o pin en el mapa) y el local la recibe
+// en el pedido para reenviarla por WhatsApp.
+// ---------------------------------------------------------------
+const CENTRO_MAPA_POR_DEFECTO = [-12.0464, -77.0428];
+const MEDIOS_PAGO_ENTREGA = [
+  { id: "efectivo", texto: "Efectivo", icono: "fa-money-bill-wave" },
+  { id: "yape_plin", texto: "Yape / Plin", icono: "fa-mobile-screen" },
+  { id: "tarjeta", texto: "Tarjeta", icono: "fa-credit-card" },
+];
+const TEXTO_MEDIO_PAGO = { efectivo: "Efectivo", yape_plin: "Yape / Plin", tarjeta: "Tarjeta" };
+const PIN_MAPA_HTML =
+  '<svg viewBox="0 0 24 24" width="40" height="40" style="filter:drop-shadow(0 4px 4px rgba(76,29,149,.35))"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z" fill="#7c3aed" stroke="#fff" stroke-width="1.4"/><circle cx="12" cy="10" r="2.6" fill="#fff"/></svg>';
+
+function enlaceMapa(lat, lng) {
+  return `https://www.google.com/maps?q=${lat},${lng}`;
+}
+
+// Mapa con pin movible (Leaflet + OpenStreetMap: gratis y sin claves).
+// Leaflet se carga recién cuando el cliente elige "A domicilio", para no
+// sumarle peso a la vitrina de quien solo retira en tienda.
+function MapaEntrega({ punto, onCambiar }) {
+  const contenedorRef = useRef(null);
+  const mapaRef = useRef(null);
+  const marcadorRef = useRef(null);
+  const leafletRef = useRef(null);
+  const onCambiarRef = useRef(onCambiar);
+  onCambiarRef.current = onCambiar;
+  const [falloMapa, setFalloMapa] = useState(false);
+  const [listo, setListo] = useState(false);
+
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      try {
+        const [leaflet] = await Promise.all([import("leaflet"), import("leaflet/dist/leaflet.css")]);
+        const L = leaflet.default || leaflet;
+        if (cancelado || !contenedorRef.current) return;
+        leafletRef.current = L;
+        const mapa = L.map(contenedorRef.current, { zoomControl: false }).setView(
+          punto ? [punto.lat, punto.lng] : CENTRO_MAPA_POR_DEFECTO,
+          punto ? 17 : 13
+        );
+        L.control.zoom({ position: "topright" }).addTo(mapa);
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: "&copy; OpenStreetMap",
+        }).addTo(mapa);
+        mapa.on("click", (e) => {
+          onCambiarRef.current({ lat: +e.latlng.lat.toFixed(6), lng: +e.latlng.lng.toFixed(6) });
+        });
+        mapaRef.current = mapa;
+        setListo(true);
+      } catch (err) {
+        console.warn("No se pudo cargar el mapa:", err);
+        if (!cancelado) setFalloMapa(true);
+      }
+    })();
+    return () => {
+      cancelado = true;
+      if (mapaRef.current) {
+        mapaRef.current.remove();
+        mapaRef.current = null;
+        marcadorRef.current = null;
+      }
+    };
+  }, []);
+
+  // El pin sigue al punto elegido (por toque, arrastre o GPS).
+  useEffect(() => {
+    const L = leafletRef.current;
+    const mapa = mapaRef.current;
+    if (!listo || !L || !mapa || !punto) return;
+    const pos = [punto.lat, punto.lng];
+    if (!marcadorRef.current) {
+      const icono = L.divIcon({ className: "", html: PIN_MAPA_HTML, iconSize: [40, 40], iconAnchor: [20, 40] });
+      const marcador = L.marker(pos, { icon: icono, draggable: true }).addTo(mapa);
+      marcador.on("dragend", () => {
+        const ll = marcador.getLatLng();
+        onCambiarRef.current({ lat: +ll.lat.toFixed(6), lng: +ll.lng.toFixed(6) });
+      });
+      marcadorRef.current = marcador;
+    } else {
+      marcadorRef.current.setLatLng(pos);
+    }
+    mapa.setView(pos, Math.max(mapa.getZoom(), 17));
+  }, [punto, listo]);
+
+  if (falloMapa) {
+    return (
+      <div className="h-[200px] rounded-2xl bg-stone-100 flex items-center justify-center text-center px-4 text-xs text-stone-500">
+        No se pudo cargar el mapa. Usá el botón “Usar mi ubicación actual”.
+      </div>
+    );
+  }
+  return (
+    <div className="relative h-[200px] rounded-2xl overflow-hidden bg-stone-100">
+      <div ref={contenedorRef} className="absolute inset-0"></div>
+      {!punto && listo && (
+        <div className="absolute left-2 bottom-6 z-[500] bg-white/95 rounded-full px-3 py-1 text-[11px] text-stone-600 shadow pointer-events-none">
+          Tocá el mapa para poner el pin
+        </div>
+      )}
+    </div>
+  );
+}
+
 const ETIQUETAS_ESTADO_PEDIDO = {
   pendiente: { texto: "En preparación", color: "bg-amber-100 text-amber-700" },
   listo: { texto: "¡Listo para retirar!", color: "bg-violet-100 text-violet-700" },
+  en_camino: { texto: "En camino", color: "bg-violet-100 text-violet-700" },
   retirado: { texto: "Retirado", color: "bg-stone-100 text-stone-500" },
   cancelado: { texto: "Cancelado", color: "bg-rose-100 text-rose-600" },
 };
+
+// En un pedido a domicilio "listo" quiere decir "armado, sale en breve" y
+// el final es "Entregado" (en la base sigue siendo 'retirado').
+function etiquetaEstadoPedido(p) {
+  if (p.tipo_entrega === "domicilio") {
+    if (p.estado === "listo") return { texto: "Listo, sale en breve", color: "bg-violet-100 text-violet-700" };
+    if (p.estado === "retirado") return { texto: "Entregado", color: "bg-stone-100 text-stone-500" };
+  }
+  return ETIQUETAS_ESTADO_PEDIDO[p.estado] || ETIQUETAS_ESTADO_PEDIDO.pendiente;
+}
 
 // Pasos visuales de "Mis pedidos": el mismo estado de siempre
 // (pendiente/listo/retirado/cancelado) pero mostrado como progreso, no
@@ -594,8 +740,15 @@ const PASOS_PEDIDO = [
   { texto: "Retirado", icono: "fa-bag-shopping" },
 ];
 const PASO_ACTUAL_POR_ESTADO = { pendiente: 1, listo: 2, retirado: 3 };
+const PASOS_PEDIDO_DOMICILIO = [
+  { texto: "Enviado", icono: "fa-paper-plane" },
+  { texto: "Preparando", icono: "fa-kitchen-set" },
+  { texto: "En camino", icono: "fa-motorcycle" },
+  { texto: "Entregado", icono: "fa-house" },
+];
+const PASO_ACTUAL_DOMICILIO = { pendiente: 1, listo: 1, en_camino: 2, retirado: 3 };
 
-function StepperPedido({ estado }) {
+function StepperPedido({ estado, tipoEntrega }) {
   if (estado === "cancelado") {
     return (
       <div className="flex items-center gap-2 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
@@ -604,10 +757,12 @@ function StepperPedido({ estado }) {
       </div>
     );
   }
-  const actual = PASO_ACTUAL_POR_ESTADO[estado] ?? 0;
+  const domicilio = tipoEntrega === "domicilio";
+  const pasos = domicilio ? PASOS_PEDIDO_DOMICILIO : PASOS_PEDIDO;
+  const actual = (domicilio ? PASO_ACTUAL_DOMICILIO : PASO_ACTUAL_POR_ESTADO)[estado] ?? 0;
   return (
     <div className="flex items-start">
-      {PASOS_PEDIDO.map((paso, i) => {
+      {pasos.map((paso, i) => {
         const completado = i <= actual;
         const esActual = i === actual && estado !== "retirado";
         return (
@@ -625,7 +780,7 @@ function StepperPedido({ estado }) {
                 {paso.texto}
               </span>
             </div>
-            {i < PASOS_PEDIDO.length - 1 && (
+            {i < pasos.length - 1 && (
               <div className={`flex-1 h-0.5 mt-3.5 ${i < actual ? "bg-violet-600" : "bg-stone-200"}`}></div>
             )}
           </React.Fragment>
@@ -746,12 +901,12 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
                     <span className="text-[11px] text-stone-400">{nombresBodegas[p.bodega_id]}</span>
                   )}
                 </div>
-                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${ETIQUETAS_ESTADO_PEDIDO[p.estado].color}`}>
-                  {ETIQUETAS_ESTADO_PEDIDO[p.estado].texto}
+                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${etiquetaEstadoPedido(p).color}`}>
+                  {etiquetaEstadoPedido(p).texto}
                 </span>
               </div>
               <div className="py-1">
-                <StepperPedido estado={p.estado} />
+                <StepperPedido estado={p.estado} tipoEntrega={p.tipo_entrega} />
               </div>
               <div className="text-xs text-stone-500 space-y-0.5">
                 {(p.items || []).map((it, i) => (
@@ -761,10 +916,25 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
                   </div>
                 ))}
               </div>
+              {p.tipo_entrega === "domicilio" && (
+                <div className="text-xs text-stone-500 space-y-0.5 pt-1 border-t border-stone-100">
+                  <div className="flex items-center justify-between gap-2">
+                    <span>Envío a domicilio</span>
+                    <span className="shrink-0">{formatoMoneda(p.costo_envio)}</span>
+                  </div>
+                  {p.entrega_referencia && (
+                    <p className="flex items-start gap-1.5 text-stone-400">
+                      <i className="fa-solid fa-location-dot mt-0.5"></i>
+                      <span>{p.entrega_referencia}</span>
+                    </p>
+                  )}
+                  {p.medio_pago && <p className="text-stone-400">Pagas al recibir: {TEXTO_MEDIO_PAGO[p.medio_pago] || p.medio_pago}</p>}
+                </div>
+              )}
               <div className="flex items-center justify-between pt-2 border-t border-stone-100">
                 <span className="text-xs font-semibold text-stone-500">Total</span>
                 <span className="text-sm font-bold text-stone-800">
-                  {formatoMoneda((p.items || []).reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0))}
+                  {formatoMoneda((p.items || []).reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0) + Number(p.costo_envio || 0))}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-2 pt-0.5">
@@ -1134,7 +1304,17 @@ function App() {
   const [carritoAbierto, setCarritoAbierto] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
-  const [pedidoConfirmado, setPedidoConfirmado] = useState(null); // { codigo, whatsappUrl }
+  const [pedidoConfirmado, setPedidoConfirmado] = useState(null); // { codigo, whatsappUrl, domicilio }
+  // Entrega: "retiro" (en tienda) o "domicilio" (el local reparte).
+  const [tipoEntrega, setTipoEntrega] = useState("retiro");
+  const [ubicacionEntrega, setUbicacionEntrega] = useState(null); // { lat, lng }
+  const [referenciaEntrega, setReferenciaEntrega] = useState("");
+  const [telefonoEntrega, setTelefonoEntrega] = useState("");
+  const [medioPagoEntrega, setMedioPagoEntrega] = useState("efectivo");
+  const [pagaConEntrega, setPagaConEntrega] = useState("");
+  const [obteniendoGps, setObteniendoGps] = useState(false);
+  const [errorGps, setErrorGps] = useState("");
+  const [entregaListo, setEntregaListo] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState("");
   const [fotoAmpliada, setFotoAmpliada] = useState(null); // producto
@@ -1228,6 +1408,42 @@ function App() {
     activarNotificaciones(clienteSesion.id, true).catch(() => {});
   }, [clienteSesion?.id]);
 
+  // Datos de entrega: se guardan por bodega igual que el carrito, para que
+  // no se pierdan si el cliente tiene que ir y volver de Google para entrar.
+  useEffect(() => {
+    if (!slug) return;
+    try {
+      const g = JSON.parse(localStorage.getItem(`kd_entrega_${slug}`) || "null");
+      if (g) {
+        if (g.tipo === "domicilio") setTipoEntrega("domicilio");
+        if (g.ubicacion && typeof g.ubicacion.lat === "number" && typeof g.ubicacion.lng === "number") setUbicacionEntrega(g.ubicacion);
+        if (typeof g.referencia === "string") setReferenciaEntrega(g.referencia);
+        if (typeof g.telefono === "string") setTelefonoEntrega(g.telefono);
+        if (g.medioPago) setMedioPagoEntrega(g.medioPago);
+      }
+    } catch {
+      // sin datos guardados: se empieza de cero
+    }
+    setEntregaListo(true);
+  }, [slug]);
+
+  useEffect(() => {
+    if (!slug || !entregaListo) return;
+    try {
+      localStorage.setItem(
+        `kd_entrega_${slug}`,
+        JSON.stringify({ tipo: tipoEntrega, ubicacion: ubicacionEntrega, referencia: referenciaEntrega, telefono: telefonoEntrega, medioPago: medioPagoEntrega })
+      );
+    } catch {
+      // ignorado -- en el peor caso hay que volver a escribirlos
+    }
+  }, [slug, entregaListo, tipoEntrega, ubicacionEntrega, referenciaEntrega, telefonoEntrega, medioPagoEntrega]);
+
+  // El teléfono de contacto arranca con el de su cuenta si todavía no escribió otro.
+  useEffect(() => {
+    if (clienteSesion?.telefono) setTelefonoEntrega((t) => t || clienteSesion.telefono);
+  }, [clienteSesion?.telefono]);
+
   useEffect(() => {
     // Aviso en vivo: mientras el cliente tenga sesión y la pestaña abierta
     // (en cualquier pantalla, no solo "Mis pedidos"), suena apenas la bodega
@@ -1240,7 +1456,7 @@ function App() {
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "pedidos_seguimiento", filter: `cliente_id=eq.${clienteSesion.id}` },
         (payload) => {
-          if (payload.new.estado === "listo" && payload.old?.estado !== "listo") {
+          if ((payload.new.estado === "listo" || payload.new.estado === "en_camino") && payload.old?.estado !== payload.new.estado) {
             sonarAvisoPedidoListo();
           }
         }
@@ -1503,6 +1719,26 @@ function App() {
       itemsCarritoCombos.reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0),
     [itemsCarrito, itemsCarritoCombos]
   );
+  const entregaDisponible = !!bodega?.delivery_domicilio;
+  const esDomicilio = tipoEntrega === "domicilio" && entregaDisponible;
+  const costoEnvio = esDomicilio ? Number(bodega?.costo_envio) || 0 : 0;
+  const totalConEnvio = totalCarrito + costoEnvio;
+  const telefonoEntregaLimpio = telefonoEntrega.replace(/\D/g, "");
+  const pedidoMinimo = Number(bodega?.pedido_minimo) || 0;
+  // Qué le falta al cliente para poder enviar un pedido a domicilio.
+  const problemaEntrega = !esDomicilio
+    ? ""
+    : !ubicacionEntrega
+    ? "Marcá en el mapa dónde querés recibir tu pedido."
+    : referenciaEntrega.trim().length < 3
+    ? "Escribí una referencia de tu dirección."
+    : telefonoEntregaLimpio.length < 7 || telefonoEntregaLimpio.length > 15
+    ? "Ingresá un teléfono de contacto válido."
+    : totalCarrito < pedidoMinimo
+    ? `El pedido mínimo para delivery es ${formatoMoneda(pedidoMinimo)}.`
+    : medioPagoEntrega === "efectivo" && pagaConEntrega && Number(pagaConEntrega) < totalConEnvio
+    ? "El monto con el que pagás no alcanza para el total."
+    : "";
   const totalUnidades = useMemo(
     () =>
       itemsCarrito.reduce((acc, it) => acc + it.cantidad, 0) +
@@ -1573,8 +1809,36 @@ function App() {
     setCarritoAbierto(true);
   }, [productosPorId, combosPorId]);
 
+  const usarMiUbicacion = () => {
+    setErrorGps("");
+    if (!navigator.geolocation) {
+      setErrorGps("Tu navegador no permite obtener la ubicación. Marcala tocando el mapa.");
+      return;
+    }
+    setObteniendoGps(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUbicacionEntrega({ lat: +pos.coords.latitude.toFixed(6), lng: +pos.coords.longitude.toFixed(6) });
+        setObteniendoGps(false);
+      },
+      (err) => {
+        setObteniendoGps(false);
+        setErrorGps(
+          err.code === 1
+            ? "No diste permiso de ubicación. Podés marcarla tocando el mapa."
+            : "No pudimos obtener tu ubicación. Marcala tocando el mapa."
+        );
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
+  };
+
   const confirmarPedido = async () => {
     if (itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) return;
+    if (problemaEntrega) {
+      setError(problemaEntrega);
+      return;
+    }
     setEnviando(true);
     setError("");
     const codigo = generarCodigoCorto();
@@ -1597,6 +1861,17 @@ function App() {
       bodega_id: bodega.bodega_id,
       items,
       cliente_id: clienteSesion?.id || null,
+      ...(esDomicilio
+        ? {
+            tipo_entrega: "domicilio",
+            entrega_lat: ubicacionEntrega.lat,
+            entrega_lng: ubicacionEntrega.lng,
+            entrega_referencia: referenciaEntrega.trim(),
+            telefono_contacto: telefonoEntregaLimpio,
+            medio_pago: medioPagoEntrega,
+            paga_con: medioPagoEntrega === "efectivo" && pagaConEntrega ? Number(pagaConEntrega) : null,
+          }
+        : {}),
     });
     setEnviando(false);
     if (err) {
@@ -1606,6 +1881,8 @@ function App() {
           ? "Hiciste varios pedidos seguidos. Esperá unos minutos e intentá de nuevo."
           : msg.includes("suficiente stock")
           ? `${msg} Bajá la cantidad e intentá de nuevo.`
+          : err.code === "P0001" && msg
+          ? msg
           : "No se pudo generar el pedido. Intentá de nuevo en un momento."
       );
       return;
@@ -1615,10 +1892,22 @@ function App() {
       items,
       total: totalCarrito,
       codigo,
+      entrega: esDomicilio
+        ? {
+            costoEnvio,
+            medioPago: medioPagoEntrega,
+            pagaCon: medioPagoEntrega === "efectivo" && pagaConEntrega ? Number(pagaConEntrega) : null,
+            referencia: referenciaEntrega.trim(),
+            telefono: telefonoEntregaLimpio,
+            lat: ubicacionEntrega.lat,
+            lng: ubicacionEntrega.lng,
+          }
+        : null,
     });
     const telefono = (bodega.telefono || "").replace(/\D/g, "");
     const whatsappUrl = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
-    setPedidoConfirmado({ codigo, whatsappUrl });
+    setPedidoConfirmado({ codigo, whatsappUrl, domicilio: esDomicilio });
+    setPagaConEntrega("");
     setCarrito({});
     setCarritoCombos({});
     setCarritoAbierto(false);
@@ -1715,6 +2004,7 @@ function App() {
         bodega={bodega}
         codigo={pedidoConfirmado.codigo}
         whatsappUrl={pedidoConfirmado.whatsappUrl}
+        domicilio={pedidoConfirmado.domicilio}
         onVolver={() => setPedidoConfirmado(null)}
       />
     );
@@ -2138,6 +2428,104 @@ function App() {
                 </div>
               ))}
               {itemsCarrito.length === 0 && itemsCarritoCombos.length === 0 && <p className="text-center text-stone-400 py-6">Tu carrito está vacío.</p>}
+
+              {entregaDisponible && (itemsCarrito.length > 0 || itemsCarritoCombos.length > 0) && (
+                <div className="flex flex-col gap-3 pt-3 border-t border-stone-100">
+                  <div className="grid grid-cols-2 gap-1 bg-stone-100 rounded-xl p-1">
+                    {[["retiro", "Retiro en tienda", "fa-store"], ["domicilio", "A domicilio", "fa-motorcycle"]].map(([id, texto, icono]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => { setTipoEntrega(id); setError(""); }}
+                        className={`py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                          tipoEntrega === id ? "bg-violet-600 text-white" : "text-stone-500"
+                        }`}
+                      >
+                        <i className={`fa-solid ${icono}`}></i> {texto}
+                      </button>
+                    ))}
+                  </div>
+
+                  {esDomicilio && (
+                    <div className="flex flex-col gap-2.5">
+                      <p className="text-xs font-semibold text-stone-600">¿Dónde te lo llevamos?</p>
+                      <MapaEntrega punto={ubicacionEntrega} onCambiar={setUbicacionEntrega} />
+                      <button
+                        type="button"
+                        onClick={usarMiUbicacion}
+                        disabled={obteniendoGps}
+                        className="w-full py-2.5 rounded-xl bg-violet-50 text-violet-700 text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        <i className="fa-solid fa-location-crosshairs"></i>
+                        {obteniendoGps ? "Buscando tu ubicación..." : "Usar mi ubicación actual"}
+                      </button>
+                      {errorGps && <p className="text-xs text-rose-600">{errorGps}</p>}
+                      <p className="text-[11px] text-stone-400 -mt-1">Tocá el mapa o arrastrá el pin para ajustar el punto exacto.</p>
+
+                      <div>
+                        <label className="text-xs font-semibold text-stone-600 block mb-1">Referencia</label>
+                        <input
+                          type="text"
+                          value={referenciaEntrega}
+                          onChange={(e) => setReferenciaEntrega(e.target.value)}
+                          maxLength={200}
+                          placeholder="Ej. Portón verde, 2.º piso, tocar timbre"
+                          className="w-full border border-stone-200 rounded-xl px-3 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:border-violet-400"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-stone-600 block mb-1">Teléfono de contacto</label>
+                        <input
+                          type="tel"
+                          inputMode="tel"
+                          value={telefonoEntrega}
+                          onChange={(e) => setTelefonoEntrega(e.target.value)}
+                          maxLength={20}
+                          placeholder="Ej. 987654321"
+                          className="w-full border border-stone-200 rounded-xl px-3 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:border-violet-400"
+                        />
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-semibold text-stone-600 mb-1.5">¿Cómo pagarás al recibir?</p>
+                        <div className="flex flex-wrap gap-2">
+                          {MEDIOS_PAGO_ENTREGA.map((m) => (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => setMedioPagoEntrega(m.id)}
+                              className={`px-3 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition ${
+                                medioPagoEntrega === m.id ? "bg-violet-600 text-white" : "bg-violet-50 text-violet-700"
+                              }`}
+                            >
+                              <i className={`fa-solid ${m.icono}`}></i> {m.texto}
+                            </button>
+                          ))}
+                        </div>
+                        {medioPagoEntrega === "efectivo" && (
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            min="0"
+                            step="0.1"
+                            value={pagaConEntrega}
+                            onChange={(e) => setPagaConEntrega(e.target.value)}
+                            placeholder="¿Con cuánto pagas? (opcional)"
+                            className="mt-2 w-full border border-stone-200 rounded-xl px-3 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:border-violet-400"
+                          />
+                        )}
+                      </div>
+
+                      {(bodega.zona_reparto || pedidoMinimo > 0) && (
+                        <p className="text-[11px] text-stone-400 leading-snug">
+                          {bodega.zona_reparto ? `Zona de reparto: ${bodega.zona_reparto}.` : ""}
+                          {pedidoMinimo > 0 ? ` Pedido mínimo: ${formatoMoneda(pedidoMinimo)}.` : ""}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="px-4 py-4 border-t border-stone-200">
               {estadoHorario && !estadoHorario.abierto && (
@@ -2147,14 +2535,31 @@ function App() {
                 </p>
               )}
               {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-stone-500">Total</span>
-                <span className="font-bold text-stone-800">{formatoMoneda(totalCarrito)}</span>
+              <div className="mb-3 space-y-1">
+                {esDomicilio && (
+                  <>
+                    <div className="flex items-center justify-between text-xs text-stone-500">
+                      <span>Productos</span>
+                      <span>{formatoMoneda(totalCarrito)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-stone-500">
+                      <span>Envío a domicilio</span>
+                      <span>{formatoMoneda(costoEnvio)}</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-stone-500">{esDomicilio ? "Total a pagar" : "Total"}</span>
+                  <span className="font-bold text-stone-800">{formatoMoneda(totalConEnvio)}</span>
+                </div>
+                {problemaEntrega && (itemsCarrito.length > 0 || itemsCarritoCombos.length > 0) && (
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-1.5">{problemaEntrega}</p>
+                )}
               </div>
               {clienteSesion ? (
                 <button
                   onClick={confirmarPedido}
-                  disabled={(itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) || enviando}
+                  disabled={(itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) || enviando || !!problemaEntrega}
                   className="w-full py-3 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {enviando ? "Generando..." : (

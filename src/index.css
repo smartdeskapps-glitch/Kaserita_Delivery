@@ -12,3 +12,16 @@
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Mapa de entrega (Leaflet): Tailwind le pone max-width a las imágenes y
+   eso rompe las teselas; el z-index evita que el mapa tape los modales. */
+.leaflet-container {
+  z-index: 0;
+  font: inherit;
+}
+.leaflet-container img.leaflet-tile,
+.leaflet-container .leaflet-marker-icon,
+.leaflet-container .leaflet-marker-shadow {
+  max-width: none !important;
+  max-height: none !important;
+}
