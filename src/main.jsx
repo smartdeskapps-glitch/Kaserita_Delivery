@@ -426,7 +426,7 @@ function VisorFoto({ producto, onCerrar }) {
   );
 }
 
-function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, domicilio }) {
+function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedidos, domicilio, resumen }) {
   const [copiado, setCopiado] = useState(false);
   const copiarCodigo = async () => {
     try {
@@ -435,43 +435,155 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, domicilio
       setTimeout(() => setCopiado(false), 2000);
     } catch (e) {}
   };
+  // El pedido ya está registrado y el local lo ve en su sistema; el mensaje de
+  // WhatsApp es el aviso directo (y lleva la ubicación en los de domicilio).
+  const pasos = [
+    { titulo: "Pedido registrado", detalle: "El local ya lo ve en su sistema.", estado: "hecho" },
+    { titulo: "Avísale por WhatsApp", detalle: "Envía el mensaje para que lo atiendan más rápido.", estado: "actual" },
+    { titulo: "El local lo prepara", detalle: domicilio ? "Te avisamos cuando salga en camino." : "Te avisamos cuando esté listo.", estado: "pendiente" },
+  ];
   return (
-    <div className="max-w-md mx-auto px-4 py-10 flex flex-col items-center text-center gap-4">
-      <div className="w-16 h-16 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-2xl">
-        <i className="fa-solid fa-check"></i>
+    <div className="max-w-md mx-auto min-h-screen px-4 pt-9 pb-6 flex flex-col gap-3.5">
+      <div className="flex flex-col items-center text-center gap-2">
+        <div className="relative w-[84px] h-[84px] flex items-center justify-center mb-1">
+          <span className="absolute inset-0 rounded-full bg-[#6105dc]/[0.09]"></span>
+          <span className="absolute inset-[11px] rounded-full bg-[#6105dc]/[0.14]"></span>
+          <span className="relative w-[52px] h-[52px] rounded-full bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] text-white flex items-center justify-center">
+            <i className="fa-solid fa-check text-xl"></i>
+          </span>
+        </div>
+        <h1 className="text-[23px] font-extrabold tracking-tight text-[#1c1830]">¡Pedido registrado!</h1>
+        <p className="text-[13.5px] text-[#78729a] leading-relaxed max-w-[300px]">
+          {domicilio ? (
+            <>
+              Ya lo tiene <strong className="text-[#1c1830]">{bodega.nombre}</strong>. Avísale por WhatsApp: el mensaje lleva tu
+              ubicación y el detalle para que te lo lleven.
+            </>
+          ) : (
+            <>
+              Ya lo tiene <strong className="text-[#1c1830]">{bodega.nombre}</strong>. Avísale por WhatsApp para que lo
+              atiendan más rápido.
+            </>
+          )}
+        </p>
       </div>
-      <h1 className="text-lg font-bold text-stone-800">¡Tu pedido está listo!</h1>
-      <p className="text-sm text-stone-500">
-        {domicilio ? (
-          <>
-            Mandá el mensaje por WhatsApp a <strong>{bodega.nombre}</strong>: lleva tu ubicación y el detalle
-            para que te lo lleven a tu puerta. Tené el dinero listo para pagar al recibir.
-          </>
-        ) : (
-          <>
-            Mandá el mensaje por WhatsApp a <strong>{bodega.nombre}</strong>. Mostrá este código
-            en caja para que carguen tu pedido al instante.
-          </>
-        )}
-      </p>
-      <button
-        onClick={copiarCodigo}
-        className="text-3xl font-mono font-bold tracking-widest bg-stone-100 rounded-xl px-6 py-3 text-stone-800"
-      >
-        {codigo}
-      </button>
-      <p className="text-xs text-stone-400 -mt-2">{copiado ? "¡Copiado!" : "Tocá el código para copiarlo"}</p>
+
+      <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] px-4 py-3.5 flex flex-col">
+        {pasos.map((paso, idx) => (
+          <div key={paso.titulo} className={`relative flex gap-3 ${idx < pasos.length - 1 ? "pb-3.5" : ""}`}>
+            {idx < pasos.length - 1 && (
+              <span className={`absolute left-[13px] top-7 bottom-0.5 w-0.5 ${paso.estado === "hecho" ? "bg-[#6105dc]" : "bg-[#e2d6f6]"}`}></span>
+            )}
+            <span
+              className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-xs font-bold ${
+                paso.estado === "hecho"
+                  ? "bg-[#6105dc] text-white"
+                  : paso.estado === "actual"
+                  ? "bg-white text-[#6105dc] ring-2 ring-[#6105dc] shadow-[0_0_0_6px_rgba(97,5,220,0.14)]"
+                  : "bg-[#f4eefe] text-[#78729a]"
+              }`}
+            >
+              {paso.estado === "hecho" ? <i className="fa-solid fa-check text-[11px]"></i> : idx + 1}
+            </span>
+            <div>
+              <p className={`text-sm font-bold leading-snug ${paso.estado === "actual" ? "text-[#4d04b0]" : "text-[#1c1830]"}`}>{paso.titulo}</p>
+              <p className="text-[12.5px] text-[#78729a] leading-snug">{paso.detalle}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] pl-[18px] pr-3.5 py-3 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10.5px] font-bold tracking-[0.08em] uppercase text-[#78729a]">Código del pedido</p>
+          <p className="text-[26px] font-mono font-bold tracking-[0.16em] text-[#1c1830] leading-tight">{codigo}</p>
+        </div>
+        <button
+          onClick={copiarCodigo}
+          className="h-[38px] px-3.5 rounded-full bg-[#f4eefe] text-[#4d04b0] text-[12.5px] font-bold flex items-center gap-1.5 shrink-0"
+        >
+          <i className={`fa-regular ${copiado ? "fa-circle-check" : "fa-copy"} text-xs`}></i>
+          {copiado ? "Copiado" : "Copiar"}
+        </button>
+      </div>
+
+      {resumen && (
+        <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
+          {domicilio ? (
+            <div className="flex items-center gap-3 px-3.5 py-3">
+              <span className="w-10 h-10 rounded-[14px] bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+                <i className="fa-solid fa-motorcycle text-sm"></i>
+              </span>
+              <div className="min-w-0">
+                <p className="text-[10.5px] font-bold tracking-[0.07em] uppercase text-[#78729a]">Entregar en</p>
+                <p className="text-sm font-bold text-[#1c1830] leading-snug line-clamp-2">{resumen.referencia}</p>
+                <p className="text-xs text-[#78729a]">Tel. {resumen.telefono} · ubicación marcada en el mapa</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 px-3.5 py-3">
+              <span className="w-10 h-10 rounded-[14px] bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+                <i className="fa-solid fa-store text-sm"></i>
+              </span>
+              <div className="min-w-0">
+                <p className="text-[10.5px] font-bold tracking-[0.07em] uppercase text-[#78729a]">Retiras en</p>
+                <p className="text-sm font-bold text-[#1c1830] leading-snug">{bodega.nombre}</p>
+                {bodega.direccion && <p className="text-xs text-[#78729a] line-clamp-2">{bodega.direccion}</p>}
+              </div>
+            </div>
+          )}
+          <div className="flex items-center gap-3 px-3.5 py-3 border-t border-[#efe6fc]">
+            <span className="w-10 h-10 rounded-[14px] bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+              <i className={`fa-solid ${domicilio ? "fa-money-bill-wave" : "fa-bag-shopping"} text-sm`}></i>
+            </span>
+            <div className="min-w-0">
+              <p className="text-[10.5px] font-bold tracking-[0.07em] uppercase text-[#78729a]">
+                {domicilio ? "Pagas al recibir" : `Tu pedido · ${resumen.unidades} producto${resumen.unidades === 1 ? "" : "s"}`}
+              </p>
+              <p className="text-sm font-bold text-[#1c1830]">Total {formatoMoneda(resumen.total)}</p>
+              <p className="text-xs text-[#78729a]">
+                {domicilio
+                  ? `${TEXTO_MEDIO_PAGO[resumen.medioPago] || ""}${resumen.pagaCon ? `, con ${formatoMoneda(resumen.pagaCon)}` : ""} · incluye envío ${formatoMoneda(resumen.costoEnvio)}`
+                  : "Pagas en caja al retirar"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {domicilio && (
+        <p className="text-[12.5px] text-amber-700 bg-amber-100 rounded-2xl px-3.5 py-2.5 flex items-start gap-2 leading-snug">
+          <i className="fa-regular fa-clock mt-0.5"></i>
+          <span>Ten el dinero listo. El repartidor te avisa al llegar.</span>
+        </p>
+      )}
+
+      <div className="flex-1"></div>
+
       <a
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="w-full py-3 rounded-xl bg-violet-600 text-white font-semibold flex items-center justify-center gap-2"
+        className="h-14 rounded-full bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white font-bold text-[15.5px] flex items-center justify-center gap-2.5"
       >
-        <i className="fa-brands fa-whatsapp text-lg"></i> Enviar por WhatsApp
+        <i className="fa-brands fa-whatsapp text-xl"></i> Enviar por WhatsApp
       </a>
-      <button onClick={onVolver} className="text-sm text-stone-500 underline mt-2">
-        Volver al catálogo
-      </button>
+      <div className="flex gap-2">
+        {onVerPedidos && (
+          <button
+            onClick={onVerPedidos}
+            className="flex-1 h-[46px] rounded-full bg-white ring-1 ring-[#e6dcf7] text-[#4d04b0] font-semibold text-[13.5px] flex items-center justify-center gap-1.5"
+          >
+            <i className="fa-solid fa-receipt text-xs"></i> Ver mis pedidos
+          </button>
+        )}
+        <button
+          onClick={onVolver}
+          className="flex-1 h-[46px] rounded-full bg-white ring-1 ring-[#e6dcf7] text-[#4d04b0] font-semibold text-[13.5px] flex items-center justify-center gap-1.5"
+        >
+          <i className="fa-solid fa-store text-xs"></i> Volver al catálogo
+        </button>
+      </div>
     </div>
   );
 }
@@ -2104,7 +2216,20 @@ function App() {
     });
     const telefono = (bodega.telefono || "").replace(/\D/g, "");
     const whatsappUrl = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
-    setPedidoConfirmado({ codigo, whatsappUrl, domicilio: esDomicilio });
+    setPedidoConfirmado({
+      codigo,
+      whatsappUrl,
+      domicilio: esDomicilio,
+      resumen: {
+        unidades: totalUnidades,
+        total: totalConEnvio,
+        costoEnvio,
+        referencia: referenciaEntrega.trim(),
+        telefono: telefonoEntregaLimpio,
+        medioPago: medioPagoEntrega,
+        pagaCon: medioPagoEntrega === "efectivo" && pagaConEntrega ? Number(pagaConEntrega) : null,
+      },
+    });
     setPagaConEntrega("");
     setCarrito({});
     setCarritoCombos({});
@@ -2203,6 +2328,8 @@ function App() {
         codigo={pedidoConfirmado.codigo}
         whatsappUrl={pedidoConfirmado.whatsappUrl}
         domicilio={pedidoConfirmado.domicilio}
+        resumen={pedidoConfirmado.resumen}
+        onVerPedidos={clienteSesion ? () => { setPedidoConfirmado(null); setVistaMisPedidos(true); } : undefined}
         onVolver={() => setPedidoConfirmado(null)}
       />
     );
