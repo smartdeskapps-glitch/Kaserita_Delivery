@@ -1735,7 +1735,7 @@ function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarD
 
   return (
     <div className="fixed inset-0 z-20 overflow-y-auto bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">
-      <div className="max-w-md mx-auto px-4 pt-5 pb-28 flex flex-col gap-3 min-h-full">
+      <div className="kd-entra relative max-w-md mx-auto px-4 pt-5 pb-28 flex flex-col gap-3 min-h-full" style={{ "--d": direccionEntrada }}>
         <div className="flex items-center gap-3">
           <button onClick={onVolver} aria-label="Volver" className="w-10 h-10 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center">
             <i className="fa-solid fa-arrow-left text-sm"></i>
@@ -1842,6 +1842,19 @@ function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarD
 // Barra inferior con efecto vidrio. Se muestra en las pantallas principales
 // (vitrina, Mis tiendas, Mis pedidos y Perfil) para poder moverse entre ellas
 // sin tener que volver atrás.
+// Recuerda la pestaña anterior para animar: la cápsula de la barra viaja desde
+// donde estaba (aunque la barra se vuelva a montar al cambiar de pantalla) y la
+// pantalla nueva entra por el lado hacia donde nos movemos.
+const ORDEN_PESTANAS = ["inicio", "pedidos", "tiendas", "perfil"];
+let pestanaPrevia = 0;
+let pestanaActual = 0;
+let direccionEntrada = 0;
+function marcarPestana(id) {
+  const i = ORDEN_PESTANAS.indexOf(id);
+  direccionEntrada = i >= pestanaActual ? 1 : -1;
+  pestanaActual = i;
+}
+
 function BarraNavegacion({ activa, contadorPedidos, onInicio, onTiendas, onPedidos, onPerfil }) {
   const tabs = [
     { id: "inicio", icono: "fa-house", texto: "Inicio", onClick: onInicio },
@@ -1849,18 +1862,45 @@ function BarraNavegacion({ activa, contadorPedidos, onInicio, onTiendas, onPedid
     { id: "tiendas", icono: "fa-store", texto: "Mis tiendas", onClick: onTiendas },
     { id: "perfil", icono: "fa-user", texto: "Perfil", onClick: onPerfil },
   ];
+  const indice = Math.max(0, ORDEN_PESTANAS.indexOf(activa));
+  const [pos, setPos] = useState(pestanaPrevia);
+  useEffect(() => {
+    // Dos cuadros: primero se pinta la cápsula en su lugar anterior y luego se
+    // mueve al nuevo, para que el navegador anime el recorrido.
+    let r2;
+    const r1 = requestAnimationFrame(() => {
+      r2 = requestAnimationFrame(() => setPos(indice));
+    });
+    pestanaPrevia = indice;
+    pestanaActual = indice;
+    return () => {
+      cancelAnimationFrame(r1);
+      if (r2) cancelAnimationFrame(r2);
+    };
+  }, [indice]);
   return (
     <nav className="fixed bottom-0 inset-x-0 z-[25] rounded-t-[28px] bg-white/95 supports-[backdrop-filter]:bg-white/70 backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_-1px_0_rgba(97,5,220,0.08)]">
-      <div className="max-w-3xl mx-auto flex items-center justify-around h-[78px] px-2.5 pb-2">
+      <div className="relative max-w-3xl mx-auto grid grid-cols-4 items-center h-[78px] px-2.5 pb-2">
+        <div
+          aria-hidden="true"
+          className="absolute left-2.5 top-[13px] w-[calc((100%-20px)/4)] h-[52px] flex justify-center pointer-events-none transition-transform duration-[450ms] ease-[cubic-bezier(0.3,1.35,0.5,1)]"
+          style={{ transform: `translateX(${pos * 100}%)` }}
+        >
+          <span className="w-[76px] h-[52px] rounded-[18px] bg-[#6105dc]/[0.11]"></span>
+        </div>
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={t.onClick}
-            className={`relative w-[76px] h-[52px] rounded-[18px] flex flex-col items-center justify-center gap-0.5 transition-colors ${
-              t.id === activa ? "bg-[#6105dc]/[0.11] text-[#4d04b0]" : "text-[#78729a]"
+            className={`relative z-[1] justify-self-center w-[76px] h-[52px] rounded-[18px] flex flex-col items-center justify-center gap-0.5 transition-colors ${
+              t.id === activa ? "text-[#4d04b0]" : "text-[#78729a]"
             }`}
           >
-            <i className={`fa-solid ${t.icono} text-lg`}></i>
+            <i
+              className={`fa-solid ${t.icono} text-lg transition-transform duration-[350ms] ease-[cubic-bezier(0.3,1.6,0.5,1)] ${
+                t.id === activa ? "-translate-y-px scale-110" : ""
+              }`}
+            ></i>
             <span className="text-[10.5px] font-semibold">{t.texto}</span>
             {t.contador > 0 && (
               <span className="absolute right-3 -top-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#6105dc] text-white text-[10.5px] font-extrabold flex items-center justify-center border-2 border-white">
@@ -2748,6 +2788,7 @@ function App() {
 
   // Navegación de la barra inferior: cada pestaña deja abierta solo su pantalla.
   const irAInicio = () => {
+    marcarPestana("inicio");
     setVistaMisTiendas(false);
     setVistaMisPedidos(false);
     setPerfilAbierto(false);
@@ -2755,18 +2796,21 @@ function App() {
   };
   const irATiendas = () => {
     if (!clienteSesion) return setModalCuentaAbierto(true);
+    marcarPestana("tiendas");
     setVistaMisPedidos(false);
     setPerfilAbierto(false);
     setVistaMisTiendas(true);
   };
   const irAPedidos = () => {
     if (!clienteSesion) return setModalCuentaAbierto(true);
+    marcarPestana("pedidos");
     setVistaMisTiendas(false);
     setPerfilAbierto(false);
     setVistaMisPedidos(true);
   };
   const irAPerfil = () => {
     if (!clienteSesion) return setModalCuentaAbierto(true);
+    marcarPestana("perfil");
     setVistaMisTiendas(false);
     setVistaMisPedidos(false);
     setPerfilAbierto(true);
@@ -2785,12 +2829,14 @@ function App() {
   if (vistaMisPedidos && clienteSesion) {
     return (
       <>
-        <PantallaMisPedidos
-          cliente={clienteSesion}
-          onVolver={() => setVistaMisPedidos(false)}
-          bodegaActualId={bodega?.bodega_id}
-          onRepetirPedido={repetirPedido}
-        />
+        <div className="kd-entra relative" style={{ "--d": direccionEntrada }}>
+          <PantallaMisPedidos
+            cliente={clienteSesion}
+            onVolver={() => setVistaMisPedidos(false)}
+            bodegaActualId={bodega?.bodega_id}
+            onRepetirPedido={repetirPedido}
+          />
+        </div>
         {barraNavegacion("pedidos")}
       </>
     );
@@ -2799,14 +2845,16 @@ function App() {
   if (vistaMisTiendas && clienteSesion) {
     return (
       <>
-        <PantallaMisTiendas onVolver={() => setVistaMisTiendas(false)} />
+        <div className="kd-entra relative" style={{ "--d": direccionEntrada }}>
+          <PantallaMisTiendas onVolver={() => setVistaMisTiendas(false)} />
+        </div>
         {barraNavegacion("tiendas")}
       </>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto pb-48">
+    <div className="kd-entra relative max-w-3xl mx-auto pb-48" style={{ "--d": direccionEntrada }}>
       <header className="px-4 pt-4 pb-2 flex items-center gap-3">
         <div className="w-[46px] h-[46px] rounded-2xl bg-[#f4eefe] overflow-hidden shrink-0">
           {bodega.logo_url ? (

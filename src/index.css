@@ -31,3 +31,18 @@ body {
   background: linear-gradient(135deg, #f4effc 0%, #f9f8fb 50%, #f5f4f8 100%) fixed;
   min-height: 100vh;
 }
+
+/* Entrada lateral al cambiar de pestaña (barra inferior). Se anima "left" y no
+   "transform" para no convertir al contenedor en referencia de los elementos
+   fixed (carrito flotante, barra). */
+.kd-entra {
+  animation: kd-entra 0.42s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+@keyframes kd-entra {
+  from { opacity: 0; left: calc(var(--d, 1) * 34px); }
+  to { opacity: 1; left: 0; }
+}
+body { overflow-x: clip; }
+@media (prefers-reduced-motion: reduce) {
+  .kd-entra { animation: none; }
+}
