@@ -395,7 +395,7 @@ function VisorFoto({ producto, onCerrar }) {
           <img
             src={fotos[indice]}
             alt={tituloProducto(producto.descripcion)}
-            className="max-w-full max-h-[65vh] rounded-xl object-contain shadow-2xl"
+            className="max-w-full max-h-[65vh] rounded-[24px] object-contain shadow-2xl"
           />
           {fotos.length > 1 && (
             <button
@@ -417,7 +417,7 @@ function VisorFoto({ producto, onCerrar }) {
             ))}
           </div>
         )}
-        <p className="text-white text-sm font-semibold text-center">{tituloProducto(producto.descripcion)}</p>
+        <p className="text-white text-[15px] font-bold text-center">{tituloProducto(producto.descripcion)}</p>
         {producto.descripcion_larga && (
           <p className="text-white/70 text-xs text-center max-w-sm whitespace-pre-line">{producto.descripcion_larga}</p>
         )}
@@ -588,6 +588,36 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedi
   );
 }
 
+// Hoja inferior (en celular) o cuadro centrado (en pantalla grande) con el
+// estilo de la app: fondo violeta oscuro con desenfoque, esquinas muy
+// redondeadas, título y botón de cerrar. Las hojas de la app la comparten.
+function HojaInferior({ titulo, onCerrar, children, ancho = "sm:max-w-sm", alto = "", sinCerrarFuera = false }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[#1c1830]/45 backdrop-blur-[3px] sm:p-4"
+      onClick={sinCerrarFuera ? undefined : onCerrar}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
+        className={`kd-hoja w-full ${ancho} ${alto} bg-white rounded-t-[28px] sm:rounded-[28px] shadow-2xl flex flex-col min-h-0`}
+      >
+        <div className="w-[38px] h-1 rounded bg-[#e3d9f5] mx-auto mt-2.5 sm:hidden shrink-0"></div>
+        <div className="flex items-center justify-between gap-3 px-[18px] pt-3.5 pb-2 shrink-0">
+          <h2 className="text-[17px] font-extrabold tracking-tight text-[#1c1830]">{titulo}</h2>
+          {onCerrar && (
+            <button onClick={onCerrar} aria-label="Cerrar" className="w-9 h-9 rounded-full bg-[#f4f1f9] text-[#78729a] flex items-center justify-center shrink-0">
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+          )}
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function IconGoogle() {
   return (
     <svg viewBox="0 0 48 48" className="w-4 h-4">
@@ -601,33 +631,33 @@ function IconGoogle() {
 
 function ModalCuenta({ onCerrar, onGoogle }) {
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center sm:justify-center z-30" onClick={onCerrar}>
-      <div
-        className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm p-5 space-y-3"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="font-bold text-stone-800">Ingresar</h2>
-          <button onClick={onCerrar} className="text-stone-400">
-            <i className="fa-solid fa-xmark text-lg"></i>
-          </button>
+    <HojaInferior titulo="Ingresar" onCerrar={onCerrar}>
+      <div className="px-[18px] pb-6 pt-1 flex flex-col gap-3">
+        <div className="flex items-center gap-3 bg-[#f4eefe] rounded-[20px] px-3.5 py-3">
+          <span className="w-10 h-10 rounded-full bg-white text-[#6105dc] flex items-center justify-center shrink-0">
+            <i className="fa-solid fa-bag-shopping"></i>
+          </span>
+          <p className="text-[12.5px] leading-snug text-[#4d04b0]">
+            Con tu cuenta ves el estado de tus pedidos, guardás tus tiendas favoritas y te avisamos cuando tu pedido esté listo.
+          </p>
         </div>
-        <p className="text-xs text-stone-500">
-          Con tu cuenta podés ver el estado de tus pedidos, guardar tus favoritos y recibir un aviso cuando tu pedido
-          esté listo.
-        </p>
         <button
           type="button"
           onClick={onGoogle}
-          className="w-full py-2.5 rounded-xl border border-stone-200 text-stone-700 font-semibold text-sm flex items-center justify-center gap-2"
+          className="w-full h-12 rounded-full bg-white ring-1 ring-[#e6dcf7] shadow-sm text-[#1c1830] font-bold text-sm flex items-center justify-center gap-2.5 active:scale-[0.98] transition"
         >
           <IconGoogle /> Continuar con Google
         </button>
-        <p className="text-[11px] text-stone-400 text-center">
+        <p className="text-[11.5px] text-[#78729a] text-center">
           Entrás con tu cuenta de Google: no hace falta crear ni recordar ningún PIN.
         </p>
+        <p className="text-[11px] text-[#a29cbd] text-center leading-snug">
+          Al continuar aceptás los{" "}
+          <a href="https://kaserita.vercel.app/terminos.html" target="_blank" rel="noopener noreferrer" className="underline">Términos</a> y la{" "}
+          <a href="https://kaserita.vercel.app/privacidad.html" target="_blank" rel="noopener noreferrer" className="underline">Política de privacidad</a>.
+        </p>
       </div>
-    </div>
+    </HojaInferior>
   );
 }
 
@@ -670,39 +700,34 @@ function ModalCompletarPerfil({ inicial, onListo, onCancelar }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center sm:justify-center z-30">
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm p-5 space-y-3">
-        <h2 className="font-bold text-stone-800">Ya casi -- un dato más</h2>
-        <p className="text-xs text-stone-500">Necesitamos tu WhatsApp para poder avisarte de tus pedidos.</p>
-        <form onSubmit={guardar} className="space-y-2.5">
+    <HojaInferior titulo="Ya casi, un dato más" sinCerrarFuera>
+      <div className="px-[18px] pb-6 pt-1 flex flex-col gap-3">
+        <p className="text-[12.5px] text-[#78729a]">Necesitamos tu WhatsApp para poder avisarte de tus pedidos.</p>
+        <form onSubmit={guardar} className="flex flex-col gap-2.5">
           <input
             type="text"
             placeholder="Tu nombre"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
-            className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
+            className="w-full h-12 rounded-2xl bg-[#f7f4fc] ring-1 ring-[#efe6fc] px-4 text-sm text-[#1c1830] placeholder-[#a29cbd] focus:outline-none focus:ring-2 focus:ring-[#6105dc]/40"
           />
           <input
             type="tel"
             placeholder="Tu celular (WhatsApp)"
             value={telefono}
             onChange={(e) => setTelefono(e.target.value)}
-            className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
+            className="w-full h-12 rounded-2xl bg-[#f7f4fc] ring-1 ring-[#efe6fc] px-4 text-sm text-[#1c1830] placeholder-[#a29cbd] focus:outline-none focus:ring-2 focus:ring-[#6105dc]/40"
           />
-          {error && <p className="text-xs text-red-600">{error}</p>}
-          <button
-            type="submit"
-            disabled={cargando}
-            className="w-full py-2.5 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50"
-          >
+          {error && <p className="text-xs text-rose-600 px-1">{error}</p>}
+          <button type="submit" disabled={cargando} className="w-full h-12 rounded-full bg-[#6105dc] hover:bg-[#4d04b0] text-white font-bold text-sm disabled:opacity-50 active:scale-[0.98] transition">
             {cargando ? "Un momento..." : "Continuar"}
           </button>
         </form>
-        <button onClick={onCancelar} className="w-full text-center text-xs text-stone-400 underline">
+        <button onClick={onCancelar} className="w-full text-center text-xs text-[#78729a] underline">
           Cancelar y salir
         </button>
       </div>
-    </div>
+    </HojaInferior>
   );
 }
 
@@ -1588,31 +1613,25 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
       )}
 
       {modalPegarLink && (
-        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center sm:justify-center z-50" onClick={() => setModalPegarLink(false)}>
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-stone-800">Pegar link de la bodega</h2>
-              <button onClick={() => setModalPegarLink(false)} className="text-stone-400">
-                <i className="fa-solid fa-xmark text-lg"></i>
-              </button>
-            </div>
+        <HojaInferior titulo="Pegar link de la bodega" onCerrar={() => setModalPegarLink(false)}>
+          <div className="px-[18px] pb-6 pt-1 flex flex-col gap-3">
             <input
               type="text"
               value={linkPegado}
               onChange={(e) => setLinkPegado(e.target.value)}
               placeholder="https://kaserita-delivery.vercel.app/bodega-demo"
-              className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-900"
+              className="w-full h-12 rounded-2xl bg-[#f7f4fc] ring-1 ring-[#efe6fc] px-4 text-sm text-[#1c1830] placeholder-[#a29cbd] focus:outline-none focus:ring-2 focus:ring-[#6105dc]/40"
               autoFocus
             />
             <button
               onClick={() => irAlSlugDesdeTexto(linkPegado)}
               disabled={!linkPegado.trim()}
-              className="w-full py-2.5 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50"
+              className="w-full h-12 rounded-full bg-[#6105dc] hover:bg-[#4d04b0] text-white font-bold text-sm disabled:opacity-50 active:scale-[0.98] transition"
             >
               Ir a la tienda
             </button>
           </div>
-        </div>
+        </HojaInferior>
       )}
     </div>
   );
@@ -1624,6 +1643,33 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
 // con el que entra, así que no se edita. La forma de pago no se guarda acá:
 // se elige al hacer cada pedido.
 function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarDireccion, onInstalar, onSalir }) {
+  const [confirmarEliminar, setConfirmarEliminar] = useState(false);
+  const [textoConfirmar, setTextoConfirmar] = useState("");
+  const [eliminando, setEliminando] = useState(false);
+  const [errorEliminar, setErrorEliminar] = useState("");
+
+  // Borra la cuenta y sus datos (migration_37_eliminar_mi_cuenta.sql) y vuelve
+  // al inicio con todo limpio.
+  const eliminarCuenta = async () => {
+    setEliminando(true);
+    setErrorEliminar("");
+    const { error } = await sbClient.rpc("eliminar_mi_cuenta");
+    if (error) {
+      setEliminando(false);
+      setErrorEliminar(
+        error.code === "PGRST202" || /could not find the function/i.test(error.message || "")
+          ? "Esta opción todavía no está disponible. Intentá de nuevo más tarde."
+          : error.message || "No se pudo eliminar la cuenta."
+      );
+      return;
+    }
+    try { await sbClient.auth.signOut({ scope: "local" }); } catch (e) { /* la sesión ya no existe */ }
+    try {
+      Object.keys(localStorage).filter((k) => k.startsWith("kd_")).forEach((k) => localStorage.removeItem(k));
+    } catch (e) { /* sin almacenamiento */ }
+    window.location.href = window.location.origin + "/";
+  };
+
   const [editando, setEditando] = useState(null); // "nombre" | "telefono" | null
   const [valor, setValor] = useState("");
   const [error, setError] = useState("");
@@ -1872,6 +1918,28 @@ function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarD
           </div>
         )}
 
+        <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
+          <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-[#78729a] px-3.5 pt-3 pb-1">Legal</p>
+          {[
+            ["fa-shield-halved", "Política de privacidad", "https://kaserita.vercel.app/privacidad.html"],
+            ["fa-file-lines", "Términos y condiciones", "https://kaserita.vercel.app/terminos.html"],
+          ].map(([icono, texto, url], i) => (
+            <a
+              key={texto}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`px-3.5 py-3 flex items-center gap-3 ${i > 0 ? "border-t border-[#efe6fc]" : ""}`}
+            >
+              <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+                <i className={`fa-solid ${icono} text-sm`}></i>
+              </span>
+              <p className="text-sm font-bold text-[#1c1830] flex-1">{texto}</p>
+              <i className="fa-solid fa-arrow-up-right-from-square text-[11px] text-[#a29cbd]"></i>
+            </a>
+          ))}
+        </div>
+
         <div className="flex-1"></div>
         <button
           onClick={onSalir}
@@ -1879,7 +1947,63 @@ function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarD
         >
           <i className="fa-solid fa-right-from-bracket text-xs"></i> Cerrar sesión
         </button>
+        <button
+          onClick={() => { setTextoConfirmar(""); setErrorEliminar(""); setConfirmarEliminar(true); }}
+          className="text-[12.5px] font-semibold text-[#78729a] underline py-1"
+        >
+          Eliminar mi cuenta
+        </button>
       </div>
+
+      {confirmarEliminar && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-6 bg-[#1c1830]/45 backdrop-blur-[3px]"
+          onClick={() => !eliminando && setConfirmarEliminar(false)}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+            className="kd-pop w-full max-w-sm bg-white rounded-[28px] px-[18px] pt-[22px] pb-[18px] flex flex-col items-center text-center gap-2 shadow-[0_24px_50px_-18px_rgba(28,24,48,0.5)]"
+          >
+            <span className="w-[52px] h-[52px] rounded-full bg-[#fff1f3] text-[#e11d48] flex items-center justify-center">
+              <i className="fa-solid fa-user-xmark text-xl"></i>
+            </span>
+            <h3 className="text-[18px] font-extrabold text-[#1c1830]">¿Eliminar tu cuenta?</h3>
+            <p className="text-[12.5px] text-[#78729a] leading-snug">
+              Se borrarán tu nombre, teléfono, correo, tus tiendas guardadas y el historial de tus pedidos. Esta acción no se puede deshacer.
+            </p>
+            <label className="w-full text-left text-[11.5px] font-semibold text-[#78729a] mt-1.5">
+              Para confirmar, escribí <span className="font-extrabold text-[#e11d48]">ELIMINAR</span>
+              <input
+                type="text"
+                value={textoConfirmar}
+                onChange={(e) => setTextoConfirmar(e.target.value)}
+                autoCapitalize="characters"
+                autoComplete="off"
+                className="mt-1.5 w-full h-11 rounded-2xl bg-[#f7f4fc] ring-1 ring-[#efe6fc] px-4 text-sm font-bold tracking-wider text-[#1c1830] focus:outline-none focus:ring-2 focus:ring-[#e11d48]/40"
+              />
+            </label>
+            {errorEliminar && <p className="text-xs text-rose-600 text-left w-full">{errorEliminar}</p>}
+            <div className="w-full flex gap-2 mt-1">
+              <button
+                onClick={() => setConfirmarEliminar(false)}
+                disabled={eliminando}
+                className="flex-1 h-[46px] rounded-full bg-[#f4eefe] text-[#4d04b0] text-sm font-bold disabled:opacity-50 active:scale-[0.98] transition-transform"
+              >
+                Mejor no
+              </button>
+              <button
+                onClick={eliminarCuenta}
+                disabled={eliminando || textoConfirmar.trim().toUpperCase() !== "ELIMINAR"}
+                className="flex-1 h-[46px] rounded-full bg-[#e11d48] text-white text-sm font-bold disabled:opacity-40 active:scale-[0.98] transition-transform"
+              >
+                {eliminando ? "Eliminando..." : "Eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2741,8 +2865,8 @@ function App() {
         {clienteSesion ? (
           <div className="max-w-md mx-auto px-4 pt-4">
             <div className="flex items-center justify-between mb-1">
-              <span className="font-bold text-violet-700">Kaserita</span>
-              <button onClick={salir} className="text-xs text-stone-400 underline">
+              <span className="font-extrabold text-lg tracking-tight text-[#4d04b0]">Kaserita</span>
+              <button onClick={salir} className="h-8 px-3.5 rounded-full bg-white ring-1 ring-[#efe6fc] text-xs font-bold text-[#78729a]">
                 Cerrar sesión
               </button>
             </div>
@@ -2751,36 +2875,39 @@ function App() {
         {clienteSesion ? (
           <PantallaMisTiendas esInicio />
         ) : (
-          <div className="max-w-md mx-auto px-4 py-16 text-center text-stone-500 space-y-5">
-            <div>
-              <i className="fa-solid fa-store text-3xl text-stone-300 mb-3"></i>
-              <p>Este es el catálogo de pedidos de Kaserita.</p>
-              <p className="text-sm mt-1">Pedile a tu bodega el link de su catálogo para empezar a pedir.</p>
+          <div className="max-w-md mx-auto px-4 py-14 flex flex-col items-center text-center gap-5">
+            <span className="w-[72px] h-[72px] rounded-[26px] bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] text-white flex items-center justify-center shadow-lg shadow-[#6105dc]/25">
+              <i className="fa-solid fa-store text-3xl"></i>
+            </span>
+            <div className="space-y-1.5">
+              <h1 className="text-[22px] font-extrabold tracking-tight text-[#1c1830]">Kaserita Delivery</h1>
+              <p className="text-sm text-[#78729a]">Este es el catálogo de pedidos de Kaserita.</p>
+              <p className="text-sm text-[#78729a]">Pedile a tu bodega el link de su catálogo para empezar a pedir.</p>
             </div>
             {ultimaBodega && (
               <a
                 href={`/${ultimaBodega.slug}`}
-                className="flex items-center gap-3 bg-white border border-stone-200 rounded-2xl p-3 text-left"
+                className="w-full flex items-center gap-3 bg-white ring-1 ring-[#efe6fc] rounded-[26px] p-2.5 text-left active:scale-[0.99] transition"
               >
-                <div className="w-11 h-11 rounded-full bg-stone-100 overflow-hidden shrink-0">
+                <div className="w-[52px] h-[52px] rounded-[18px] bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] overflow-hidden shrink-0 flex items-center justify-center text-white font-extrabold text-lg">
                   {ultimaBodega.logo_url ? (
                     <img src={ultimaBodega.logo_url} alt={ultimaBodega.nombre} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-violet-600 text-white font-bold text-sm">
-                      {ultimaBodega.nombre?.charAt(0).toUpperCase()}
-                    </div>
+                    ultimaBodega.nombre?.charAt(0).toUpperCase()
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-stone-400">Seguir viendo</p>
-                  <p className="font-semibold text-sm text-stone-800 truncate">{ultimaBodega.nombre}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#78729a]">Seguir viendo</p>
+                  <p className="font-bold text-[14.5px] text-[#1c1830] truncate">{ultimaBodega.nombre}</p>
                 </div>
-                <i className="fa-solid fa-chevron-right text-stone-300"></i>
+                <span className="w-9 h-9 rounded-full bg-[#6105dc] text-white flex items-center justify-center shrink-0">
+                  <i className="fa-solid fa-arrow-right text-xs"></i>
+                </span>
               </a>
             )}
             <button
               onClick={() => setModalCuentaAbierto(true)}
-              className="text-sm text-violet-600 font-semibold underline"
+              className="h-11 px-6 rounded-full bg-white ring-1 ring-[#e6dcf7] text-[#4d04b0] text-sm font-bold active:scale-[0.98] transition"
             >
               Ingresá para ver tus bodegas guardadas
             </button>
@@ -2807,15 +2934,22 @@ function App() {
   }
 
   if (estadoBodega === "cargando") {
-    return <div className="max-w-md mx-auto px-4 py-16 text-center text-stone-400">Cargando...</div>;
+    return (
+      <div className="max-w-md mx-auto px-4 py-24 flex flex-col items-center gap-3 text-[#78729a]">
+        <i className="fa-solid fa-spinner fa-spin text-2xl text-[#6105dc]"></i>
+        <p className="text-sm font-semibold">Cargando...</p>
+      </div>
+    );
   }
 
   if (estadoBodega === "no-encontrada") {
     return (
-      <div className="max-w-md mx-auto px-4 py-16 text-center text-stone-500">
-        <i className="fa-solid fa-circle-exclamation text-3xl text-stone-300 mb-3"></i>
-        <p>No encontramos este catálogo.</p>
-        <p className="text-sm mt-1">Puede que el link esté mal escrito o que la bodega no tenga delivery habilitado.</p>
+      <div className="max-w-md mx-auto px-4 py-20 flex flex-col items-center text-center gap-3">
+        <span className="w-16 h-16 rounded-full bg-[#f4eefe] text-[#6105dc] flex items-center justify-center">
+          <i className="fa-solid fa-circle-exclamation text-2xl"></i>
+        </span>
+        <h1 className="text-lg font-extrabold text-[#1c1830]">No encontramos este catálogo</h1>
+        <p className="text-sm text-[#78729a]">Puede que el link esté mal escrito o que la bodega no tenga delivery habilitado.</p>
       </div>
     );
   }
@@ -3691,15 +3825,8 @@ function App() {
       )}
 
       {modalTodosCombos && (
-        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center sm:justify-center z-30" onClick={() => setModalTodosCombos(false)}>
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
-              <h2 className="font-bold text-stone-800">Todos los combos</h2>
-              <button onClick={() => setModalTodosCombos(false)} className="text-stone-400">
-                <i className="fa-solid fa-xmark text-lg"></i>
-              </button>
-            </div>
-            <div className="overflow-y-auto flex-1 p-4 flex flex-col gap-3">
+        <HojaInferior titulo="Todos los combos" onCerrar={() => setModalTodosCombos(false)} ancho="sm:max-w-md" alto="max-h-[85vh]">
+            <div className="overflow-y-auto flex-1 px-4 pb-6 pt-1 flex flex-col gap-3">
               {combos.map((combo) => (
                 <TarjetaCombo
                   key={combo.id}
@@ -3712,20 +3839,12 @@ function App() {
                 />
               ))}
             </div>
-          </div>
-        </div>
+        </HojaInferior>
       )}
 
       {modalTodosDestacados && (
-        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center sm:justify-center z-30" onClick={() => setModalTodosDestacados(false)}>
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
-              <h2 className="font-bold text-stone-800">Todos los destacados</h2>
-              <button onClick={() => setModalTodosDestacados(false)} className="text-stone-400">
-                <i className="fa-solid fa-xmark text-lg"></i>
-              </button>
-            </div>
-            <div className="overflow-y-auto flex-1 p-4 grid grid-cols-2 gap-3">
+        <HojaInferior titulo="Todos los destacados" onCerrar={() => setModalTodosDestacados(false)} ancho="sm:max-w-lg" alto="max-h-[85vh]">
+            <div className="overflow-y-auto flex-1 px-4 pb-6 pt-1 grid grid-cols-2 gap-3">
               {productosDestacados.map((p) => (
                 <TarjetaProducto
                   key={p.id}
@@ -3739,8 +3858,7 @@ function App() {
                 />
               ))}
             </div>
-          </div>
-        </div>
+        </HojaInferior>
       )}
 
       {modalCuentaAbierto && (
@@ -3827,27 +3945,24 @@ function App() {
       )}
 
       {instruccionesIOSAbiertas && (
-        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-5 max-w-sm w-full space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-stone-800">Instalar {bodega.nombre}</h2>
-              <button onClick={() => setInstruccionesIOSAbiertas(false)} className="text-stone-400">
-                <i className="fa-solid fa-xmark"></i>
-              </button>
-            </div>
-            <p className="text-sm text-stone-600">
-              En iPhone la instalación se hace desde Safari, así:
-            </p>
-            <ol className="text-sm text-stone-600 space-y-2 list-decimal list-inside">
-              <li>Tocá el botón <i className="fa-solid fa-arrow-up-from-bracket"></i> Compartir (abajo o arriba de la pantalla).</li>
-              <li>Elegí <strong>"Agregar a inicio"</strong>.</li>
-              <li>Tocá <strong>"Agregar"</strong> arriba a la derecha.</li>
+        <HojaInferior titulo={`Instalar ${bodega.nombre}`} onCerrar={() => setInstruccionesIOSAbiertas(false)}>
+          <div className="px-[18px] pb-6 pt-1 flex flex-col gap-3">
+            <p className="text-[13px] text-[#78729a]">En iPhone la instalación se hace desde Safari, así:</p>
+            <ol className="flex flex-col gap-2">
+              {[
+                <>Tocá el botón <i className="fa-solid fa-arrow-up-from-bracket"></i> <strong>Compartir</strong> (abajo o arriba de la pantalla).</>,
+                <>Elegí <strong>"Agregar a inicio"</strong>.</>,
+                <>Tocá <strong>"Agregar"</strong> arriba a la derecha.</>,
+              ].map((paso, i) => (
+                <li key={i} className="flex items-start gap-3 bg-[#f4eefe] rounded-2xl px-3.5 py-3 text-[13px] text-[#1c1830] leading-snug">
+                  <span className="w-6 h-6 rounded-full bg-[#6105dc] text-white text-xs font-extrabold flex items-center justify-center shrink-0">{i + 1}</span>
+                  <span>{paso}</span>
+                </li>
+              ))}
             </ol>
-            <p className="text-xs text-stone-400">
-              Solo funciona desde Safari, no desde Chrome ni otras apps del navegador.
-            </p>
+            <p className="text-[11.5px] text-[#a29cbd]">Solo funciona desde Safari, no desde Chrome ni otras apps del navegador.</p>
           </div>
-        </div>
+        </HojaInferior>
       )}
     </div>
   );
