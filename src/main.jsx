@@ -1573,6 +1573,272 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
   );
 }
 
+// "Mi perfil": datos de la cuenta que la clienta puede editar (nombre y teléfono
+// de contacto), la dirección que se guarda en este dispositivo para no
+// escribirla en cada pedido, y las notificaciones. El correo es el de Google
+// con el que entra, así que no se edita. La forma de pago no se guarda acá:
+// se elige al hacer cada pedido.
+function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarDireccion, onInstalar, onSalir }) {
+  const [editando, setEditando] = useState(null); // "nombre" | "telefono" | null
+  const [valor, setValor] = useState("");
+  const [error, setError] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [correo, setCorreo] = useState("");
+  const [pushActivo, setPushActivo] = useState(false);
+  const [novedades, setNovedades] = useState(true);
+  const [avisoNotif, setAvisoNotif] = useState("");
+
+  useEffect(() => {
+    sbClient.auth.getUser().then(({ data }) => setCorreo(data?.user?.email || ""));
+    (async () => {
+      try {
+        if ("serviceWorker" in navigator && "PushManager" in window && Notification.permission === "granted") {
+          const reg = await navigator.serviceWorker.getRegistration();
+          const sub = await reg?.pushManager.getSubscription();
+          setPushActivo(!!sub && localStorage.getItem("kd_push_apagado") !== "1");
+        }
+      } catch {
+        // sin soporte de notificaciones: el interruptor queda apagado
+      }
+    })();
+    sbClient
+      .from("bodegas_visitadas")
+      .select("avisos")
+      .then(({ data }) => {
+        if (data && data.length > 0) setNovedades(data.every((v) => v.avisos !== false));
+      });
+  }, []);
+
+  const empezarEdicion = (campo) => {
+    setEditando(campo);
+    setValor(campo === "nombre" ? cliente.nombre || "" : cliente.telefono || "");
+    setError("");
+  };
+
+  const guardar = async () => {
+    const limpio = valor.trim();
+    let cambios;
+    if (editando === "nombre") {
+      if (limpio.length < 2) return setError("Escribe tu nombre.");
+      cambios = { nombre: limpio };
+    } else {
+      const digitos = limpio.replace(/\D/g, "");
+      if (digitos.length < 7 || digitos.length > 15) return setError("Ingresa un teléfono válido.");
+      cambios = { telefono: digitos };
+    }
+    setGuardando(true);
+    const { error: err } = await sbClient.from("clientes_delivery").update(cambios).eq("id", cliente.id);
+    setGuardando(false);
+    if (err) {
+      setError(err.code === "23505" ? "Ese teléfono ya está registrado en otra cuenta." : "No se pudo guardar. Intenta de nuevo.");
+      return;
+    }
+    onActualizado({ ...cliente, ...cambios });
+    setEditando(null);
+    setError("");
+  };
+
+  const alternarPush = async () => {
+    setAvisoNotif("");
+    if (pushActivo) {
+      try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        const sub = await reg?.pushManager.getSubscription();
+        await sub?.unsubscribe();
+        await sbClient.from("clientes_delivery").update({ push_subscription: null }).eq("id", cliente.id);
+        localStorage.setItem("kd_push_apagado", "1");
+        setPushActivo(false);
+      } catch {
+        setAvisoNotif("No se pudieron apagar las notificaciones.");
+      }
+    } else {
+      try {
+        localStorage.removeItem("kd_push_apagado");
+        await activarNotificaciones(cliente.id);
+        setPushActivo(true);
+      } catch (err) {
+        setAvisoNotif(err.message || "No se pudieron activar las notificaciones.");
+      }
+    }
+  };
+
+  const alternarNovedades = async () => {
+    const nuevo = !novedades;
+    setNovedades(nuevo);
+    // La política de la tabla solo deja tocar filas propias; el filtro es solo porque
+    // Supabase no acepta un UPDATE sin condición.
+    const { error: err } = await sbClient.from("bodegas_visitadas").update({ avisos: nuevo }).neq("bodega_id", "00000000-0000-0000-0000-000000000000");
+    if (err) setNovedades(!nuevo);
+  };
+
+  const desde = cliente.creado_en
+    ? new Date(cliente.creado_en).toLocaleDateString("es-PE", { month: "long", year: "numeric" })
+    : "";
+
+  const filaEditable = (campo, icono, etiqueta, texto) => (
+    <div className="px-3.5 py-3 border-t border-[#efe6fc] first:border-t-0">
+      {editando === campo ? (
+        <div className="flex flex-col gap-2">
+          <p className="text-[11px] font-semibold text-[#78729a]">{etiqueta}</p>
+          <input
+            type={campo === "telefono" ? "tel" : "text"}
+            inputMode={campo === "telefono" ? "tel" : undefined}
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            maxLength={campo === "telefono" ? 20 : 60}
+            autoFocus
+            className="w-full bg-white border border-[#e6dcf7] rounded-full px-4 py-2.5 text-sm text-stone-800 focus:outline-none focus:border-[#6105dc]/45 focus:ring-4 focus:ring-[#6105dc]/[0.07]"
+          />
+          {error && <p className="text-xs text-rose-600">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              onClick={guardar}
+              disabled={guardando}
+              className="flex-1 h-10 rounded-full bg-[#6105dc] text-white text-sm font-bold disabled:opacity-50"
+            >
+              {guardando ? "Guardando..." : "Guardar"}
+            </button>
+            <button onClick={() => { setEditando(null); setError(""); }} className="flex-1 h-10 rounded-full bg-white ring-1 ring-[#e6dcf7] text-[#4d04b0] text-sm font-semibold">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3">
+          <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+            <i className={`fa-solid ${icono} text-sm`}></i>
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold text-[#78729a]">{etiqueta}</p>
+            <p className="text-sm font-bold text-[#1c1830] truncate">{texto}</p>
+          </div>
+          <button onClick={() => empezarEdicion(campo)} aria-label={`Editar ${etiqueta.toLowerCase()}`} className="text-[#6105dc] w-8 h-8 flex items-center justify-center">
+            <i className="fa-solid fa-pen text-xs"></i>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  const interruptor = (activo, onClick, etiqueta) => (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={activo}
+      aria-label={etiqueta}
+      onClick={onClick}
+      className={`relative w-11 h-[26px] rounded-full shrink-0 transition-colors ${activo ? "bg-[#6105dc]" : "bg-[#d9d5e2]"}`}
+    >
+      <span className={`absolute top-[3px] w-5 h-5 rounded-full bg-white transition-all ${activo ? "left-[21px]" : "left-[3px]"}`}></span>
+    </button>
+  );
+
+  return (
+    <div className="fixed inset-0 z-20 overflow-y-auto bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">
+      <div className="max-w-md mx-auto px-4 py-5 flex flex-col gap-3 min-h-full">
+        <div className="flex items-center gap-3">
+          <button onClick={onVolver} aria-label="Volver" className="w-10 h-10 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center">
+            <i className="fa-solid fa-arrow-left text-sm"></i>
+          </button>
+          <h1 className="text-[22px] font-extrabold tracking-tight text-[#1c1830]">Mi perfil</h1>
+        </div>
+
+        <div className="flex items-center gap-3.5 px-0.5 py-1">
+          <span className="w-14 h-14 rounded-full bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] text-white text-2xl font-extrabold flex items-center justify-center shrink-0">
+            {(cliente.nombre || "?").charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0">
+            <p className="text-[17px] font-bold text-[#1c1830] truncate">{cliente.nombre}</p>
+            {desde && <p className="text-[12.5px] text-[#78729a]">Cliente desde {desde}</p>}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
+          <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-[#78729a] px-3.5 pt-3 pb-1">Datos personales</p>
+          {filaEditable("nombre", "fa-user", "Nombre", cliente.nombre)}
+          {filaEditable("telefono", "fa-mobile-screen", "Teléfono de contacto", cliente.telefono)}
+          <div className="px-3.5 py-3 border-t border-[#efe6fc] flex items-center gap-3">
+            <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+              <i className="fa-regular fa-envelope text-sm"></i>
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold text-[#78729a]">Correo (Google)</p>
+              <p className="text-sm font-bold text-[#1c1830] truncate">{correo || "—"}</p>
+            </div>
+            <span className="text-[11px] text-[#a29cbd] flex items-center gap-1 shrink-0">
+              <i className="fa-solid fa-lock text-[10px]"></i> Fijo
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
+          <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-[#78729a] px-3.5 pt-3 pb-1">Entrega</p>
+          <div className="px-3.5 py-3 flex items-center gap-3">
+            <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+              <i className="fa-solid fa-location-dot text-sm"></i>
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold text-[#78729a]">Dirección guardada en este dispositivo</p>
+              <p className="text-sm font-bold text-[#1c1830] line-clamp-2">
+                {direccion.referencia || (direccion.tiene ? "Ubicación marcada en el mapa" : "Todavía no guardaste una dirección")}
+              </p>
+            </div>
+            <button onClick={onEditarDireccion} className="text-[12.5px] font-bold text-[#6105dc] shrink-0">
+              {direccion.tiene ? "Cambiar" : "Agregar"}
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
+          <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-[#78729a] px-3.5 pt-3 pb-1">Notificaciones</p>
+          <div className="px-3.5 py-3 flex items-center gap-3">
+            <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+              <i className="fa-solid fa-bell text-sm"></i>
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-[#1c1830]">Estado de mis pedidos</p>
+              <p className="text-xs text-[#78729a]">Aviso cuando esté listo o en camino</p>
+            </div>
+            {interruptor(pushActivo, alternarPush, "Notificaciones de mis pedidos")}
+          </div>
+          <div className="px-3.5 py-3 border-t border-[#efe6fc] flex items-center gap-3">
+            <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+              <i className="fa-solid fa-heart text-sm"></i>
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-[#1c1830]">Novedades de mis tiendas</p>
+              <p className="text-xs text-[#78729a]">Cuando abren o suman delivery</p>
+            </div>
+            {interruptor(novedades, alternarNovedades, "Novedades de mis tiendas")}
+          </div>
+          {avisoNotif && <p className="text-xs text-rose-600 px-3.5 pb-3">{avisoNotif}</p>}
+        </div>
+
+        {onInstalar && (
+          <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
+            <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-[#78729a] px-3.5 pt-3 pb-1">Cuenta</p>
+            <button onClick={onInstalar} className="w-full px-3.5 py-3 flex items-center gap-3 text-left">
+              <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+                <i className="fa-solid fa-download text-sm"></i>
+              </span>
+              <p className="text-sm font-bold text-[#1c1830] flex-1">Instalar la app</p>
+              <i className="fa-solid fa-chevron-right text-xs text-[#a29cbd]"></i>
+            </button>
+          </div>
+        )}
+
+        <div className="flex-1"></div>
+        <button
+          onClick={onSalir}
+          className="h-12 rounded-full bg-white ring-1 ring-rose-200 text-rose-600 font-bold text-sm flex items-center justify-center gap-2"
+        >
+          <i className="fa-solid fa-right-from-bracket text-xs"></i> Cerrar sesión
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [slug] = useState(getSlugFromPath());
   const [estadoBodega, setEstadoBodega] = useState("cargando"); // cargando | ok | no-encontrada | sin-slug
@@ -1704,6 +1970,7 @@ function App() {
 
   useEffect(() => {
     if (!clienteSesion) return;
+    if (localStorage.getItem("kd_push_apagado") === "1") return;
     activarNotificaciones(clienteSesion.id, true).catch(() => {});
   }, [clienteSesion?.id]);
 
@@ -1712,7 +1979,9 @@ function App() {
   useEffect(() => {
     if (!slug) return;
     try {
-      const g = JSON.parse(localStorage.getItem(`kd_entrega_${slug}`) || "null");
+      let g = JSON.parse(localStorage.getItem(`kd_entrega_${slug}`) || "null");
+      // Sin datos de esta tienda, se usa la dirección guardada de la última vez (de cualquier tienda).
+      if (!g) g = JSON.parse(localStorage.getItem("kd_direccion_guardada") || "null");
       if (g) {
         if (g.tipo === "domicilio") setTipoEntrega("domicilio");
         if (g.ubicacion && typeof g.ubicacion.lat === "number" && typeof g.ubicacion.lng === "number") setUbicacionEntrega(g.ubicacion);
@@ -1733,6 +2002,9 @@ function App() {
         `kd_entrega_${slug}`,
         JSON.stringify({ tipo: tipoEntrega, ubicacion: ubicacionEntrega, referencia: referenciaEntrega, telefono: telefonoEntrega, medioPago: medioPagoEntrega })
       );
+      if (ubicacionEntrega || referenciaEntrega.trim()) {
+        localStorage.setItem("kd_direccion_guardada", JSON.stringify({ ubicacion: ubicacionEntrega, referencia: referenciaEntrega, telefono: telefonoEntrega }));
+      }
     } catch {
       // ignorado -- en el peor caso hay que volver a escribirlos
     }
@@ -2798,7 +3070,7 @@ function App() {
             { id: "inicio", icono: "fa-house", texto: "Inicio", activo: true, onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
             { id: "tiendas", icono: "fa-store", texto: "Mis tiendas", onClick: () => (clienteSesion ? setVistaMisTiendas(true) : setModalCuentaAbierto(true)) },
             { id: "pedidos", icono: "fa-receipt", texto: "Pedidos", contador: pedidosActivos.length, onClick: () => (clienteSesion ? setVistaMisPedidos(true) : setModalCuentaAbierto(true)) },
-            { id: "perfil", icono: "fa-user", texto: "Perfil", onClick: () => setPerfilAbierto(true) },
+            { id: "perfil", icono: "fa-user", texto: "Perfil", onClick: () => (clienteSesion ? setPerfilAbierto(true) : setModalCuentaAbierto(true)) },
           ].map((t) => (
             <button key={t.id} onClick={t.onClick} className={`relative w-[74px] flex flex-col items-center gap-1 ${t.activo ? "text-[#6105dc]" : "text-[#78729a]"}`}>
               <i className={`fa-solid ${t.icono} text-lg`}></i>
@@ -2813,54 +3085,20 @@ function App() {
         </div>
       </nav>
 
-      {perfilAbierto && (
-        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center sm:justify-center z-40" onClick={() => setPerfilAbierto(false)}>
-          <div className="bg-white rounded-t-[28px] sm:rounded-[28px] w-full sm:max-w-sm p-3" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3 px-3 pt-2 pb-3 border-b border-[#efe6fc]">
-              <span className="w-11 h-11 rounded-full bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] text-white font-extrabold flex items-center justify-center">
-                {clienteSesion ? (clienteSesion.nombre || "?").charAt(0).toUpperCase() : <i className="fa-solid fa-user text-sm"></i>}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="font-bold text-[#1c1830] truncate">{clienteSesion ? clienteSesion.nombre : "Sin sesión"}</p>
-                <p className="text-xs text-[#78729a]">{clienteSesion ? clienteSesion.telefono : "Ingresa para ver tus pedidos"}</p>
-              </div>
-              <button onClick={() => setPerfilAbierto(false)} className="text-[#a29cbd]">
-                <i className="fa-solid fa-xmark text-lg"></i>
-              </button>
-            </div>
-            {[
-              clienteSesion && { icono: "fa-receipt", texto: "Mis pedidos", contador: pedidosActivos.length, onClick: () => { setPerfilAbierto(false); setVistaMisPedidos(true); } },
-              clienteSesion && { icono: "fa-store", texto: "Mis tiendas", onClick: () => { setPerfilAbierto(false); setVistaMisTiendas(true); } },
-              (eventoInstalacion || (esIOS && !yaInstalada)) && {
-                icono: "fa-download",
-                texto: "Instalar la app",
-                onClick: () => { setPerfilAbierto(false); if (eventoInstalacion) instalarApp(); else setInstruccionesIOSAbiertas(true); },
-              },
-              !clienteSesion && { icono: "fa-right-to-bracket", texto: "Ingresar", onClick: () => { setPerfilAbierto(false); setModalCuentaAbierto(true); } },
-            ]
-              .filter(Boolean)
-              .map((it) => (
-                <button key={it.texto} onClick={it.onClick} className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left font-semibold text-sm text-[#1c1830] hover:bg-[#faf8fe]">
-                  <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] flex items-center justify-center">
-                    <i className={`fa-solid ${it.icono} text-sm`}></i>
-                  </span>
-                  {it.texto}
-                  {it.contador > 0 && <span className="ml-auto text-[11px] font-extrabold text-white bg-[#6105dc] rounded-full px-2 py-0.5">{it.contador}</span>}
-                </button>
-              ))}
-            {clienteSesion && (
-              <button
-                onClick={() => { setPerfilAbierto(false); salir(); }}
-                className="w-full flex items-center gap-3 px-3 py-3 mt-1 border-t border-[#efe6fc] text-left font-semibold text-sm text-rose-600"
-              >
-                <span className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center">
-                  <i className="fa-solid fa-right-from-bracket text-sm"></i>
-                </span>
-                Cerrar sesión
-              </button>
-            )}
-          </div>
-        </div>
+      {perfilAbierto && clienteSesion && (
+        <PantallaPerfil
+          cliente={clienteSesion}
+          onActualizado={setClienteSesion}
+          onVolver={() => setPerfilAbierto(false)}
+          direccion={{ referencia: referenciaEntrega.trim(), tiene: !!ubicacionEntrega }}
+          onEditarDireccion={() => setUbicacionAbierta(true)}
+          onInstalar={
+            eventoInstalacion || (esIOS && !yaInstalada)
+              ? () => { if (eventoInstalacion) instalarApp(); else setInstruccionesIOSAbiertas(true); }
+              : null
+          }
+          onSalir={() => { setPerfilAbierto(false); salir(); }}
+        />
       )}
 
       {totalUnidades > 0 && !carritoAbierto && (
@@ -3209,7 +3447,7 @@ function App() {
         </div>
       )}
 
-      {carritoAbierto && ubicacionAbierta && (
+      {(carritoAbierto || perfilAbierto) && ubicacionAbierta && (
         <div className="fixed inset-0 z-30 flex flex-col bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">
           <div className="max-w-md w-full mx-auto flex flex-col h-full min-h-0">
             <div className="relative">
