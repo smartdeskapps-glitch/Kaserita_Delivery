@@ -870,21 +870,20 @@ function StepperPedido({ estado, tipoEntrega }) {
         const esActual = i === actual && estado !== "retirado";
         return (
           <React.Fragment key={paso.texto}>
-            <div className="flex flex-col items-center gap-1 w-14 shrink-0">
+            <div className="flex flex-col items-center gap-1.5 w-[60px] shrink-0">
               <div
-                className={`relative w-7 h-7 rounded-full flex items-center justify-center text-[11px] ${
-                  completado ? "bg-violet-600 text-white" : "bg-stone-100 text-stone-300"
-                }`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs ${
+                  completado ? "bg-[#6105dc] text-white" : "bg-[#f1eff6] text-[#c3bdd6]"
+                } ${esActual ? "shadow-[0_0_0_5px_rgba(97,5,220,0.16)]" : ""}`}
               >
                 <i className={`fa-solid ${paso.icono}`}></i>
-                {esActual && <span className="absolute inset-0 rounded-full bg-violet-600 animate-ping opacity-40"></span>}
               </div>
-              <span className={`text-[9px] font-semibold text-center leading-tight ${completado ? "text-violet-700" : "text-stone-400"}`}>
+              <span className={`text-[10px] font-semibold text-center leading-tight ${completado ? "text-[#4d04b0]" : "text-[#a29cbd]"}`}>
                 {paso.texto}
               </span>
             </div>
             {i < pasos.length - 1 && (
-              <div className={`flex-1 h-0.5 mt-3.5 ${i < actual ? "bg-violet-600" : "bg-stone-200"}`}></div>
+              <div className={`flex-1 h-0.5 mt-[15px] ${i < actual ? "bg-[#6105dc]" : "bg-[#e6dcf7]"}`}></div>
             )}
           </React.Fragment>
         );
@@ -899,6 +898,17 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
   const [cargando, setCargando] = useState(true);
   const [activandoPush, setActivandoPush] = useState(false);
   const [avisoPush, setAvisoPush] = useState("");
+  const [copiadoId, setCopiadoId] = useState(null);
+
+  const copiarCodigoPedido = async (p) => {
+    try {
+      await navigator.clipboard.writeText(p.codigo_corto);
+      setCopiadoId(p.id);
+      setTimeout(() => setCopiadoId((actual) => (actual === p.id ? null : actual)), 2000);
+    } catch {
+      // sin portapapeles: el código igual se ve en pantalla
+    }
+  };
 
   const cargar = useCallback((silencioso = false) => {
     if (!silencioso) setCargando(true);
@@ -971,23 +981,32 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-4 pb-16">
       <div className="flex items-center gap-3">
-        <button onClick={onVolver} className="text-stone-500">
-          <i className="fa-solid fa-arrow-left"></i>
+        <button
+          onClick={onVolver}
+          aria-label="Volver"
+          className="w-10 h-10 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center shrink-0"
+        >
+          <i className="fa-solid fa-arrow-left text-sm"></i>
         </button>
-        <h1 className="text-lg font-bold text-stone-800">Mis pedidos</h1>
+        <h1 className="text-[22px] font-extrabold tracking-tight text-[#1c1830]">Mis pedidos</h1>
       </div>
 
-      <div className="bg-stone-50 border border-stone-200 rounded-xl p-3 flex items-center justify-between gap-3">
-        <p className="text-xs text-stone-500">Activá las notificaciones para enterarte apenas tu pedido esté listo.</p>
+      <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] px-3.5 py-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="w-9 h-9 rounded-[13px] bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+            <i className="fa-solid fa-bell text-sm"></i>
+          </span>
+          <p className="text-xs text-[#78729a] leading-snug">Activa las notificaciones para enterarte apenas tu pedido esté listo.</p>
+        </div>
         <button
           onClick={activarPush}
           disabled={activandoPush}
-          className="shrink-0 px-3 py-1.5 rounded-lg bg-stone-900 text-white text-xs font-semibold disabled:opacity-50"
+          className="shrink-0 h-9 px-4 rounded-full bg-[#6105dc] text-white text-xs font-bold disabled:opacity-50"
         >
           {activandoPush ? "..." : "Activar"}
         </button>
       </div>
-      {avisoPush && <p className="text-xs text-stone-500">{avisoPush}</p>}
+      {avisoPush && <p className="text-xs text-[#78729a]">{avisoPush}</p>}
 
       {cargando ? (
         <p className="text-center text-stone-400 py-10">Cargando...</p>
@@ -995,68 +1014,114 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
         <p className="text-center text-stone-400 py-10">Todavía no hiciste ningún pedido con tu cuenta.</p>
       ) : (
         <div className="space-y-3">
-          {pedidos.map((p) => (
-            <div key={p.id} className="bg-white border border-stone-200 rounded-xl p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-sm text-stone-800">{p.codigo_corto}</span>
-                  {nombresBodegas[p.bodega_id] && (
-                    <span className="text-[11px] text-stone-400">{nombresBodegas[p.bodega_id]}</span>
-                  )}
-                </div>
-                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${etiquetaEstadoPedido(p).color}`}>
-                  {etiquetaEstadoPedido(p).texto}
-                </span>
-              </div>
-              <div className="py-1">
-                <StepperPedido estado={p.estado} tipoEntrega={p.tipo_entrega} />
-              </div>
-              <div className="text-xs text-stone-500 space-y-0.5">
-                {(p.items || []).map((it, i) => (
-                  <div key={i} className="flex items-center justify-between gap-2">
-                    <span>{it.cantidad} x {it.combo_id ? it.descripcion : tituloProducto(it.descripcion)}</span>
-                    <span className="shrink-0">{formatoMoneda(it.precio_venta * it.cantidad)}</span>
+          {pedidos.map((p) => {
+            // Retiro en tienda aún sin retirar: el código va como ticket, a la vista,
+            // porque es lo que se muestra en caja.
+            const mostrarTicket = p.tipo_entrega !== "domicilio" && (p.estado === "pendiente" || p.estado === "listo");
+            const listo = p.estado === "listo";
+            return (
+              <div key={p.id} className="bg-white rounded-[26px] ring-1 ring-[#efe6fc] p-3.5 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {mostrarTicket ? (
+                      <span className="font-bold text-sm text-[#1c1830] truncate">{nombresBodegas[p.bodega_id] || "Pedido"}</span>
+                    ) : (
+                      <>
+                        <span className="font-mono font-bold text-sm tracking-wide text-[#1c1830]">{p.codigo_corto}</span>
+                        {nombresBodegas[p.bodega_id] && (
+                          <span className="text-[11px] text-[#78729a] truncate">{nombresBodegas[p.bodega_id]}</span>
+                        )}
+                      </>
+                    )}
                   </div>
-                ))}
-              </div>
-              {p.tipo_entrega === "domicilio" && (
-                <div className="text-xs text-stone-500 space-y-0.5 pt-1 border-t border-stone-100">
-                  <div className="flex items-center justify-between gap-2">
-                    <span>Envío a domicilio</span>
-                    <span className="shrink-0">{formatoMoneda(p.costo_envio)}</span>
-                  </div>
-                  {p.entrega_referencia && (
-                    <p className="flex items-start gap-1.5 text-stone-400">
-                      <i className="fa-solid fa-location-dot mt-0.5"></i>
-                      <span>{p.entrega_referencia}</span>
-                    </p>
-                  )}
-                  {p.medio_pago && <p className="text-stone-400">Pagas al recibir: {TEXTO_MEDIO_PAGO[p.medio_pago] || p.medio_pago}</p>}
+                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 ${etiquetaEstadoPedido(p).color}`}>
+                    {etiquetaEstadoPedido(p).texto}
+                  </span>
                 </div>
-              )}
-              <div className="flex items-center justify-between pt-2 border-t border-stone-100">
-                <span className="text-xs font-semibold text-stone-500">Total</span>
-                <span className="text-sm font-bold text-stone-800">
-                  {formatoMoneda((p.items || []).reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0) + Number(p.costo_envio || 0))}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-2 pt-0.5">
-                {(p.estado === "pendiente" || p.estado === "listo") ? (
-                  <button onClick={() => cancelar(p.id)} className="text-xs text-rose-600 underline">
-                    Cancelar pedido
-                  </button>
-                ) : <span></span>}
-                {p.bodega_id === bodegaActualId && (
-                  <button
-                    onClick={() => onRepetirPedido(p)}
-                    className="text-xs font-semibold text-violet-700 bg-violet-50 hover:bg-violet-100 rounded-full px-3 py-1.5 flex items-center gap-1.5"
-                  >
-                    <i className="fa-solid fa-rotate-right text-[10px]"></i> Pedir de nuevo
-                  </button>
+
+                <div className="py-0.5">
+                  <StepperPedido estado={p.estado} tipoEntrega={p.tipo_entrega} />
+                </div>
+
+                <div className="text-[12.5px] text-[#78729a] space-y-1">
+                  {(p.items || []).map((it, i) => (
+                    <div key={i} className="flex items-center justify-between gap-2">
+                      <span>{it.cantidad} x {it.combo_id ? it.descripcion : tituloProducto(it.descripcion)}</span>
+                      <span className="shrink-0 tabular-nums">{formatoMoneda(it.precio_venta * it.cantidad)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {p.tipo_entrega === "domicilio" && (
+                  <div className="text-xs text-[#78729a] space-y-1 pt-2 border-t border-[#efe6fc]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>Envío a domicilio</span>
+                      <span className="shrink-0 tabular-nums">{formatoMoneda(p.costo_envio)}</span>
+                    </div>
+                    {p.entrega_referencia && (
+                      <p className="flex items-start gap-1.5">
+                        <i className="fa-solid fa-location-dot mt-0.5 text-[#a29cbd]"></i>
+                        <span>{p.entrega_referencia}</span>
+                      </p>
+                    )}
+                    {p.medio_pago && <p>Pagas al recibir: {TEXTO_MEDIO_PAGO[p.medio_pago] || p.medio_pago}</p>}
+                  </div>
                 )}
+
+                {mostrarTicket && (
+                  <div
+                    className={`relative rounded-[20px] px-3.5 py-3.5 text-center ${
+                      listo ? "bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] text-white" : "bg-[#f4eefe]"
+                    }`}
+                  >
+                    <span className="absolute -left-2 top-1/2 -mt-2 w-4 h-4 rounded-full bg-white ring-1 ring-[#efe6fc]"></span>
+                    <span className="absolute -right-2 top-1/2 -mt-2 w-4 h-4 rounded-full bg-white ring-1 ring-[#efe6fc]"></span>
+                    <p className={`text-[11px] font-bold tracking-[0.08em] uppercase ${listo ? "text-white/85" : "text-[#78729a]"}`}>
+                      {listo ? "¡Listo para retirar!" : "Tu código de retiro"}
+                    </p>
+                    <div className={`border-t-2 border-dashed my-2.5 ${listo ? "border-white/40" : "border-[#d9cdf3]"}`}></div>
+                    <button
+                      type="button"
+                      onClick={() => copiarCodigoPedido(p)}
+                      className={`font-mono text-[30px] font-extrabold tracking-[0.2em] leading-tight ${listo ? "text-white" : "text-[#1c1830]"}`}
+                    >
+                      {p.codigo_corto}
+                    </button>
+                    <p className={`text-xs mt-0.5 ${listo ? "text-white/85" : "text-[#78729a]"}`}>
+                      {copiadoId === p.id
+                        ? "¡Código copiado!"
+                        : listo
+                        ? "Muéstralo en caja y pagas al retirar"
+                        : "Lo necesitarás al retirar · toca para copiar"}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-baseline justify-between pt-2.5 border-t border-[#efe6fc]">
+                  <span className="text-xs font-semibold text-[#78729a]">Total</span>
+                  <span className="text-lg font-extrabold tracking-tight text-[#1c1830] tabular-nums">
+                    {formatoMoneda((p.items || []).reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0) + Number(p.costo_envio || 0))}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                  {(p.estado === "pendiente" || p.estado === "listo") ? (
+                    <button onClick={() => cancelar(p.id)} className="text-xs text-rose-600 underline">
+                      Cancelar pedido
+                    </button>
+                  ) : <span></span>}
+                  {p.bodega_id === bodegaActualId && (
+                    <button
+                      onClick={() => onRepetirPedido(p)}
+                      className="text-xs font-bold text-[#4d04b0] bg-[#f4eefe] hover:bg-[#ece0fd] rounded-full px-3.5 py-2 flex items-center gap-1.5"
+                    >
+                      <i className="fa-solid fa-rotate-right text-[10px]"></i> Pedir de nuevo
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
