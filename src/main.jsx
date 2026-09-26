@@ -1146,6 +1146,46 @@ function irAlSlugDesdeTexto(texto) {
   window.location.href = `/${destino}`;
 }
 
+// Las dos formas de recibir el pedido en una tienda de "Mis tiendas": retiro
+// (siempre gratis) y delivery (costo y pedido mínimo, o apagado si la tienda no
+// reparte). Si los datos no llegaron (aún no se corrió migration_36) no muestra
+// nada, y la tarjeta queda como antes.
+function ModalidadesEntrega({ t, oscuro = false }) {
+  if (typeof t.delivery_domicilio !== "boolean") return null;
+  const reparte = t.delivery_domicilio;
+  const costo = Number(t.costo_envio || 0);
+  const minimo = Number(t.pedido_minimo || 0);
+  const caja = (activa) =>
+    oscuro ? (activa ? "bg-white/[0.17]" : "bg-white/[0.08]") : activa ? "bg-[#f4eefe]" : "bg-[#f6f5f8]";
+  const icono = (activa) =>
+    oscuro ? (activa ? "text-white" : "text-white/45") : activa ? "text-[#6105dc]" : "text-[#c4c0d6]";
+  const titulo = (activa) =>
+    oscuro ? (activa ? "text-white" : "text-white/60") : activa ? "text-[#1c1830]" : "text-[#a8a3c2]";
+  const detalle = (activa) =>
+    oscuro ? (activa ? "text-white/85" : "text-white/55") : activa ? "text-[#78729a]" : "text-[#a8a3c2]";
+  const textoMinimo = minimo > 0 ? ` · mín. S/ ${Number.isInteger(minimo) ? minimo : minimo.toFixed(2)}` : "";
+  const casilla = (activa, iconoFa, nombre, texto) => (
+    <div className={`rounded-2xl px-2.5 py-2 flex items-center gap-2 leading-tight ${caja(activa)}`}>
+      <i className={`fa-solid ${iconoFa} text-[15px] shrink-0 ${icono(activa)}`}></i>
+      <span className="min-w-0 text-[11.5px]">
+        <b className={`block text-xs ${titulo(activa)}`}>{nombre}</b>
+        <span className={detalle(activa)}>{texto}</span>
+      </span>
+    </div>
+  );
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {casilla(true, "fa-bag-shopping", "Retiro", "Gratis")}
+      {casilla(
+        reparte,
+        "fa-motorcycle",
+        "Delivery",
+        reparte ? `${costo > 0 ? formatoMoneda(costo) : "Gratis"}${textoMinimo}` : "No disponible"
+      )}
+    </div>
+  );
+}
+
 function PantallaMisTiendas({ onVolver, esInicio = false }) {
   const [tiendas, setTiendas] = useState([]);
   const [ultimoPedidoPorBodega, setUltimoPedidoPorBodega] = useState({});
@@ -1408,6 +1448,8 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
                         </button>
                       </div>
 
+                      <ModalidadesEntrega t={t} oscuro />
+
                       {itemsUlt ? (
                         <div className="bg-white/15 rounded-[20px] px-3.5 py-3 text-[12.5px] leading-relaxed">
                           <p className="text-[11px] font-bold uppercase tracking-wider text-white/75 mb-0.5">
@@ -1450,7 +1492,8 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
                   const estado = estadoAtencionBodega(t.horario_atencion);
                   const sigue = favoritas.has(t.bodega_id);
                   return (
-                    <div key={t.bodega_id} className="bg-white rounded-[26px] ring-1 ring-[#efe6fc] p-2.5 flex items-center gap-3">
+                    <div key={t.bodega_id} className="bg-white rounded-[26px] ring-1 ring-[#efe6fc] p-2.5 flex flex-col gap-2.5">
+                     <div className="flex items-center gap-3">
                       <div className="w-[54px] h-[54px] rounded-[18px] bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] overflow-hidden shrink-0 flex items-center justify-center text-white">
                         {t.logo_url ? (
                           <img src={t.logo_url} alt={t.nombre} className="w-full h-full object-cover" />
@@ -1488,6 +1531,8 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
                       >
                         <i className="fa-solid fa-arrow-right text-xs"></i>
                       </a>
+                     </div>
+                     <ModalidadesEntrega t={t} />
                     </div>
                   );
                 })}
