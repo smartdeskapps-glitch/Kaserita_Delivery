@@ -1609,6 +1609,9 @@ function App() {
   const [tiendaSeguida, setTiendaSeguida] = useState(false);
   const [avisosTienda, setAvisosTienda] = useState(true);
   const [avisoSeguir, setAvisoSeguir] = useState("");
+  // Pedidos en curso del cliente (para la tarjeta de seguimiento y el contador de "Pedidos").
+  const [pedidosActivos, setPedidosActivos] = useState([]);
+  const [perfilAbierto, setPerfilAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState("");
   const [fotoAmpliada, setFotoAmpliada] = useState(null); // producto
@@ -1921,6 +1924,42 @@ function App() {
         }
       });
   }, [estadoBodega, bodega, clienteSesion]);
+
+  useEffect(() => {
+    if (!clienteSesion) {
+      setPedidosActivos([]);
+      return;
+    }
+    let vivo = true;
+    const cargar = () =>
+      sbClient
+        .from("pedidos_seguimiento")
+        .select("id, bodega_id, codigo_corto, estado, tipo_entrega, creado_en")
+        .in("estado", ["pendiente", "listo", "en_camino"])
+        .order("creado_en", { ascending: false })
+        .limit(20)
+        .then(({ data }) => {
+          if (vivo && data) setPedidosActivos(data);
+        });
+    cargar();
+    const canal = sbClient
+      .channel(`pedidos-activos-${clienteSesion.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pedidos_seguimiento", filter: `cliente_id=eq.${clienteSesion.id}` },
+        cargar
+      )
+      .subscribe();
+    const alVolver = () => {
+      if (document.visibilityState === "visible") cargar();
+    };
+    document.addEventListener("visibilitychange", alVolver);
+    return () => {
+      vivo = false;
+      sbClient.removeChannel(canal);
+      document.removeEventListener("visibilitychange", alVolver);
+    };
+  }, [clienteSesion?.id]);
 
   const mostrarAvisoSeguir = (texto) => {
     setAvisoSeguir(texto);
@@ -2416,7 +2455,7 @@ function App() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto pb-28">
+    <div className="max-w-3xl mx-auto pb-44">
       <header className="px-4 pt-4 pb-2 flex items-center gap-3">
         <div className="w-[46px] h-[46px] rounded-2xl bg-[#f4eefe] overflow-hidden shrink-0">
           {bodega.logo_url ? (
@@ -2472,53 +2511,43 @@ function App() {
               <i className={`fa-solid ${avisosTienda ? "fa-bell" : "fa-bell-slash"} text-xs`}></i>
             </button>
           )}
-          {(eventoInstalacion || (esIOS && !yaInstalada)) && (
-            <button
-              onClick={eventoInstalacion ? instalarApp : () => setInstruccionesIOSAbiertas(true)}
-              title="Instalar"
-              className="w-9 h-9 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center"
-            >
-              <i className="fa-solid fa-download text-xs"></i>
-            </button>
-          )}
-          {clienteSesion ? (
-            <>
-              <button
-                onClick={() => setVistaMisTiendas(true)}
-                title="Tiendas"
-                className="w-9 h-9 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center"
-              >
-                <i className="fa-solid fa-store text-xs"></i>
-              </button>
-              <button
-                onClick={() => setVistaMisPedidos(true)}
-                title="Mis pedidos"
-                className="w-9 h-9 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center"
-              >
-                <i className="fa-solid fa-receipt text-xs"></i>
-              </button>
-              <button
-                onClick={salir}
-                title="Salir"
-                className="w-9 h-9 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center"
-              >
-                <i className="fa-solid fa-right-from-bracket text-xs"></i>
-              </button>
-            </>
-          ) : (
+          {!clienteSesion && (
             <button
               onClick={() => setModalCuentaAbierto(true)}
-              title="Ingresar"
-              className="w-9 h-9 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center"
+              className="h-9 px-4 rounded-full bg-[#6105dc] text-white text-xs font-bold"
             >
-              <i className="fa-solid fa-user text-xs"></i>
+              Ingresar
             </button>
           )}
         </div>
       </header>
 
+      {(() => {
+        const activoAqui = pedidosActivos.find((pa) => pa.bodega_id === bodega.bodega_id);
+        if (!activoAqui) return null;
+        const et = etiquetaEstadoPedido(activoAqui);
+        const otros = pedidosActivos.length - 1;
+        return (
+          <div className="mx-4 mt-2 mb-1 rounded-[22px] bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] text-white px-3.5 py-3 flex items-center gap-3">
+            <span className="w-10 h-10 rounded-[14px] bg-white/20 shrink-0 flex items-center justify-center">
+              <i className={`fa-solid ${activoAqui.estado === "en_camino" ? "fa-motorcycle" : activoAqui.estado === "listo" ? "fa-bell" : "fa-kitchen-set"} text-sm`}></i>
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[13.5px] font-bold leading-tight">Tu pedido · {activoAqui.codigo_corto}</p>
+              <p className="text-xs text-white/85">
+                {et.texto}
+                {otros > 0 ? ` · ${otros} más en curso` : ""}
+              </p>
+            </div>
+            <button onClick={() => setVistaMisPedidos(true)} className="shrink-0 h-8 px-3.5 rounded-full bg-white text-[#4d04b0] text-xs font-bold">
+              Ver
+            </button>
+          </div>
+        );
+      })()}
+
       {avisoSeguir && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 max-w-[90%] bg-stone-900 text-white text-xs px-4 py-2.5 rounded-full shadow-lg text-center">
+        <div className="fixed bottom-44 left-1/2 -translate-x-1/2 z-40 max-w-[90%] bg-stone-900 text-white text-xs px-4 py-2.5 rounded-full shadow-lg text-center">
           {avisoSeguir}
         </div>
       )}
@@ -2763,10 +2792,81 @@ function App() {
         </div>
       )}
 
+      <nav className="fixed bottom-0 inset-x-0 z-10 bg-white rounded-t-[26px] border-t border-[#efe6fc]">
+        <div className="max-w-3xl mx-auto flex items-center justify-around h-[68px] px-2 pb-1">
+          {[
+            { id: "inicio", icono: "fa-house", texto: "Inicio", activo: true, onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
+            { id: "tiendas", icono: "fa-store", texto: "Mis tiendas", onClick: () => (clienteSesion ? setVistaMisTiendas(true) : setModalCuentaAbierto(true)) },
+            { id: "pedidos", icono: "fa-receipt", texto: "Pedidos", contador: pedidosActivos.length, onClick: () => (clienteSesion ? setVistaMisPedidos(true) : setModalCuentaAbierto(true)) },
+            { id: "perfil", icono: "fa-user", texto: "Perfil", onClick: () => setPerfilAbierto(true) },
+          ].map((t) => (
+            <button key={t.id} onClick={t.onClick} className={`relative w-[74px] flex flex-col items-center gap-1 ${t.activo ? "text-[#6105dc]" : "text-[#78729a]"}`}>
+              <i className={`fa-solid ${t.icono} text-lg`}></i>
+              <span className="text-[10.5px] font-semibold">{t.texto}</span>
+              {t.contador > 0 && (
+                <span className="absolute right-3 -top-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#6105dc] text-white text-[10.5px] font-extrabold flex items-center justify-center border-2 border-white">
+                  {t.contador}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      {perfilAbierto && (
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center sm:justify-center z-40" onClick={() => setPerfilAbierto(false)}>
+          <div className="bg-white rounded-t-[28px] sm:rounded-[28px] w-full sm:max-w-sm p-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 px-3 pt-2 pb-3 border-b border-[#efe6fc]">
+              <span className="w-11 h-11 rounded-full bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] text-white font-extrabold flex items-center justify-center">
+                {clienteSesion ? (clienteSesion.nombre || "?").charAt(0).toUpperCase() : <i className="fa-solid fa-user text-sm"></i>}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-bold text-[#1c1830] truncate">{clienteSesion ? clienteSesion.nombre : "Sin sesión"}</p>
+                <p className="text-xs text-[#78729a]">{clienteSesion ? clienteSesion.telefono : "Ingresa para ver tus pedidos"}</p>
+              </div>
+              <button onClick={() => setPerfilAbierto(false)} className="text-[#a29cbd]">
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+            {[
+              clienteSesion && { icono: "fa-receipt", texto: "Mis pedidos", contador: pedidosActivos.length, onClick: () => { setPerfilAbierto(false); setVistaMisPedidos(true); } },
+              clienteSesion && { icono: "fa-store", texto: "Mis tiendas", onClick: () => { setPerfilAbierto(false); setVistaMisTiendas(true); } },
+              (eventoInstalacion || (esIOS && !yaInstalada)) && {
+                icono: "fa-download",
+                texto: "Instalar la app",
+                onClick: () => { setPerfilAbierto(false); if (eventoInstalacion) instalarApp(); else setInstruccionesIOSAbiertas(true); },
+              },
+              !clienteSesion && { icono: "fa-right-to-bracket", texto: "Ingresar", onClick: () => { setPerfilAbierto(false); setModalCuentaAbierto(true); } },
+            ]
+              .filter(Boolean)
+              .map((it) => (
+                <button key={it.texto} onClick={it.onClick} className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left font-semibold text-sm text-[#1c1830] hover:bg-[#faf8fe]">
+                  <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] flex items-center justify-center">
+                    <i className={`fa-solid ${it.icono} text-sm`}></i>
+                  </span>
+                  {it.texto}
+                  {it.contador > 0 && <span className="ml-auto text-[11px] font-extrabold text-white bg-[#6105dc] rounded-full px-2 py-0.5">{it.contador}</span>}
+                </button>
+              ))}
+            {clienteSesion && (
+              <button
+                onClick={() => { setPerfilAbierto(false); salir(); }}
+                className="w-full flex items-center gap-3 px-3 py-3 mt-1 border-t border-[#efe6fc] text-left font-semibold text-sm text-rose-600"
+              >
+                <span className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center">
+                  <i className="fa-solid fa-right-from-bracket text-sm"></i>
+                </span>
+                Cerrar sesión
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {totalUnidades > 0 && !carritoAbierto && (
         <button
           onClick={() => setCarritoAbierto(true)}
-          className="fixed bottom-4 left-4 right-4 max-w-3xl mx-auto bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white rounded-full pl-2.5 pr-2 py-2 flex items-center justify-between gap-2 shadow-lg shadow-[#6105dc]/25 active:scale-[0.98] transition-transform"
+          className="fixed bottom-[84px] left-4 right-4 max-w-3xl mx-auto bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white rounded-full pl-2.5 pr-2 py-2 flex items-center justify-between gap-2 shadow-lg shadow-[#6105dc]/25 active:scale-[0.98] transition-transform"
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="relative w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
