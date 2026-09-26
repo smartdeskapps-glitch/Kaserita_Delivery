@@ -975,6 +975,8 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
   const [ultimaVisitaPorBodega, setUltimaVisitaPorBodega] = useState({});
   const [favoritas, setFavoritas] = useState(() => new Set());
   const [idHabitual, setIdHabitual] = useState(null);
+  // Items del último pedido (no cancelado) de cada bodega -- para "Pedir de nuevo".
+  const [itemsUltimoPedido, setItemsUltimoPedido] = useState({});
   const [busqueda, setBusqueda] = useState("");
   const [cargando, setCargando] = useState(true);
   const [modalPegarLink, setModalPegarLink] = useState(false);
@@ -1062,11 +1064,18 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
         setUltimaVisitaPorBodega(visitasPorId);
         const [{ data: bodegas }, { data: pedidos }] = await Promise.all([
           sbClient.rpc("obtener_nombres_bodegas", { p_ids: idsEnOrden }),
-          sbClient.from("pedidos_seguimiento").select("bodega_id, creado_en").order("creado_en", { ascending: false }),
+          sbClient.from("pedidos_seguimiento").select("bodega_id, creado_en, estado, items").order("creado_en", { ascending: false }),
         ]);
         const ultimos = {};
-        (pedidos || []).forEach((p) => { if (!ultimos[p.bodega_id]) ultimos[p.bodega_id] = p.creado_en; });
+        const itemsUltimos = {};
+        (pedidos || []).forEach((p) => {
+          if (!ultimos[p.bodega_id]) ultimos[p.bodega_id] = p.creado_en;
+          if (!itemsUltimos[p.bodega_id] && p.estado !== "cancelado" && Array.isArray(p.items) && p.items.length > 0) {
+            itemsUltimos[p.bodega_id] = p.items;
+          }
+        });
         setUltimoPedidoPorBodega(ultimos);
+        setItemsUltimoPedido(itemsUltimos);
         const porId = {};
         (bodegas || []).forEach((b) => { porId[b.bodega_id] = b; });
         setTiendas(idsEnOrden.map((id) => porId[id]).filter(Boolean));
@@ -1080,36 +1089,72 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
     return tiendas.filter((t) => t.nombre?.toLowerCase().includes(b));
   }, [tiendas, busqueda]);
 
+  // Seguir / dejar de seguir una tienda desde esta lista. La política de la
+  // tabla solo deja modificar filas del propio cliente, así que basta con el bodega_id.
+  const alternarFavorita = async (bodegaId) => {
+    const nueva = !favoritas.has(bodegaId);
+    const cambiar = (activa) =>
+      setFavoritas((prev) => {
+        const n = new Set(prev);
+        if (activa) n.add(bodegaId);
+        else n.delete(bodegaId);
+        return n;
+      });
+    cambiar(nueva);
+    const { error: err } = await sbClient.from("bodegas_visitadas").update(nueva ? { favorita: true, avisos: true } : { favorita: false }).eq("bodega_id", bodegaId);
+    if (err) cambiar(!nueva);
+  };
+
+  // "Pedir de nuevo": deja el carrito de esa tienda armado con lo de su último
+  // pedido (mismo lugar donde la vitrina guarda su carrito) y abre la tienda.
+  // Los productos que ya no existan o no tengan stock se descartan solos al
+  // cargar el catálogo, y el servidor vuelve a validar precio y stock al enviar.
+  const pedirDeNuevo = (t) => {
+    const items = itemsUltimoPedido[t.bodega_id] || [];
+    const carritoNuevo = {};
+    const combosNuevo = {};
+    items.forEach((it) => {
+      if (it.combo_id) combosNuevo[it.combo_id] = (combosNuevo[it.combo_id] || 0) + it.cantidad;
+      else if (it.id) carritoNuevo[it.id] = (carritoNuevo[it.id] || 0) + it.cantidad;
+    });
+    try {
+      localStorage.setItem(`kd_carrito_${t.slug}`, JSON.stringify(carritoNuevo));
+      localStorage.setItem(`kd_carrito_combos_${t.slug}`, JSON.stringify(combosNuevo));
+    } catch {
+      // sin almacenamiento: se abre la tienda igual, con el carrito vacío
+    }
+    window.location.href = `/${t.slug}`;
+  };
+
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-4 pb-16">
       <div className="flex items-center gap-3">
         {!esInicio && (
-          <button onClick={onVolver} className="text-stone-500">
-            <i className="fa-solid fa-arrow-left"></i>
+          <button
+            onClick={onVolver}
+            aria-label="Volver"
+            className="w-10 h-10 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center shrink-0"
+          >
+            <i className="fa-solid fa-arrow-left text-sm"></i>
           </button>
         )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold text-stone-800">{esInicio ? "Tus bodegas" : "Mis tiendas"}</h1>
-            {tiendas.length > 0 && (
-              <span className="bg-violet-100 text-violet-700 text-[11px] font-bold px-2 py-0.5 rounded-full">
-                {tiendas.length} guardada{tiendas.length === 1 ? "" : "s"}
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-stone-400">Las bodegas donde ya compraste, para volver sin buscar el link</p>
-        </div>
+        <h1 className="text-[22px] font-extrabold tracking-tight text-[#1c1830]">{esInicio ? "Tus bodegas" : "Mis tiendas"}</h1>
+        {tiendas.length > 0 && (
+          <span className="bg-[#ece0fd] text-[#4d04b0] text-[11.5px] font-bold px-2.5 py-0.5 rounded-full">
+            {tiendas.length} guardada{tiendas.length === 1 ? "" : "s"}
+          </span>
+        )}
       </div>
 
       {tiendas.length > 1 && (
         <div className="relative">
-          <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm"></i>
+          <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-[#a29cbd] text-sm"></i>
           <input
             type="text"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar entre mis bodegas..."
-            className="w-full bg-stone-100 border border-stone-200 rounded-xl pl-9 pr-3 py-2.5 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+            className="w-full bg-white border border-[#e6dcf7] rounded-full pl-11 pr-4 py-3 text-sm text-stone-800 placeholder-[#a29cbd] focus:outline-none focus:border-[#6105dc]/45 focus:ring-4 focus:ring-[#6105dc]/[0.07]"
           />
         </div>
       )}
@@ -1117,131 +1162,191 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
       {cargando ? (
         <p className="text-center text-stone-400 py-10">Cargando...</p>
       ) : tiendas.length === 0 ? (
-        <div className="text-center text-stone-400 py-10 space-y-2">
-          <i className="fa-solid fa-store text-2xl block"></i>
+        <div className="text-center text-[#78729a] py-10 space-y-2">
+          <i className="fa-solid fa-store text-2xl block text-[#cfc4ea]"></i>
           <p>Todavía no compraste en ninguna bodega.</p>
           <p className="text-xs">En cuanto hagas tu primer pedido, va a aparecer acá.</p>
         </div>
       ) : tiendasFiltradas.length === 0 ? (
-        <p className="text-center text-stone-400 py-10">No encontramos ninguna bodega con ese nombre.</p>
+        <p className="text-center text-[#78729a] py-10">No encontramos ninguna bodega con ese nombre.</p>
       ) : (
         <div className="space-y-3">
-          {tiendasFiltradas.map((t, i) => {
-            const habitual = t.bodega_id === idHabitual && !busqueda;
-            const estado = estadoAtencionBodega(t.horario_atencion);
+          {(() => {
+            const habitualTienda = !busqueda.trim() ? tiendasFiltradas.find((t) => t.bodega_id === idHabitual) : null;
+            const otras = tiendasFiltradas.filter((t) => t.bodega_id !== habitualTienda?.bodega_id);
+            const indicadorAtencion = (estado, oscuro) =>
+              estado ? (
+                <span
+                  className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 shrink-0 ${
+                    oscuro
+                      ? "bg-white/20 text-white"
+                      : estado.abierto
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-stone-100 text-stone-500"
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${estado.abierto ? (oscuro ? "bg-green-300" : "bg-emerald-500") : oscuro ? "bg-white/50" : "bg-stone-400"}`}></span>
+                  {estado.abierto ? "Abierto" : "Cerrado"}
+                </span>
+              ) : null;
             return (
-              <div
-                key={t.bodega_id}
-                className={`bg-white rounded-3xl overflow-hidden shadow-sm ${habitual ? "border-2 border-violet-300" : "border border-stone-200"}`}
-              >
-                <div className="h-16 bg-gradient-to-r from-violet-500 to-blue-600 relative px-3 pt-3 flex items-start justify-between">
-                  <span className="flex items-center gap-1.5">
-                    {habitual && (
-                      <span className="bg-white/20 backdrop-blur text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <i className="fa-solid fa-star text-amber-300 text-[9px]"></i> Habitual
-                      </span>
-                    )}
-                    {favoritas.has(t.bodega_id) && (
-                      <span className="bg-white/20 backdrop-blur text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <i className="fa-solid fa-heart text-rose-200 text-[9px]"></i> Siguiendo
-                      </span>
-                    )}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const url = `${window.location.origin}/${t.slug}`;
-                      if (navigator.share) {
-                        try { await navigator.share({ title: t.nombre, url }); } catch {}
-                      } else {
-                        try { await navigator.clipboard.writeText(url); } catch {}
-                      }
-                    }}
-                    title="Compartir"
-                    className="w-8 h-8 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white active:scale-90 transition"
-                  >
-                    <i className="fa-solid fa-share-nodes text-xs"></i>
-                  </button>
-                </div>
-                <div className="px-4 pb-4 -mt-8 flex flex-col items-center text-center">
-                  <div className="w-16 h-16 rounded-full bg-white p-1 shadow-md shrink-0">
-                    <div className="w-full h-full rounded-full bg-stone-100 overflow-hidden">
-                      {t.logo_url ? (
-                        <img src={t.logo_url} alt={t.nombre} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-violet-600 text-white font-black text-lg">
-                          {t.nombre?.charAt(0).toUpperCase()}
+              <>
+                {habitualTienda && (() => {
+                  const t = habitualTienda;
+                  const estado = estadoAtencionBodega(t.horario_atencion);
+                  const itemsUlt = itemsUltimoPedido[t.bodega_id];
+                  const totalUlt = (itemsUlt || []).reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0);
+                  const resumen = (itemsUlt || [])
+                    .map((it) => `${it.cantidad > 1 ? `${it.cantidad}× ` : ""}${it.combo_id ? it.descripcion : tituloProducto(it.descripcion)}`)
+                    .join(", ");
+                  return (
+                    <div className="rounded-[30px] p-4 bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] text-white flex flex-col gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-[54px] h-[54px] rounded-[18px] bg-white/20 overflow-hidden shrink-0 flex items-center justify-center">
+                          {t.logo_url ? (
+                            <img src={t.logo_url} alt={t.nombre} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="font-extrabold text-xl">{t.nombre?.charAt(0).toUpperCase()}</span>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                  <p className="mt-2 font-bold text-stone-900 leading-tight">{t.nombre}</p>
-                  {t.direccion && (
-                    <p className="text-xs text-stone-400 flex items-center justify-center gap-1 mt-1">
-                      <i className="fa-solid fa-location-dot text-[10px] shrink-0"></i>
-                      <span className="line-clamp-1">{t.direccion}</span>
-                    </p>
-                  )}
-                  <div className="mt-2.5 inline-flex items-center gap-1.5 bg-stone-50 border border-stone-100 rounded-full px-3 py-1 text-[11px] max-w-full">
-                    {estado && (
-                      <>
-                        <span className="relative flex h-2 w-2 shrink-0">
-                          {estado.abierto && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
-                          <span className={`relative inline-flex rounded-full h-2 w-2 ${estado.abierto ? "bg-emerald-500" : "bg-stone-300"}`}></span>
-                        </span>
-                        <span className={`font-semibold shrink-0 ${estado.abierto ? "text-emerald-700" : "text-stone-500"}`}>
-                          {estado.abierto ? "Abierto" : "Cerrado"}
-                        </span>
-                        <span className="text-stone-300 shrink-0">•</span>
-                      </>
-                    )}
-                    <span className="text-stone-500 truncate">
-                      {ultimoPedidoPorBodega[t.bodega_id] ? (
-                        <>Último pedido: <strong className="text-stone-700 font-semibold">{fechaRelativa(ultimoPedidoPorBodega[t.bodega_id])}</strong></>
-                      ) : ultimaVisitaPorBodega[t.bodega_id] ? (
-                        <>Visto: <strong className="text-stone-700 font-semibold">{fechaRelativa(ultimaVisitaPorBodega[t.bodega_id])}</strong></>
-                      ) : (
-                        "Sin pedidos todavía"
-                      )}
-                    </span>
-                  </div>
-                  <a
-                    href={`/${t.slug}`}
-                    className="mt-3 w-full h-10 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition"
-                  >
-                    Ver catálogo <i className="fa-solid fa-arrow-right text-[10px]"></i>
-                  </a>
-                </div>
-              </div>
-            );
-          })}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-bold text-[17px] leading-tight">{t.nombre}</p>
+                            {indicadorAtencion(estado, true)}
+                          </div>
+                          {t.direccion && (
+                            <p className="text-xs text-white/80 flex items-center gap-1 mt-0.5">
+                              <i className="fa-solid fa-location-dot text-[10px] shrink-0"></i>
+                              <span className="line-clamp-1">{t.direccion}</span>
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => alternarFavorita(t.bodega_id)}
+                          title={favoritas.has(t.bodega_id) ? "Dejar de seguir" : "Seguir esta tienda"}
+                          className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0 active:scale-90 transition"
+                        >
+                          <i className={`${favoritas.has(t.bodega_id) ? "fa-solid" : "fa-regular"} fa-heart text-sm`}></i>
+                        </button>
+                      </div>
 
-          <div className="p-4 rounded-2xl border-2 border-dashed border-stone-200 bg-white text-center">
-            <div className="w-10 h-10 rounded-full bg-violet-50 text-violet-600 mx-auto flex items-center justify-center mb-2">
+                      {itemsUlt ? (
+                        <div className="bg-white/15 rounded-[20px] px-3.5 py-3 text-[12.5px] leading-relaxed">
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-white/75 mb-0.5">
+                            Tu último pedido · {fechaRelativa(ultimoPedidoPorBodega[t.bodega_id]).toLowerCase()}
+                          </p>
+                          <span className="line-clamp-2">{resumen}</span>
+                          <strong className="block mt-0.5">{formatoMoneda(totalUlt)}</strong>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-white/80">Todavía no hiciste pedidos en esta bodega.</p>
+                      )}
+
+                      <div className="flex gap-2">
+                        {itemsUlt && (
+                          <button
+                            type="button"
+                            onClick={() => pedirDeNuevo(t)}
+                            className="flex-1 h-11 rounded-full bg-white text-[#4d04b0] font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition"
+                          >
+                            <i className="fa-solid fa-rotate-right text-xs"></i> Pedir de nuevo
+                          </button>
+                        )}
+                        <a
+                          href={`/${t.slug}`}
+                          className={`flex-1 h-11 rounded-full font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition ${
+                            itemsUlt ? "bg-white/20 text-white" : "bg-white text-[#4d04b0]"
+                          }`}
+                        >
+                          Ver catálogo
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {otras.length > 0 && (
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#78729a] px-1 pt-1">Otras bodegas</p>
+                )}
+                {otras.map((t) => {
+                  const estado = estadoAtencionBodega(t.horario_atencion);
+                  const sigue = favoritas.has(t.bodega_id);
+                  return (
+                    <div key={t.bodega_id} className="bg-white rounded-[26px] ring-1 ring-[#efe6fc] p-2.5 flex items-center gap-3">
+                      <div className="w-[54px] h-[54px] rounded-[18px] bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] overflow-hidden shrink-0 flex items-center justify-center text-white">
+                        {t.logo_url ? (
+                          <img src={t.logo_url} alt={t.nombre} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="font-extrabold text-xl">{t.nombre?.charAt(0).toUpperCase()}</span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-[14.5px] text-[#1c1830] leading-tight truncate">{t.nombre}</p>
+                        <div className="flex items-center gap-1.5 mt-1 text-xs text-[#78729a] min-w-0">
+                          {indicadorAtencion(estado, false)}
+                          <span className="truncate">
+                            {ultimoPedidoPorBodega[t.bodega_id]
+                              ? fechaRelativa(ultimoPedidoPorBodega[t.bodega_id])
+                              : ultimaVisitaPorBodega[t.bodega_id]
+                              ? `Visto: ${fechaRelativa(ultimaVisitaPorBodega[t.bodega_id]).toLowerCase()}`
+                              : "Sin pedidos todavía"}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => alternarFavorita(t.bodega_id)}
+                        title={sigue ? "Dejar de seguir" : "Seguir esta tienda"}
+                        className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 active:scale-90 transition ${
+                          sigue ? "bg-[#f4eefe] text-[#6105dc]" : "bg-white ring-1 ring-[#efe6fc] text-[#a29cbd]"
+                        }`}
+                      >
+                        <i className={`${sigue ? "fa-solid" : "fa-regular"} fa-heart text-sm`}></i>
+                      </button>
+                      <a
+                        href={`/${t.slug}`}
+                        aria-label={`Ver catálogo de ${t.nombre}`}
+                        className="w-9 h-9 rounded-full bg-[#6105dc] text-white flex items-center justify-center shrink-0 active:scale-90 transition"
+                      >
+                        <i className="fa-solid fa-arrow-right text-xs"></i>
+                      </a>
+                    </div>
+                  );
+                })}
+              </>
+            );
+          })()}
+
+          <div className="rounded-[26px] border-[1.5px] border-dashed border-[#d9cdf3] bg-white/60 p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#ece0fd] text-[#4d04b0] flex items-center justify-center shrink-0">
               <i className="fa-solid fa-plus"></i>
             </div>
-            <p className="text-sm font-semibold text-stone-800">¿Compraste en otra bodega?</p>
-            <p className="text-xs text-stone-500 mt-0.5 mb-3">Escaneá su QR o pegá el link para tenerla a mano.</p>
-            <div className="flex items-center justify-center gap-2 flex-wrap">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-[#1c1830] leading-tight">¿Compraste en otra bodega?</p>
+              <p className="text-xs text-[#78729a] mt-0.5">Escanea su QR o pega el link</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
               {soportaEscaneo && (
                 <button
                   type="button"
                   onClick={iniciarEscaneo}
-                  className="text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 px-3.5 py-1.5 rounded-lg flex items-center gap-1.5"
+                  aria-label="Escanear QR"
+                  className="h-9 w-9 rounded-full bg-white ring-1 ring-[#e6dcf7] text-[#4d04b0] flex items-center justify-center"
                 >
-                  <i className="fa-solid fa-qrcode text-[11px]"></i> Escanear QR
+                  <i className="fa-solid fa-qrcode text-xs"></i>
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => { setLinkPegado(""); setModalPegarLink(true); }}
-                className="text-xs font-semibold text-stone-600 bg-stone-100 hover:bg-stone-200 px-3.5 py-1.5 rounded-lg flex items-center gap-1.5"
+                className="h-9 px-3.5 rounded-full bg-white ring-1 ring-[#e6dcf7] text-[#4d04b0] text-xs font-semibold flex items-center gap-1.5"
               >
-                <i className="fa-solid fa-link text-[11px]"></i> Pegar link
+                <i className="fa-solid fa-link text-[11px]"></i> Pegar
               </button>
             </div>
-            {errorCamara && <p className="text-[11px] text-rose-600 mt-2">{errorCamara}</p>}
           </div>
+          {errorCamara && <p className="text-[11px] text-rose-600 px-1">{errorCamara}</p>}
         </div>
       )}
 
