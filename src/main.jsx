@@ -979,7 +979,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
   };
 
   return (
-    <div className="max-w-md mx-auto px-4 py-6 space-y-4 pb-16">
+    <div className="max-w-md mx-auto px-4 py-6 space-y-4 pb-32">
       <div className="flex items-center gap-3">
         <button
           onClick={onVolver}
@@ -1304,7 +1304,7 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
   };
 
   return (
-    <div className="max-w-md mx-auto px-4 py-6 space-y-4 pb-16">
+    <div className={`max-w-md mx-auto px-4 py-6 space-y-4 ${esInicio ? "pb-16" : "pb-32"}`}>
       <div className="flex items-center gap-3">
         {!esInicio && (
           <button
@@ -1735,7 +1735,7 @@ function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarD
 
   return (
     <div className="fixed inset-0 z-20 overflow-y-auto bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">
-      <div className="max-w-md mx-auto px-4 py-5 flex flex-col gap-3 min-h-full">
+      <div className="max-w-md mx-auto px-4 pt-5 pb-28 flex flex-col gap-3 min-h-full">
         <div className="flex items-center gap-3">
           <button onClick={onVolver} aria-label="Volver" className="w-10 h-10 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center">
             <i className="fa-solid fa-arrow-left text-sm"></i>
@@ -1836,6 +1836,41 @@ function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarD
         </button>
       </div>
     </div>
+  );
+}
+
+// Barra inferior con efecto vidrio. Se muestra en las pantallas principales
+// (vitrina, Mis tiendas, Mis pedidos y Perfil) para poder moverse entre ellas
+// sin tener que volver atrás.
+function BarraNavegacion({ activa, contadorPedidos, onInicio, onTiendas, onPedidos, onPerfil }) {
+  const tabs = [
+    { id: "inicio", icono: "fa-house", texto: "Inicio", onClick: onInicio },
+    { id: "tiendas", icono: "fa-store", texto: "Mis tiendas", onClick: onTiendas },
+    { id: "pedidos", icono: "fa-receipt", texto: "Pedidos", contador: contadorPedidos, onClick: onPedidos },
+    { id: "perfil", icono: "fa-user", texto: "Perfil", onClick: onPerfil },
+  ];
+  return (
+    <nav className="fixed bottom-0 inset-x-0 z-[25] rounded-t-[28px] bg-white/95 supports-[backdrop-filter]:bg-white/70 backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_-1px_0_rgba(97,5,220,0.08)]">
+      <div className="max-w-3xl mx-auto flex items-center justify-around h-[78px] px-2.5 pb-2">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={t.onClick}
+            className={`relative w-[76px] h-[52px] rounded-[18px] flex flex-col items-center justify-center gap-0.5 transition-colors ${
+              t.id === activa ? "bg-[#6105dc]/[0.11] text-[#4d04b0]" : "text-[#78729a]"
+            }`}
+          >
+            <i className={`fa-solid ${t.icono} text-lg`}></i>
+            <span className="text-[10.5px] font-semibold">{t.texto}</span>
+            {t.contador > 0 && (
+              <span className="absolute right-3 -top-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#6105dc] text-white text-[10.5px] font-extrabold flex items-center justify-center border-2 border-white">
+                {t.contador}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+    </nav>
   );
 }
 
@@ -2711,19 +2746,63 @@ function App() {
     );
   }
 
+  // Navegación de la barra inferior: cada pestaña deja abierta solo su pantalla.
+  const irAInicio = () => {
+    setVistaMisTiendas(false);
+    setVistaMisPedidos(false);
+    setPerfilAbierto(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const irATiendas = () => {
+    if (!clienteSesion) return setModalCuentaAbierto(true);
+    setVistaMisPedidos(false);
+    setPerfilAbierto(false);
+    setVistaMisTiendas(true);
+  };
+  const irAPedidos = () => {
+    if (!clienteSesion) return setModalCuentaAbierto(true);
+    setVistaMisTiendas(false);
+    setPerfilAbierto(false);
+    setVistaMisPedidos(true);
+  };
+  const irAPerfil = () => {
+    if (!clienteSesion) return setModalCuentaAbierto(true);
+    setVistaMisTiendas(false);
+    setVistaMisPedidos(false);
+    setPerfilAbierto(true);
+  };
+  const barraNavegacion = (activa) => (
+    <BarraNavegacion
+      activa={activa}
+      contadorPedidos={pedidosActivos.length}
+      onInicio={irAInicio}
+      onTiendas={irATiendas}
+      onPedidos={irAPedidos}
+      onPerfil={irAPerfil}
+    />
+  );
+
   if (vistaMisPedidos && clienteSesion) {
     return (
-      <PantallaMisPedidos
-        cliente={clienteSesion}
-        onVolver={() => setVistaMisPedidos(false)}
-        bodegaActualId={bodega?.bodega_id}
-        onRepetirPedido={repetirPedido}
-      />
+      <>
+        <PantallaMisPedidos
+          cliente={clienteSesion}
+          onVolver={() => setVistaMisPedidos(false)}
+          bodegaActualId={bodega?.bodega_id}
+          onRepetirPedido={repetirPedido}
+        />
+        {barraNavegacion("pedidos")}
+      </>
     );
   }
 
   if (vistaMisTiendas && clienteSesion) {
-    return <PantallaMisTiendas onVolver={() => setVistaMisTiendas(false)} />;
+    return (
+      <>
+        <PantallaMisTiendas onVolver={() => setVistaMisTiendas(false)} />
+        {barraNavegacion("tiendas")}
+      </>
+    );
   }
 
   return (
@@ -3064,26 +3143,14 @@ function App() {
         </div>
       )}
 
-      <nav className="fixed bottom-0 inset-x-0 z-10 rounded-t-[28px] bg-white/95 supports-[backdrop-filter]:bg-white/70 backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_-1px_0_rgba(97,5,220,0.08)]">
-        <div className="max-w-3xl mx-auto flex items-center justify-around h-[78px] px-2.5 pb-2">
-          {[
-            { id: "inicio", icono: "fa-house", texto: "Inicio", activo: true, onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
-            { id: "tiendas", icono: "fa-store", texto: "Mis tiendas", onClick: () => (clienteSesion ? setVistaMisTiendas(true) : setModalCuentaAbierto(true)) },
-            { id: "pedidos", icono: "fa-receipt", texto: "Pedidos", contador: pedidosActivos.length, onClick: () => (clienteSesion ? setVistaMisPedidos(true) : setModalCuentaAbierto(true)) },
-            { id: "perfil", icono: "fa-user", texto: "Perfil", onClick: () => (clienteSesion ? setPerfilAbierto(true) : setModalCuentaAbierto(true)) },
-          ].map((t) => (
-            <button key={t.id} onClick={t.onClick} className={`relative w-[76px] h-[52px] rounded-[18px] flex flex-col items-center justify-center gap-0.5 transition-colors ${t.activo ? "bg-[#6105dc]/[0.11] text-[#4d04b0]" : "text-[#78729a]"}`}>
-              <i className={`fa-solid ${t.icono} text-lg`}></i>
-              <span className="text-[10.5px] font-semibold">{t.texto}</span>
-              {t.contador > 0 && (
-                <span className="absolute right-3 -top-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#6105dc] text-white text-[10.5px] font-extrabold flex items-center justify-center border-2 border-white">
-                  {t.contador}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </nav>
+      <BarraNavegacion
+        activa={perfilAbierto ? "perfil" : "inicio"}
+        contadorPedidos={pedidosActivos.length}
+        onInicio={irAInicio}
+        onTiendas={irATiendas}
+        onPedidos={irAPedidos}
+        onPerfil={irAPerfil}
+      />
 
       {perfilAbierto && clienteSesion && (
         <PantallaPerfil
@@ -3104,7 +3171,7 @@ function App() {
       {totalUnidades > 0 && !carritoAbierto && (
         <button
           onClick={() => setCarritoAbierto(true)}
-          className="fixed bottom-[94px] left-4 right-4 max-w-3xl mx-auto bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white rounded-full pl-2.5 pr-2 py-2 flex items-center justify-between gap-2 shadow-lg shadow-[#6105dc]/25 active:scale-[0.98] transition-transform"
+          className="fixed z-[24] bottom-[94px] left-4 right-4 max-w-3xl mx-auto bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white rounded-full pl-2.5 pr-2 py-2 flex items-center justify-between gap-2 shadow-lg shadow-[#6105dc]/25 active:scale-[0.98] transition-transform"
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="relative w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
@@ -3125,7 +3192,7 @@ function App() {
       )}
 
       {carritoAbierto && (
-        <div className="fixed inset-0 z-20 flex flex-col bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">
+        <div className="fixed inset-0 z-30 flex flex-col bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">
           <div className="max-w-md w-full mx-auto flex flex-col h-full min-h-0">
             <div className="flex items-center gap-3 px-4 pt-4 pb-2.5">
               <button
@@ -3448,7 +3515,7 @@ function App() {
       )}
 
       {(carritoAbierto || perfilAbierto) && ubicacionAbierta && (
-        <div className="fixed inset-0 z-30 flex flex-col bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">
+        <div className="fixed inset-0 z-40 flex flex-col bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">
           <div className="max-w-md w-full mx-auto flex flex-col h-full min-h-0">
             <div className="relative">
               <MapaEntrega punto={ubicacionEntrega} onCambiar={setUbicacionEntrega} alto="h-[46vh]" redondeo="rounded-none" />
