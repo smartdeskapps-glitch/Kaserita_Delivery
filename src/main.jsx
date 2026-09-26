@@ -616,7 +616,7 @@ function enlaceMapa(lat, lng) {
 // Mapa con pin movible (Leaflet + OpenStreetMap: gratis y sin claves).
 // Leaflet se carga recién cuando el cliente elige "A domicilio", para no
 // sumarle peso a la vitrina de quien solo retira en tienda.
-function MapaEntrega({ punto, onCambiar }) {
+function MapaEntrega({ punto, onCambiar, alto = "h-[200px]", redondeo = "rounded-2xl" }) {
   const contenedorRef = useRef(null);
   const mapaRef = useRef(null);
   const marcadorRef = useRef(null);
@@ -685,13 +685,13 @@ function MapaEntrega({ punto, onCambiar }) {
 
   if (falloMapa) {
     return (
-      <div className="h-[200px] rounded-2xl bg-stone-100 flex items-center justify-center text-center px-4 text-xs text-stone-500">
+      <div className={`${alto} ${redondeo} bg-stone-100 flex items-center justify-center text-center px-4 text-xs text-stone-500`}>
         No se pudo cargar el mapa. Usá el botón “Usar mi ubicación actual”.
       </div>
     );
   }
   return (
-    <div className="relative h-[200px] rounded-2xl overflow-hidden bg-stone-100">
+    <div className={`relative ${alto} ${redondeo} overflow-hidden bg-stone-100`}>
       <div ref={contenedorRef} className="absolute inset-0"></div>
       {!punto && listo && (
         <div className="absolute left-2 bottom-6 z-[500] bg-white/95 rounded-full px-3 py-1 text-[11px] text-stone-600 shadow pointer-events-none">
@@ -1425,6 +1425,8 @@ function App() {
   const [pagaConEntrega, setPagaConEntrega] = useState("");
   const [obteniendoGps, setObteniendoGps] = useState(false);
   const [errorGps, setErrorGps] = useState("");
+  const [ubicacionAbierta, setUbicacionAbierta] = useState(false); // pantalla "Confirmar ubicación"
+  const [pagoAbierto, setPagoAbierto] = useState(false); // opciones de pago desplegadas
   const [entregaListo, setEntregaListo] = useState(false);
   // "Seguir tienda": corazón de la vitrina + si quiere recibir avisos de esta tienda.
   const [tiendaSeguida, setTiendaSeguida] = useState(false);
@@ -2015,6 +2017,13 @@ function App() {
     );
   };
 
+  const vaciarPedido = () => {
+    if (!window.confirm("¿Vaciar tu pedido?")) return;
+    setCarrito({});
+    setCarritoCombos({});
+    setCarritoAbierto(false);
+  };
+
   const confirmarPedido = async () => {
     if (itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) return;
     if (problemaEntrega) {
@@ -2586,70 +2595,59 @@ function App() {
       )}
 
       {carritoAbierto && (
-        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center sm:justify-center z-20">
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col">
-            <div className="px-4 py-3 border-b border-stone-200 flex items-center justify-between">
-              <h2 className="font-bold text-stone-800">Tu pedido</h2>
-              <button onClick={() => setCarritoAbierto(false)} className="text-stone-400">
-                <i className="fa-solid fa-xmark text-lg"></i>
+        <div className="fixed inset-0 z-20 flex flex-col bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">
+          <div className="max-w-md w-full mx-auto flex flex-col h-full min-h-0">
+            <div className="flex items-center gap-3 px-4 pt-4 pb-2.5">
+              <button
+                onClick={() => setCarritoAbierto(false)}
+                aria-label="Volver"
+                className="w-10 h-10 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center shrink-0"
+              >
+                <i className="fa-solid fa-arrow-left text-sm"></i>
               </button>
-            </div>
-            <div className="overflow-y-auto flex-1 px-4 py-3 flex flex-col gap-3">
-              {itemsCarritoCombos.map((it) => (
-                <div key={`combo-${it.id}`} className="flex items-center justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-stone-800 truncate">
-                      <i className="fa-solid fa-gift text-amber-500 text-xs mr-1"></i>Combo: {it.nombre}
-                    </p>
-                    <p className="text-xs text-stone-400">{formatoMoneda(it.precio_venta)} c/u</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => quitarComboDelCarrito(it)}
-                      className="w-7 h-7 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center"
-                    >
-                      <i className="fa-solid fa-minus text-xs"></i>
-                    </button>
-                    <span className="text-sm font-semibold w-4 text-center">{it.cantidad}</span>
-                    <button
-                      onClick={() => agregarComboAlCarrito(it)}
-                      className="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center"
-                    >
-                      <i className="fa-solid fa-plus text-xs"></i>
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {itemsCarrito.map((it) => (
-                <div key={it.id} className="flex items-center justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-stone-800 truncate">{tituloProducto(it.descripcion)}</p>
-                    <p className="text-xs text-stone-400">{formatoMoneda(it.precio_venta)} c/u</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => quitarDelCarrito(it)}
-                      className="w-7 h-7 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center"
-                    >
-                      <i className="fa-solid fa-minus text-xs"></i>
-                    </button>
-                    <span className="text-sm font-semibold w-4 text-center">{it.cantidad}</span>
-                    <button
-                      onClick={() => agregarAlCarrito(it)}
-                      className="w-7 h-7 rounded-full bg-violet-600 text-white flex items-center justify-center"
-                    >
-                      <i className="fa-solid fa-plus text-xs"></i>
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {itemsCarrito.length === 0 && itemsCarritoCombos.length === 0 && <p className="text-center text-stone-400 py-6">Tu carrito está vacío.</p>}
-
+              <h2 className="flex-1 text-[19px] font-extrabold tracking-tight text-[#1c1830]">Tu pedido</h2>
               {(itemsCarrito.length > 0 || itemsCarritoCombos.length > 0) && (
-                <div className="flex flex-col gap-3 pt-3 border-t border-stone-100">
-                  <p className="text-xs font-semibold text-stone-600 -mb-1">¿Cómo quieres recibir tu pedido?</p>
-                  <div className="grid grid-cols-2 gap-1 bg-stone-100 rounded-xl p-1">
-                    {[["retiro", "Retiro en tienda", "fa-store"], ["domicilio", "A domicilio", "fa-motorcycle"]].map(([id, texto, icono]) => {
+                <button onClick={vaciarPedido} className="text-[12.5px] font-semibold text-[#6105dc]">
+                  Vaciar
+                </button>
+              )}
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-3">
+              {itemsCarrito.length === 0 && itemsCarritoCombos.length === 0 ? (
+                <div className="text-center py-16 space-y-3">
+                  <i className="fa-solid fa-bag-shopping text-3xl text-[#cfc4ea] block"></i>
+                  <p className="text-[#78729a]">Tu carrito está vacío.</p>
+                  <button
+                    onClick={() => setCarritoAbierto(false)}
+                    className="h-11 px-6 rounded-full bg-[#6105dc] text-white text-sm font-bold"
+                  >
+                    Volver a la tienda
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 px-0.5">
+                    <div className="w-10 h-10 rounded-[14px] bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] overflow-hidden shrink-0 flex items-center justify-center text-white font-bold">
+                      {bodega.logo_url ? (
+                        <img src={bodega.logo_url} alt={bodega.nombre} className="w-full h-full object-cover" />
+                      ) : (
+                        bodega.nombre?.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[14.5px] font-bold text-[#1c1830] truncate">{bodega.nombre}</p>
+                      {estadoHorario && (
+                        <p className="text-xs text-[#78729a]">{estadoHorario.abierto ? "Abierto ahora" : "Cerrado ahora"}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1.5 bg-white rounded-[22px] p-1.5 ring-1 ring-[#efe6fc]">
+                    {[
+                      ["domicilio", "Delivery", "fa-motorcycle", entregaDisponible ? formatoMoneda(Number(bodega?.costo_envio) || 0) : "No disponible"],
+                      ["retiro", "Retiro", "fa-store", "Gratis"],
+                    ].map(([id, texto, icono, detalle]) => {
                       const deshabilitado = id === "domicilio" && !entregaDisponible;
                       const seleccionado = (esDomicilio ? "domicilio" : "retiro") === id;
                       return (
@@ -2657,163 +2655,339 @@ function App() {
                           key={id}
                           type="button"
                           disabled={deshabilitado}
-                          onClick={() => { setTipoEntrega(id); setError(""); }}
-                          className={`py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
-                            seleccionado ? "bg-violet-600 text-white" : deshabilitado ? "text-stone-300 cursor-not-allowed" : "text-stone-500"
+                          onClick={() => {
+                            setTipoEntrega(id);
+                            setError("");
+                            if (id === "domicilio" && !ubicacionEntrega) setUbicacionAbierta(true);
+                          }}
+                          className={`rounded-[17px] py-2.5 px-2 flex flex-col items-center gap-0.5 transition ${
+                            seleccionado ? "bg-[#6105dc] text-white" : deshabilitado ? "text-[#cfc4ea] cursor-not-allowed" : "text-[#78729a]"
                           }`}
                         >
-                          <i className={`fa-solid ${icono}`}></i> {texto}
+                          <span className="text-sm font-bold flex items-center gap-2">
+                            <i className={`fa-solid ${icono} text-xs`}></i> {texto}
+                          </span>
+                          <span className={`text-[11.5px] ${seleccionado ? "text-white/85" : ""}`}>{detalle}</span>
                         </button>
                       );
                     })}
                   </div>
                   {!entregaDisponible && (
-                    <p className="text-[11px] text-stone-400 -mt-1">Este local no tiene entrega a domicilio por ahora.</p>
-                  )}
-                  {!esDomicilio && (
-                    <p className="text-xs text-stone-500 bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 flex items-start gap-1.5">
-                      <i className="fa-solid fa-store text-stone-400 mt-0.5"></i>
-                      <span>
-                        Retiras tu pedido en <strong>{bodega.nombre}</strong>
-                        {bodega.direccion ? ` (${bodega.direccion})` : ""} y pagas en caja.
-                      </span>
-                    </p>
+                    <p className="text-[11px] text-[#78729a] -mt-1.5 px-1">Este local no tiene entrega a domicilio por ahora.</p>
                   )}
 
-                  {esDomicilio && (
-                    <div className="flex flex-col gap-2.5">
-                      <p className="text-xs font-semibold text-stone-600">¿Dónde te lo llevamos?</p>
-                      <MapaEntrega punto={ubicacionEntrega} onCambiar={setUbicacionEntrega} />
-                      <button
-                        type="button"
-                        onClick={usarMiUbicacion}
-                        disabled={obteniendoGps}
-                        className="w-full py-2.5 rounded-xl bg-violet-50 text-violet-700 text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        <i className="fa-solid fa-location-crosshairs"></i>
-                        {obteniendoGps ? "Buscando tu ubicación..." : "Usar mi ubicación actual"}
+                  <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
+                    {esDomicilio ? (
+                      <button type="button" onClick={() => setUbicacionAbierta(true)} className="w-full text-left flex items-center gap-3 px-3.5 py-3">
+                        <span className="w-[62px] h-[62px] rounded-2xl bg-[#f4eefe] text-[#6105dc] shrink-0 flex items-center justify-center">
+                          <i className="fa-solid fa-location-dot text-2xl"></i>
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-[10.5px] font-bold tracking-[0.07em] uppercase text-[#78729a]">Entregar en</span>
+                          <span className="block text-sm font-bold text-[#1c1830] leading-snug line-clamp-2">
+                            {ubicacionEntrega ? referenciaEntrega.trim() || "Ubicación marcada en el mapa" : "Marca dónde te lo llevamos"}
+                          </span>
+                          <span className="block text-xs text-[#78729a]">
+                            {ubicacionEntrega ? telefonoEntrega || "Falta tu teléfono" : "Toca para elegir en el mapa"}
+                          </span>
+                        </span>
+                        <span className="text-[12.5px] font-bold text-[#6105dc] shrink-0">{ubicacionEntrega ? "Cambiar" : "Marcar"}</span>
                       </button>
-                      {errorGps && <p className="text-xs text-rose-600">{errorGps}</p>}
-                      <p className="text-[11px] text-stone-400 -mt-1">Tocá el mapa o arrastrá el pin para ajustar el punto exacto.</p>
-
-                      <div>
-                        <label className="text-xs font-semibold text-stone-600 block mb-1">Referencia</label>
-                        <input
-                          type="text"
-                          value={referenciaEntrega}
-                          onChange={(e) => setReferenciaEntrega(e.target.value)}
-                          maxLength={200}
-                          placeholder="Ej. Portón verde, 2.º piso, tocar timbre"
-                          className="w-full border border-stone-200 rounded-xl px-3 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:border-violet-400"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold text-stone-600 block mb-1">Teléfono de contacto</label>
-                        <input
-                          type="tel"
-                          inputMode="tel"
-                          value={telefonoEntrega}
-                          onChange={(e) => setTelefonoEntrega(e.target.value)}
-                          maxLength={20}
-                          placeholder="Ej. 987654321"
-                          className="w-full border border-stone-200 rounded-xl px-3 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:border-violet-400"
-                        />
-                      </div>
-
-                      <div>
-                        <p className="text-xs font-semibold text-stone-600 mb-1.5">¿Cómo pagarás al recibir?</p>
-                        <div className="flex flex-wrap gap-2">
-                          {MEDIOS_PAGO_ENTREGA.map((m) => (
-                            <button
-                              key={m.id}
-                              type="button"
-                              onClick={() => setMedioPagoEntrega(m.id)}
-                              className={`px-3 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition ${
-                                medioPagoEntrega === m.id ? "bg-violet-600 text-white" : "bg-violet-50 text-violet-700"
-                              }`}
-                            >
-                              <i className={`fa-solid ${m.icono}`}></i> {m.texto}
-                            </button>
-                          ))}
-                        </div>
-                        {medioPagoEntrega === "efectivo" && (
-                          <input
-                            type="number"
-                            inputMode="decimal"
-                            min="0"
-                            step="0.1"
-                            value={pagaConEntrega}
-                            onChange={(e) => setPagaConEntrega(e.target.value)}
-                            placeholder="¿Con cuánto pagas? (opcional)"
-                            className="mt-2 w-full border border-stone-200 rounded-xl px-3 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:border-violet-400"
-                          />
+                    ) : (
+                      <div className="flex items-center gap-3 px-3.5 py-3">
+                        <span className="w-[62px] h-[62px] rounded-2xl bg-[#f4eefe] text-[#6105dc] shrink-0 flex items-center justify-center">
+                          <i className="fa-solid fa-store text-2xl"></i>
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-[10.5px] font-bold tracking-[0.07em] uppercase text-[#78729a]">Retiras en</span>
+                          <span className="block text-sm font-bold text-[#1c1830] leading-snug">{bodega.nombre}</span>
+                          {bodega.direccion && <span className="block text-xs text-[#78729a] line-clamp-2">{bodega.direccion}</span>}
+                        </span>
+                        {bodega.direccion && (
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bodega.direccion)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[12.5px] font-bold text-[#6105dc] shrink-0"
+                          >
+                            Ver mapa
+                          </a>
                         )}
                       </div>
+                    )}
 
-                      {(bodega.zona_reparto || pedidoMinimo > 0) && (
-                        <p className="text-[11px] text-stone-400 leading-snug">
-                          {bodega.zona_reparto ? `Zona de reparto: ${bodega.zona_reparto}.` : ""}
-                          {pedidoMinimo > 0 ? ` Pedido mínimo: ${formatoMoneda(pedidoMinimo)}.` : ""}
-                        </p>
-                      )}
+                    <div className="flex items-center gap-3 px-3.5 py-3 border-t border-[#efe6fc]">
+                      <span className="w-10 h-10 rounded-[14px] bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+                        <i className="fa-regular fa-clock text-sm"></i>
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-sm font-bold text-[#1c1830]">Lo antes posible</span>
+                        <span className="block text-xs text-[#78729a]">
+                          {esDomicilio ? "El local te confirma el tiempo por WhatsApp" : "Te avisamos cuando esté listo"}
+                        </span>
+                      </span>
                     </div>
+
+                    {esDomicilio ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setPagoAbierto((v) => !v)}
+                          className="w-full text-left flex items-center gap-3 px-3.5 py-3 border-t border-[#efe6fc]"
+                        >
+                          <span className="w-10 h-10 rounded-[14px] bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+                            <i className={`fa-solid ${MEDIOS_PAGO_ENTREGA.find((m) => m.id === medioPagoEntrega)?.icono || "fa-money-bill-wave"} text-sm`}></i>
+                          </span>
+                          <span className="flex-1 min-w-0">
+                            <span className="block text-sm font-bold text-[#1c1830]">{TEXTO_MEDIO_PAGO[medioPagoEntrega]}</span>
+                            <span className="block text-xs text-[#78729a]">
+                              Pagas al recibir
+                              {medioPagoEntrega === "efectivo" && pagaConEntrega ? ` · con ${formatoMoneda(pagaConEntrega)}` : ""}
+                            </span>
+                          </span>
+                          <i className={`fa-solid fa-chevron-down text-xs text-[#a29cbd] transition-transform ${pagoAbierto ? "rotate-180" : ""}`}></i>
+                        </button>
+                        {pagoAbierto && (
+                          <div className="px-3.5 pb-3.5 flex flex-col gap-2.5">
+                            <div className="flex flex-wrap gap-2">
+                              {MEDIOS_PAGO_ENTREGA.map((m) => (
+                                <button
+                                  key={m.id}
+                                  type="button"
+                                  onClick={() => setMedioPagoEntrega(m.id)}
+                                  className={`px-3.5 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition ${
+                                    medioPagoEntrega === m.id ? "bg-[#6105dc] text-white" : "bg-white ring-1 ring-[#efe6fc] text-[#4d04b0]"
+                                  }`}
+                                >
+                                  <i className={`fa-solid ${m.icono}`}></i> {m.texto}
+                                </button>
+                              ))}
+                            </div>
+                            {medioPagoEntrega === "efectivo" && (
+                              <input
+                                type="number"
+                                inputMode="decimal"
+                                min="0"
+                                step="0.1"
+                                value={pagaConEntrega}
+                                onChange={(e) => setPagaConEntrega(e.target.value)}
+                                placeholder="¿Con cuánto pagas? (opcional)"
+                                className="w-full bg-white border border-[#e6dcf7] rounded-full px-4 py-2.5 text-sm text-stone-800 placeholder:text-[#a29cbd] focus:outline-none focus:border-[#6105dc]/45 focus:ring-4 focus:ring-[#6105dc]/[0.07]"
+                              />
+                            )}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-3 px-3.5 py-3 border-t border-[#efe6fc]">
+                        <span className="w-10 h-10 rounded-[14px] bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+                          <i className="fa-solid fa-money-bill-wave text-sm"></i>
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-sm font-bold text-[#1c1830]">Pagas en caja</span>
+                          <span className="block text-xs text-[#78729a]">Efectivo, Yape o tarjeta</span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
+                    <div className="flex items-center justify-between px-3.5 pt-3.5 pb-1">
+                      <p className="text-[15px] font-bold text-[#1c1830]">Tu pedido</p>
+                      <button onClick={() => setCarritoAbierto(false)} className="text-[12.5px] font-bold text-[#6105dc]">
+                        Agregar más
+                      </button>
+                    </div>
+                    {itemsCarritoCombos.map((it) => (
+                      <div key={`combo-${it.id}`} className="flex items-center gap-3 px-3.5 py-2.5 border-t border-[#efe6fc] first:border-t-0">
+                        <span className="w-[54px] h-[54px] rounded-2xl bg-[#f4eefe] text-[#6105dc] shrink-0 flex items-center justify-center">
+                          <i className="fa-solid fa-gift text-lg"></i>
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-[#1c1830] leading-tight line-clamp-2">Combo: {it.nombre}</p>
+                          <div className="flex items-center gap-1.5 mt-1.5">
+                            <button onClick={() => quitarComboDelCarrito(it)} className="w-[26px] h-[26px] rounded-full bg-[#f4eefe] text-[#4d04b0] flex items-center justify-center">
+                              <i className="fa-solid fa-minus text-[10px]"></i>
+                            </button>
+                            <span className="min-w-[16px] text-center text-[13px] font-bold">{it.cantidad}</span>
+                            <button onClick={() => agregarComboAlCarrito(it)} className="w-[26px] h-[26px] rounded-full bg-[#6105dc] text-white flex items-center justify-center">
+                              <i className="fa-solid fa-plus text-[10px]"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <span className="text-sm font-bold tabular-nums shrink-0">{formatoMoneda(it.precio_venta * it.cantidad)}</span>
+                      </div>
+                    ))}
+                    {itemsCarrito.map((it) => (
+                      <div key={it.id} className="flex items-center gap-3 px-3.5 py-2.5 border-t border-[#efe6fc] first:border-t-0">
+                        <span className="w-[54px] h-[54px] rounded-2xl bg-[#f4eefe] overflow-hidden shrink-0 flex items-center justify-center">
+                          {it.foto_url ? (
+                            <img src={it.foto_url} alt={tituloProducto(it.descripcion)} className="w-full h-full object-cover" />
+                          ) : (
+                            <i className="fa-solid fa-image text-[#cfc4ea]"></i>
+                          )}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-[#1c1830] leading-tight line-clamp-2">{tituloProducto(it.descripcion)}</p>
+                          <p className="text-xs text-[#78729a]">{formatoMoneda(it.precio_venta)} c/u</p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <button onClick={() => quitarDelCarrito(it)} className="w-[26px] h-[26px] rounded-full bg-[#f4eefe] text-[#4d04b0] flex items-center justify-center">
+                              <i className="fa-solid fa-minus text-[10px]"></i>
+                            </button>
+                            <span className="min-w-[16px] text-center text-[13px] font-bold">{it.cantidad}</span>
+                            <button onClick={() => agregarAlCarrito(it)} className="w-[26px] h-[26px] rounded-full bg-[#6105dc] text-white flex items-center justify-center">
+                              <i className="fa-solid fa-plus text-[10px]"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <span className="text-sm font-bold tabular-nums shrink-0">{formatoMoneda(it.precio_venta * it.cantidad)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] px-3.5 py-3 flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between text-[13px] text-[#78729a]">
+                      <span>Productos ({totalUnidades})</span>
+                      <span className="font-semibold text-[#1c1830] tabular-nums">{formatoMoneda(totalCarrito)}</span>
+                    </div>
+                    {esDomicilio && (
+                      <div className="flex items-center justify-between text-[13px] text-[#78729a]">
+                        <span>Envío a domicilio</span>
+                        <span className="font-semibold text-[#1c1830] tabular-nums">{formatoMoneda(costoEnvio)}</span>
+                      </div>
+                    )}
+                    <div className="flex items-baseline justify-between border-t border-dashed border-[#e2d6f6] pt-2 mt-0.5">
+                      <span className="font-bold text-[#1c1830]">{esDomicilio ? "Total a pagar" : "Total"}</span>
+                      <span className="text-xl font-extrabold tracking-tight tabular-nums text-[#1c1830]">{formatoMoneda(totalConEnvio)}</span>
+                    </div>
+                  </div>
+
+                  {(bodega.zona_reparto || pedidoMinimo > 0) && esDomicilio && (
+                    <p className="text-[11px] text-[#78729a] leading-snug px-1">
+                      {bodega.zona_reparto ? `Zona de reparto: ${bodega.zona_reparto}.` : ""}
+                      {pedidoMinimo > 0 ? ` Pedido mínimo: ${formatoMoneda(pedidoMinimo)}.` : ""}
+                    </p>
                   )}
-                </div>
+                  {estadoHorario && !estadoHorario.abierto && (
+                    <p className="text-xs text-[#78729a] bg-white ring-1 ring-[#efe6fc] rounded-2xl px-3 py-2.5 flex items-center gap-1.5">
+                      <i className="fa-solid fa-clock text-[#a29cbd]"></i>
+                      Este local está cerrado ahora: tu pedido va a esperar hasta que vuelvan a abrir.
+                    </p>
+                  )}
+                </>
               )}
             </div>
-            <div className="px-4 py-4 border-t border-stone-200">
-              {estadoHorario && !estadoHorario.abierto && (
-                <p className="text-xs text-stone-500 bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 mb-3 flex items-center gap-1.5">
-                  <i className="fa-solid fa-clock text-stone-400"></i>
-                  Este local está cerrado ahora -- tu pedido va a esperar hasta que vuelvan a abrir.
-                </p>
-              )}
+
+            <div className="px-4 pt-3 pb-4 bg-white rounded-t-[26px] border-t border-[#efe6fc]">
               {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
-              <div className="mb-3 space-y-1">
-                {esDomicilio && (
-                  <>
-                    <div className="flex items-center justify-between text-xs text-stone-500">
-                      <span>Productos</span>
-                      <span>{formatoMoneda(totalCarrito)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-stone-500">
-                      <span>Envío a domicilio</span>
-                      <span>{formatoMoneda(costoEnvio)}</span>
-                    </div>
-                  </>
-                )}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-stone-500">{esDomicilio ? "Total a pagar" : "Total"}</span>
-                  <span className="font-bold text-stone-800">{formatoMoneda(totalConEnvio)}</span>
+              {problemaEntrega && (itemsCarrito.length > 0 || itemsCarritoCombos.length > 0) && (
+                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-2xl px-3 py-2 mb-2.5">{problemaEntrega}</p>
+              )}
+              <div className="flex items-center gap-3.5">
+                <div className="flex flex-col min-w-[78px]">
+                  <span className="text-[11.5px] text-[#78729a]">Total</span>
+                  <span className="text-[21px] font-extrabold tracking-tight tabular-nums text-[#1c1830] leading-tight">{formatoMoneda(totalConEnvio)}</span>
                 </div>
-                {problemaEntrega && (itemsCarrito.length > 0 || itemsCarritoCombos.length > 0) && (
-                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-1.5">{problemaEntrega}</p>
-                )}
-              </div>
-              {clienteSesion ? (
-                <button
-                  onClick={confirmarPedido}
-                  disabled={(itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) || enviando || !!problemaEntrega}
-                  className="w-full py-3 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {enviando ? "Generando..." : (
-                    <>
-                      <i className="fa-brands fa-whatsapp text-lg"></i> Confirmar y enviar por WhatsApp
-                    </>
-                  )}
-                </button>
-              ) : (
-                <>
+                {clienteSesion ? (
+                  <button
+                    onClick={confirmarPedido}
+                    disabled={(itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) || enviando || !!problemaEntrega}
+                    className="flex-1 h-[54px] rounded-full bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white font-bold text-[15px] disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {enviando ? "Generando..." : (
+                      <>
+                        <i className="fa-brands fa-whatsapp text-xl"></i> Enviar por WhatsApp
+                      </>
+                    )}
+                  </button>
+                ) : (
                   <button
                     type="button"
                     onClick={iniciarConGoogle}
                     disabled={itemsCarrito.length === 0 && itemsCarritoCombos.length === 0}
-                    className="w-full py-3 rounded-xl bg-violet-600 text-white font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 h-[54px] rounded-full bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2 px-3"
                   >
-                    <IconGoogle /> Continuar con Google para enviar el pedido
+                    <span className="bg-white rounded-full w-6 h-6 flex items-center justify-center shrink-0"><IconGoogle /></span>
+                    Continuar con Google
                   </button>
-                </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {carritoAbierto && ubicacionAbierta && (
+        <div className="fixed inset-0 z-30 flex flex-col bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">
+          <div className="max-w-md w-full mx-auto flex flex-col h-full min-h-0">
+            <div className="relative">
+              <MapaEntrega punto={ubicacionEntrega} onCambiar={setUbicacionEntrega} alto="h-[46vh]" redondeo="rounded-none" />
+              <button
+                onClick={() => setUbicacionAbierta(false)}
+                aria-label="Volver"
+                className="absolute left-3.5 top-4 z-[600] w-10 h-10 rounded-full bg-white text-[#4d04b0] flex items-center justify-center shadow-md"
+              >
+                <i className="fa-solid fa-arrow-left text-sm"></i>
+              </button>
+              <button
+                type="button"
+                onClick={usarMiUbicacion}
+                disabled={obteniendoGps}
+                className="absolute right-3.5 bottom-9 z-[600] h-11 px-4 rounded-full bg-white text-[#4d04b0] text-[13px] font-bold flex items-center gap-2 shadow-md disabled:opacity-60"
+              >
+                <i className="fa-solid fa-location-crosshairs"></i>
+                {obteniendoGps ? "Buscando..." : "Usar mi ubicación"}
+              </button>
+            </div>
+
+            <div className="-mt-6 relative z-[600] flex-1 min-h-0 overflow-y-auto rounded-t-[28px] bg-gradient-to-br from-[#f4effc] to-[#f9f8fb] px-4 pt-4 pb-4 flex flex-col gap-3">
+              <div>
+                <p className="text-[11px] font-bold tracking-[0.07em] uppercase text-[#78729a]">Entregar en</p>
+                <p className="text-[17px] font-bold text-[#1c1830] leading-snug">
+                  {ubicacionEntrega ? "Ubicación marcada en el mapa" : "Marca dónde te lo llevamos"}
+                </p>
+                <p className="text-xs text-[#78729a] mt-0.5">Toca el mapa o arrastra el pin para ajustar el punto exacto.</p>
+              </div>
+              {errorGps && <p className="text-xs text-rose-600">{errorGps}</p>}
+
+              <div className="bg-white rounded-[18px] px-3.5 py-2.5 ring-1 ring-[#e6dcf7]">
+                <label className="block text-[10.5px] font-semibold text-[#78729a]">Referencia</label>
+                <input
+                  type="text"
+                  value={referenciaEntrega}
+                  onChange={(e) => setReferenciaEntrega(e.target.value)}
+                  maxLength={200}
+                  placeholder="Ej. Portón verde, 2.º piso, tocar timbre"
+                  className="w-full text-sm text-stone-800 placeholder:text-[#a29cbd] focus:outline-none bg-transparent"
+                />
+              </div>
+              <div className="bg-white rounded-[18px] px-3.5 py-2.5 ring-1 ring-[#e6dcf7]">
+                <label className="block text-[10.5px] font-semibold text-[#78729a]">Teléfono de contacto</label>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  value={telefonoEntrega}
+                  onChange={(e) => setTelefonoEntrega(e.target.value)}
+                  maxLength={20}
+                  placeholder="Ej. 987654321"
+                  className="w-full text-sm text-stone-800 placeholder:text-[#a29cbd] focus:outline-none bg-transparent"
+                />
+              </div>
+              {(bodega.zona_reparto || pedidoMinimo > 0) && (
+                <p className="text-[11px] text-[#78729a] leading-snug">
+                  {bodega.zona_reparto ? `Zona de reparto: ${bodega.zona_reparto}.` : ""}
+                  {pedidoMinimo > 0 ? ` Pedido mínimo: ${formatoMoneda(pedidoMinimo)}.` : ""}
+                </p>
               )}
+              <div className="flex-1"></div>
+              <button
+                type="button"
+                onClick={() => setUbicacionAbierta(false)}
+                disabled={!ubicacionEntrega || referenciaEntrega.trim().length < 3 || telefonoEntregaLimpio.length < 7 || telefonoEntregaLimpio.length > 15}
+                className="h-[54px] rounded-full bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white font-bold text-[15px] disabled:opacity-50"
+              >
+                Confirmar dirección
+              </button>
             </div>
           </div>
         </div>
