@@ -55,6 +55,25 @@ un pedido como "listo" -- no se puede crear por SQL Editor.
    el secreto `WEBHOOK_SECRET` del paso 1.
 7. Guardar.
 
+## 4. Avisos de la tienda a sus clientes ("Seguir tienda")
+
+Segunda función, para avisar a los clientes cuando una bodega activa su
+catálogo o su entrega a domicilio (o cuando el dueño toca "Avisar a mis
+clientes" en el POS). Usa los mismos secretos del paso 1.
+
+1. Correr `supabase/migration_34_seguir_tienda_y_avisos.sql` en el SQL Editor.
+2. Dashboard → **Edge Functions** → **New Function**, nombre exacto
+   `enviar-aviso-tienda`, pegar el contenido de
+   [`supabase/functions/enviar-aviso-tienda/index.ts`](supabase/functions/enviar-aviso-tienda/index.ts) y Deploy.
+3. Dashboard → **Database** → **Webhooks** → **Create a new webhook**:
+   tabla `avisos_tienda`, evento solo **Insert**, tipo **Supabase Edge
+   Functions**, función `enviar-aviso-tienda`, y el header
+   `x-webhook-secret` con el mismo valor de `WEBHOOK_SECRET`.
+
+Para probarlo: con un cliente que tenga notificaciones activadas y la
+bodega en "Mis tiendas", en el POS abrir Mi Link de Pedidos → "Avisar a mis
+clientes". Debe llegar la notificación "¡Tu bodega ya recibe pedidos!".
+
 ## Cómo probarlo de punta a punta
 
 1. En la vitrina, crear una cuenta de cliente (celular + PIN) y hacer un

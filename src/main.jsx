@@ -982,6 +982,8 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
   const [tiendas, setTiendas] = useState([]);
   const [ultimoPedidoPorBodega, setUltimoPedidoPorBodega] = useState({});
   const [ultimaVisitaPorBodega, setUltimaVisitaPorBodega] = useState({});
+  const [favoritas, setFavoritas] = useState(() => new Set());
+  const [idHabitual, setIdHabitual] = useState(null);
   const [busqueda, setBusqueda] = useState("");
   const [cargando, setCargando] = useState(true);
   const [modalPegarLink, setModalPegarLink] = useState(false);
@@ -1049,10 +1051,16 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
     // cualquier bodega que haya dejado de ofrecer delivery desde entonces.
     sbClient
       .from("bodegas_visitadas")
-      .select("bodega_id, visto_en")
+      .select("bodega_id, visto_en, favorita")
       .order("visto_en", { ascending: false })
+      // Si todavía no se corrió migration_34 (no existe "favorita"), se vuelve a pedir sin esa columna.
+      .then((r1) => (r1.error ? sbClient.from("bodegas_visitadas").select("bodega_id, visto_en").order("visto_en", { ascending: false }) : r1))
       .then(async ({ data: visitas }) => {
-        const filas = visitas || [];
+        const filasRecientes = visitas || [];
+        // Las tiendas que sigue van primero; dentro de cada grupo, la más reciente arriba.
+        const filas = filasRecientes.slice().sort((a, b) => Number(!!b.favorita) - Number(!!a.favorita));
+        setFavoritas(new Set(filas.filter((v) => v.favorita).map((v) => v.bodega_id)));
+        setIdHabitual(filasRecientes[0]?.bodega_id || null);
         const idsEnOrden = filas.map((v) => v.bodega_id);
         if (idsEnOrden.length === 0) {
           setCargando(false);
@@ -1128,7 +1136,7 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
       ) : (
         <div className="space-y-3">
           {tiendasFiltradas.map((t, i) => {
-            const habitual = i === 0 && !busqueda;
+            const habitual = t.bodega_id === idHabitual && !busqueda;
             const estado = estadoAtencionBodega(t.horario_atencion);
             return (
               <div
@@ -1136,11 +1144,18 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
                 className={`bg-white rounded-3xl overflow-hidden shadow-sm ${habitual ? "border-2 border-violet-300" : "border border-stone-200"}`}
               >
                 <div className="h-16 bg-gradient-to-r from-violet-500 to-blue-600 relative px-3 pt-3 flex items-start justify-between">
-                  {habitual ? (
-                    <span className="bg-white/20 backdrop-blur text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                      <i className="fa-solid fa-star text-amber-300 text-[9px]"></i> Habitual
-                    </span>
-                  ) : <span></span>}
+                  <span className="flex items-center gap-1.5">
+                    {habitual && (
+                      <span className="bg-white/20 backdrop-blur text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <i className="fa-solid fa-star text-amber-300 text-[9px]"></i> Habitual
+                      </span>
+                    )}
+                    {favoritas.has(t.bodega_id) && (
+                      <span className="bg-white/20 backdrop-blur text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <i className="fa-solid fa-heart text-rose-200 text-[9px]"></i> Siguiendo
+                      </span>
+                    )}
+                  </span>
                   <button
                     type="button"
                     onClick={async () => {
@@ -1315,6 +1330,10 @@ function App() {
   const [obteniendoGps, setObteniendoGps] = useState(false);
   const [errorGps, setErrorGps] = useState("");
   const [entregaListo, setEntregaListo] = useState(false);
+  // "Seguir tienda": corazón de la vitrina + si quiere recibir avisos de esta tienda.
+  const [tiendaSeguida, setTiendaSeguida] = useState(false);
+  const [avisosTienda, setAvisosTienda] = useState(true);
+  const [avisoSeguir, setAvisoSeguir] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState("");
   const [fotoAmpliada, setFotoAmpliada] = useState(null); // producto
@@ -1609,8 +1628,73 @@ function App() {
         { cliente_id: clienteSesion.id, bodega_id: bodega.bodega_id, visto_en: new Date().toISOString() },
         { onConflict: "cliente_id,bodega_id" }
       )
-      .then(() => {});
+      .then(() =>
+        // Después de registrar la visita, se lee si la sigue y si tiene los avisos activados.
+        sbClient
+          .from("bodegas_visitadas")
+          .select("favorita, avisos")
+          .eq("cliente_id", clienteSesion.id)
+          .eq("bodega_id", bodega.bodega_id)
+          .maybeSingle()
+      )
+      .then(({ data }) => {
+        if (data) {
+          setTiendaSeguida(!!data.favorita);
+          setAvisosTienda(data.avisos !== false);
+        }
+      });
   }, [estadoBodega, bodega, clienteSesion]);
+
+  const mostrarAvisoSeguir = (texto) => {
+    setAvisoSeguir(texto);
+    setTimeout(() => setAvisoSeguir(""), 4500);
+  };
+
+  const guardarPreferenciaTienda = async (cambios) => {
+    const { error: err } = await sbClient.from("bodegas_visitadas").upsert(
+      { cliente_id: clienteSesion.id, bodega_id: bodega.bodega_id, visto_en: new Date().toISOString(), ...cambios },
+      { onConflict: "cliente_id,bodega_id" }
+    );
+    return !err;
+  };
+
+  const alternarSeguirTienda = async () => {
+    if (!clienteSesion) {
+      iniciarConGoogle();
+      return;
+    }
+    const nuevo = !tiendaSeguida;
+    setTiendaSeguida(nuevo);
+    const ok = await guardarPreferenciaTienda(nuevo ? { favorita: true, avisos: true } : { favorita: false });
+    if (!ok) {
+      setTiendaSeguida(!nuevo);
+      mostrarAvisoSeguir("No se pudo guardar. Intenta de nuevo.");
+      return;
+    }
+    if (!nuevo) {
+      mostrarAvisoSeguir(`Dejaste de seguir a ${bodega.nombre}.`);
+      return;
+    }
+    setAvisosTienda(true);
+    try {
+      await activarNotificaciones(clienteSesion.id);
+      mostrarAvisoSeguir(`Ahora sigues a ${bodega.nombre}. Te avisaremos de sus novedades.`);
+    } catch {
+      mostrarAvisoSeguir(`Sigues a ${bodega.nombre}, pero activa las notificaciones del navegador para recibir sus avisos.`);
+    }
+  };
+
+  const alternarAvisosTienda = async () => {
+    const nuevo = !avisosTienda;
+    setAvisosTienda(nuevo);
+    const ok = await guardarPreferenciaTienda({ avisos: nuevo });
+    if (!ok) {
+      setAvisosTienda(!nuevo);
+      mostrarAvisoSeguir("No se pudo guardar. Intenta de nuevo.");
+      return;
+    }
+    mostrarAvisoSeguir(nuevo ? "Avisos activados para esta tienda." : "No recibirás avisos de esta tienda.");
+  };
 
   useEffect(() => {
     if (estadoBodega !== "ok" || !bodega) return;
@@ -2066,6 +2150,22 @@ function App() {
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={alternarSeguirTienda}
+            title={tiendaSeguida ? "Dejar de seguir esta tienda" : "Seguir esta tienda"}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition ${tiendaSeguida ? "bg-rose-50 text-rose-500" : "bg-stone-100 text-stone-500"}`}
+          >
+            <i className={`${tiendaSeguida ? "fa-solid" : "fa-regular"} fa-heart text-xs`}></i>
+          </button>
+          {tiendaSeguida && clienteSesion && (
+            <button
+              onClick={alternarAvisosTienda}
+              title={avisosTienda ? "Avisos activados (toca para apagarlos)" : "Avisos apagados (toca para activarlos)"}
+              className={`w-9 h-9 rounded-full flex items-center justify-center transition ${avisosTienda ? "bg-violet-50 text-violet-600" : "bg-stone-100 text-stone-400"}`}
+            >
+              <i className={`fa-solid ${avisosTienda ? "fa-bell" : "fa-bell-slash"} text-xs`}></i>
+            </button>
+          )}
           {(eventoInstalacion || (esIOS && !yaInstalada)) && (
             <button
               onClick={eventoInstalacion ? instalarApp : () => setInstruccionesIOSAbiertas(true)}
@@ -2110,6 +2210,12 @@ function App() {
           )}
         </div>
       </header>
+
+      {avisoSeguir && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 max-w-[90%] bg-stone-900 text-white text-xs px-4 py-2.5 rounded-full shadow-lg text-center">
+          {avisoSeguir}
+        </div>
+      )}
 
       {productos.length > 0 && (
         <div className="px-4 pt-3 pb-2 bg-white border-b border-stone-200 sticky top-0 z-20 space-y-2.5">
