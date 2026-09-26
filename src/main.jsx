@@ -2727,7 +2727,7 @@ function App() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto pb-44">
+    <div className="max-w-3xl mx-auto pb-48">
       <header className="px-4 pt-4 pb-2 flex items-center gap-3">
         <div className="w-[46px] h-[46px] rounded-2xl bg-[#f4eefe] overflow-hidden shrink-0">
           {bodega.logo_url ? (
@@ -2819,7 +2819,7 @@ function App() {
       })()}
 
       {avisoSeguir && (
-        <div className="fixed bottom-44 left-1/2 -translate-x-1/2 z-40 max-w-[90%] bg-stone-900 text-white text-xs px-4 py-2.5 rounded-full shadow-lg text-center">
+        <div className="fixed bottom-48 left-1/2 -translate-x-1/2 z-40 max-w-[90%] bg-stone-900 text-white text-xs px-4 py-2.5 rounded-full shadow-lg text-center">
           {avisoSeguir}
         </div>
       )}
@@ -3064,15 +3064,15 @@ function App() {
         </div>
       )}
 
-      <nav className="fixed bottom-0 inset-x-0 z-10 bg-white rounded-t-[26px] border-t border-[#efe6fc]">
-        <div className="max-w-3xl mx-auto flex items-center justify-around h-[68px] px-2 pb-1">
+      <nav className="fixed bottom-0 inset-x-0 z-10 rounded-t-[28px] bg-white/95 supports-[backdrop-filter]:bg-white/70 backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_-1px_0_rgba(97,5,220,0.08)]">
+        <div className="max-w-3xl mx-auto flex items-center justify-around h-[78px] px-2.5 pb-2">
           {[
             { id: "inicio", icono: "fa-house", texto: "Inicio", activo: true, onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
             { id: "tiendas", icono: "fa-store", texto: "Mis tiendas", onClick: () => (clienteSesion ? setVistaMisTiendas(true) : setModalCuentaAbierto(true)) },
             { id: "pedidos", icono: "fa-receipt", texto: "Pedidos", contador: pedidosActivos.length, onClick: () => (clienteSesion ? setVistaMisPedidos(true) : setModalCuentaAbierto(true)) },
             { id: "perfil", icono: "fa-user", texto: "Perfil", onClick: () => (clienteSesion ? setPerfilAbierto(true) : setModalCuentaAbierto(true)) },
           ].map((t) => (
-            <button key={t.id} onClick={t.onClick} className={`relative w-[74px] flex flex-col items-center gap-1 ${t.activo ? "text-[#6105dc]" : "text-[#78729a]"}`}>
+            <button key={t.id} onClick={t.onClick} className={`relative w-[76px] h-[52px] rounded-[18px] flex flex-col items-center justify-center gap-0.5 transition-colors ${t.activo ? "bg-[#6105dc]/[0.11] text-[#4d04b0]" : "text-[#78729a]"}`}>
               <i className={`fa-solid ${t.icono} text-lg`}></i>
               <span className="text-[10.5px] font-semibold">{t.texto}</span>
               {t.contador > 0 && (
@@ -3104,7 +3104,7 @@ function App() {
       {totalUnidades > 0 && !carritoAbierto && (
         <button
           onClick={() => setCarritoAbierto(true)}
-          className="fixed bottom-[84px] left-4 right-4 max-w-3xl mx-auto bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white rounded-full pl-2.5 pr-2 py-2 flex items-center justify-between gap-2 shadow-lg shadow-[#6105dc]/25 active:scale-[0.98] transition-transform"
+          className="fixed bottom-[94px] left-4 right-4 max-w-3xl mx-auto bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white rounded-full pl-2.5 pr-2 py-2 flex items-center justify-between gap-2 shadow-lg shadow-[#6105dc]/25 active:scale-[0.98] transition-transform"
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="relative w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
