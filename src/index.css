@@ -25,3 +25,9 @@
   max-width: none !important;
   max-height: none !important;
 }
+
+/* body-lila: mismo degradado suave que el POS */
+body {
+  background: linear-gradient(135deg, #f4effc 0%, #f9f8fb 50%, #f5f4f8 100%) fixed;
+  min-height: 100vh;
+}

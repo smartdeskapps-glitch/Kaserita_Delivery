@@ -223,13 +223,13 @@ function armarMensajeWhatsapp({ bodegaNombre, items, total, codigo, entrega }) {
 function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onVerFoto, esFavorito, onToggleFavorito }) {
   const stockPoco = producto.stock_disponible != null && producto.stock_disponible <= 3;
   return (
-    <div className="bg-white rounded-[26px] border border-stone-100 shadow-sm p-2 flex flex-col">
+    <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] p-1.5 flex flex-col gap-1.5">
       <div
         onClick={producto.foto_url ? () => onVerFoto(producto) : undefined}
-        className={`relative aspect-[4/5] rounded-[18px] bg-stone-100 flex items-center justify-center overflow-hidden ${producto.foto_url ? "cursor-zoom-in" : ""}`}
+        className={`relative aspect-square rounded-[16px] bg-[#f4eefe] flex items-center justify-center overflow-hidden ${producto.foto_url ? "cursor-zoom-in" : ""}`}
       >
         {stockPoco && (
-          <span className="absolute top-1.5 left-1.5 z-10 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide">
+          <span className="absolute bottom-1 left-1 z-10 bg-amber-100 text-amber-700 text-[9px] font-bold px-1.5 py-0.5 rounded-full">
             Pocas unidades
           </span>
         )}
@@ -237,58 +237,49 @@ function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onV
           <button
             onClick={(e) => { e.stopPropagation(); onToggleFavorito(producto.id); }}
             aria-label={esFavorito ? "Quitar de favoritos" : "Agregar a favoritos"}
-            className="absolute top-1.5 right-1.5 z-10 w-7 h-7 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-sm active:scale-90 transition"
+            className="absolute top-1 right-1 z-10 w-6 h-6 rounded-full bg-white/90 backdrop-blur flex items-center justify-center active:scale-90 transition"
           >
-            <i className={`${esFavorito ? "fa-solid text-rose-500" : "fa-regular text-stone-400"} fa-heart text-sm`}></i>
+            <i className={`${esFavorito ? "fa-solid text-[#6105dc]" : "fa-regular text-[#a29cbd]"} fa-heart text-[11px]`}></i>
           </button>
         )}
         {producto.foto_url ? (
           <img src={producto.foto_url} alt={tituloProducto(producto.descripcion)} className="w-full h-full object-cover" />
         ) : (
-          <i className="fa-solid fa-image text-stone-300 text-3xl"></i>
+          <i className="fa-solid fa-image text-[#cfc4ea] text-2xl"></i>
         )}
       </div>
-      <div className="px-1.5 pt-3 pb-1 flex flex-col gap-1 flex-1">
-        <p className="text-[15px] font-bold text-stone-800 leading-tight line-clamp-2">{tituloProducto(producto.descripcion)}</p>
-        {producto.categoria && <p className="text-xs text-stone-400 line-clamp-1">{producto.categoria}</p>}
-
-        <div className="mt-auto pt-2.5 border-t border-stone-100 flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-1.5">
-            <span className="text-sm font-bold text-violet-700">{formatoMoneda(producto.precio_venta)}</span>
-            {producto.stock_disponible != null && !stockPoco && (
-              <span className="flex items-center gap-1 text-[11px] font-semibold shrink-0 text-stone-400">
-                <i className="fa-solid fa-box text-[10px]"></i>
-                {producto.stock_disponible}
-              </span>
-            )}
-          </div>
-
-          {cantidadEnCarrito > 0 ? (
-            <div className="flex items-center justify-between gap-1.5 bg-stone-50 rounded-full p-1">
-              <button
-                onClick={() => onQuitar(producto)}
-                className="w-7 h-7 rounded-full bg-white shadow-sm text-stone-600 flex items-center justify-center active:scale-95"
-              >
-                <i className="fa-solid fa-minus text-[10px]"></i>
-              </button>
-              <span className="text-sm font-semibold">{cantidadEnCarrito}</span>
-              <button
-                onClick={() => onAgregar(producto)}
-                className="w-7 h-7 rounded-full bg-violet-600 text-white flex items-center justify-center active:scale-95"
-              >
-                <i className="fa-solid fa-plus text-[10px]"></i>
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => onAgregar(producto)}
-              className="w-full py-1.5 rounded-full bg-violet-600 text-white text-xs font-semibold flex items-center justify-center gap-1 active:scale-95"
-            >
-              Agregar <i className="fa-solid fa-plus text-[10px]"></i>
-            </button>
-          )}
-        </div>
+      <p className="px-1 text-[11.5px] font-semibold text-[#1c1830] leading-tight line-clamp-2 min-h-[28px]">
+        {tituloProducto(producto.descripcion)}
+      </p>
+      <div className="px-1 pb-0.5 flex items-center justify-between gap-1">
+        <span className="text-[13px] font-bold text-[#1c1830] tabular-nums">{formatoMoneda(producto.precio_venta)}</span>
+        {cantidadEnCarrito === 0 && (
+          <button
+            onClick={() => onAgregar(producto)}
+            aria-label="Agregar"
+            className="w-7 h-7 rounded-full bg-[#6105dc] text-white flex items-center justify-center active:scale-90 shrink-0"
+          >
+            <i className="fa-solid fa-plus text-[10px]"></i>
+          </button>
+        )}
       </div>
+      {cantidadEnCarrito > 0 && (
+        <div className="flex items-center justify-between bg-emerald-50 rounded-full p-0.5">
+          <button
+            onClick={() => onQuitar(producto)}
+            className="w-6 h-6 rounded-full bg-white text-emerald-700 flex items-center justify-center active:scale-90"
+          >
+            <i className="fa-solid fa-minus text-[9px]"></i>
+          </button>
+          <span className="text-xs font-bold text-emerald-700">{cantidadEnCarrito}</span>
+          <button
+            onClick={() => onAgregar(producto)}
+            className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center active:scale-90"
+          >
+            <i className="fa-solid fa-plus text-[9px]"></i>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -316,21 +307,21 @@ function TarjetaCombo({ combo, cantidadCombo, productosPorId, onAgregar, onQuita
   const stockLimitado = maxCombosPosibles != null && maxCombosPosibles > 0 && maxCombosPosibles <= 3;
 
   return (
-    <div className={`${ancho || "w-60"} shrink-0 bg-amber-50/50 rounded-2xl border border-amber-200 shadow-sm p-3.5 flex flex-col gap-2`}>
+    <div className={`${ancho || "w-60"} shrink-0 bg-gradient-to-br from-white to-[#f4eefe] rounded-[28px] ring-1 ring-[#efe6fc] p-4 flex flex-col gap-2`}>
       <div className="flex items-center justify-between gap-2 min-h-[18px]">
         {porcentajeOff > 0 ? (
-          <span className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">-{porcentajeOff}% OFF</span>
+          <span className="bg-[#ece0fd] text-[#4d04b0] text-[11px] font-bold px-2.5 py-1 rounded-full">-{porcentajeOff}% de descuento</span>
         ) : <span></span>}
-        {stockLimitado && <span className="text-[10px] font-semibold text-stone-500">Stock limitado</span>}
+        {stockLimitado && <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Stock limitado</span>}
       </div>
-      <p className="text-sm font-bold text-stone-900 leading-snug line-clamp-1">{combo.nombre}</p>
+      <p className="text-base font-bold text-[#1c1830] leading-snug line-clamp-1">{combo.nombre}</p>
       <p className="text-[11px] text-stone-500 line-clamp-2 flex-1">
         {(combo.items || []).map((it) => `${tituloProducto(it.descripcion)} (x${it.cantidad})`).join(", ")}
       </p>
-      <div className="flex items-end justify-between gap-2 pt-2 border-t border-amber-200/70">
+      <div className="flex items-end justify-between gap-2 pt-2 border-t border-[#efe6fc]">
         <div className="flex flex-col leading-tight gap-0.5">
           {porcentajeOff > 0 && <span className="text-[11px] text-stone-400 line-through">{formatoMoneda(precioOriginal)}</span>}
-          <span className="text-base font-black text-stone-900">{formatoMoneda(combo.precio_venta)}</span>
+          <span className="text-xl font-extrabold text-[#1c1830] tabular-nums">{formatoMoneda(combo.precio_venta)}</span>
           {ahorro > 0 && (
             <span className="w-fit text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">
               Ahorras {formatoMoneda(ahorro)}
@@ -340,12 +331,12 @@ function TarjetaCombo({ combo, cantidadCombo, productosPorId, onAgregar, onQuita
         {cantidadCombo === 0 ? (
           <button
             onClick={() => onAgregar(combo)}
-            className="shrink-0 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold px-3 py-1.5 rounded-full active:scale-95"
+            className="shrink-0 bg-[#6105dc] hover:bg-[#4d04b0] text-white text-sm font-bold px-5 py-2.5 rounded-full active:scale-95"
           >
             Agregar +
           </button>
         ) : (
-          <div className="shrink-0 flex items-center gap-2 bg-stone-900 rounded-full px-1 py-1">
+          <div className="shrink-0 flex items-center gap-2 bg-[#6105dc] rounded-full px-1 py-1">
             <button onClick={() => onQuitar(combo)} className="w-6 h-6 flex items-center justify-center text-white active:scale-90">
               <i className="fa-solid fa-minus text-[10px]"></i>
             </button>
@@ -1348,13 +1339,15 @@ function App() {
   const [destacadoActivo, setDestacadoActivo] = useState(0);
   const manejarScrollCombos = () => {
     const el = comboScrollRef.current;
-    if (!el || el.clientWidth === 0) return;
-    setComboActivo(Math.round(el.scrollLeft / el.clientWidth));
+    const anchoTarjeta = el?.firstElementChild?.offsetWidth;
+    if (!el || !anchoTarjeta) return;
+    setComboActivo(Math.round(el.scrollLeft / anchoTarjeta));
   };
   const manejarScrollDestacados = () => {
     const el = destacadoScrollRef.current;
-    if (!el || el.clientWidth === 0) return;
-    setDestacadoActivo(Math.round(el.scrollLeft / el.clientWidth));
+    const anchoTarjeta = el?.firstElementChild?.offsetWidth;
+    if (!el || !anchoTarjeta) return;
+    setDestacadoActivo(Math.round(el.scrollLeft / anchoTarjeta));
   };
   const [clienteSesion, setClienteSesion] = useState(null); // fila de clientes_delivery, o null
   const [modalCuentaAbierto, setModalCuentaAbierto] = useState(false);
@@ -2118,19 +2111,19 @@ function App() {
 
   return (
     <div className="max-w-3xl mx-auto pb-28">
-      <header className="bg-white border-b border-stone-200 px-4 pt-3 pb-3 flex items-center gap-3">
-        <div className="w-11 h-11 rounded-full border border-stone-100 bg-stone-100 overflow-hidden shrink-0">
+      <header className="px-4 pt-4 pb-2 flex items-center gap-3">
+        <div className="w-[46px] h-[46px] rounded-2xl bg-[#f4eefe] overflow-hidden shrink-0">
           {bodega.logo_url ? (
             <img src={bodega.logo_url} alt={bodega.nombre} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-violet-600 text-white font-bold">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] text-white font-bold">
               {bodega.nombre?.charAt(0).toUpperCase()}
             </div>
           )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 min-w-0">
-            <h1 className="text-[15px] font-bold text-stone-800 truncate">{bodega.nombre}</h1>
+            <h1 className="text-base font-bold text-[#1c1830] truncate">{bodega.nombre}</h1>
             {estadoHorario && (
               <span
                 className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1 ${
@@ -2160,7 +2153,7 @@ function App() {
           <button
             onClick={alternarSeguirTienda}
             title={tiendaSeguida ? "Dejar de seguir esta tienda" : "Seguir esta tienda"}
-            className={`w-9 h-9 rounded-full flex items-center justify-center transition ${tiendaSeguida ? "bg-rose-50 text-rose-500" : "bg-stone-100 text-stone-500"}`}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition ${tiendaSeguida ? "bg-[#f4eefe] text-[#6105dc]" : "bg-white ring-1 ring-[#efe6fc] text-[#4d04b0]"}`}
           >
             <i className={`${tiendaSeguida ? "fa-solid" : "fa-regular"} fa-heart text-xs`}></i>
           </button>
@@ -2168,7 +2161,7 @@ function App() {
             <button
               onClick={alternarAvisosTienda}
               title={avisosTienda ? "Avisos activados (toca para apagarlos)" : "Avisos apagados (toca para activarlos)"}
-              className={`w-9 h-9 rounded-full flex items-center justify-center transition ${avisosTienda ? "bg-violet-50 text-violet-600" : "bg-stone-100 text-stone-400"}`}
+              className={`w-9 h-9 rounded-full flex items-center justify-center transition ${avisosTienda ? "bg-[#f4eefe] text-[#6105dc]" : "bg-white ring-1 ring-[#efe6fc] text-[#a29cbd]"}`}
             >
               <i className={`fa-solid ${avisosTienda ? "fa-bell" : "fa-bell-slash"} text-xs`}></i>
             </button>
@@ -2177,7 +2170,7 @@ function App() {
             <button
               onClick={eventoInstalacion ? instalarApp : () => setInstruccionesIOSAbiertas(true)}
               title="Instalar"
-              className="w-9 h-9 rounded-full bg-violet-50 text-violet-600 flex items-center justify-center"
+              className="w-9 h-9 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center"
             >
               <i className="fa-solid fa-download text-xs"></i>
             </button>
@@ -2187,21 +2180,21 @@ function App() {
               <button
                 onClick={() => setVistaMisTiendas(true)}
                 title="Tiendas"
-                className="w-9 h-9 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center"
+                className="w-9 h-9 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center"
               >
                 <i className="fa-solid fa-store text-xs"></i>
               </button>
               <button
                 onClick={() => setVistaMisPedidos(true)}
                 title="Mis pedidos"
-                className="w-9 h-9 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center"
+                className="w-9 h-9 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center"
               >
                 <i className="fa-solid fa-receipt text-xs"></i>
               </button>
               <button
                 onClick={salir}
                 title="Salir"
-                className="w-9 h-9 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center"
+                className="w-9 h-9 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center"
               >
                 <i className="fa-solid fa-right-from-bracket text-xs"></i>
               </button>
@@ -2210,7 +2203,7 @@ function App() {
             <button
               onClick={() => setModalCuentaAbierto(true)}
               title="Ingresar"
-              className="w-9 h-9 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center"
+              className="w-9 h-9 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center"
             >
               <i className="fa-solid fa-user text-xs"></i>
             </button>
@@ -2225,15 +2218,15 @@ function App() {
       )}
 
       {productos.length > 0 && (
-        <div className="px-4 pt-3 pb-2 bg-white border-b border-stone-200 sticky top-0 z-20 space-y-2.5">
+        <div className="px-4 pt-3 pb-2 bg-[#f7f5fb]/90 backdrop-blur sticky top-0 z-20 space-y-2.5">
           <div className="relative">
-            <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm"></i>
+            <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-[#a29cbd] text-sm"></i>
             <input
               type="text"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar producto..."
-              className="w-full bg-stone-100 border border-stone-200 rounded-xl pl-9 pr-3 py-2.5 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+              className="w-full bg-white border border-[#e6dcf7] rounded-full pl-11 pr-4 py-3 text-sm text-stone-800 placeholder-[#a29cbd] focus:outline-none focus:border-[#6105dc]/45 focus:ring-4 focus:ring-[#6105dc]/[0.07]"
             />
           </div>
           {categorias.length > 0 && (
@@ -2241,34 +2234,32 @@ function App() {
               <div className="flex gap-3 overflow-x-auto hide-scrollbar px-4 py-1">
                 <button
                   onClick={() => { setCategoriaActiva(""); setSoloFavoritos(false); }}
-                  className="shrink-0 w-16 flex flex-col items-center gap-1 active:scale-95 transition"
+                  className="shrink-0 w-16 flex flex-col items-center gap-1.5 active:scale-95 transition"
                 >
                   <span
-                    className={`w-[52px] h-[52px] rounded-2xl flex items-center justify-center shadow-sm ${
-                      categoriaActiva === "" && !soloFavoritos
-                        ? "bg-gradient-to-br from-violet-500 to-blue-600 text-white"
-                        : "bg-white border border-stone-200 text-stone-500"
+                    className={`w-[58px] h-[58px] rounded-[20px] flex items-center justify-center ${
+                      categoriaActiva === "" && !soloFavoritos ? "bg-[#6105dc] text-white" : "bg-white ring-1 ring-[#efe6fc] text-[#4d04b0]"
                     }`}
                   >
-                    <i className="fa-solid fa-border-all text-lg"></i>
+                    <i className="fa-solid fa-border-all text-xl"></i>
                   </span>
-                  <span className={`text-[11px] font-bold truncate w-full text-center ${categoriaActiva === "" && !soloFavoritos ? "text-violet-700" : "text-stone-600"}`}>
+                  <span className={`text-[11px] font-semibold truncate w-full text-center ${categoriaActiva === "" && !soloFavoritos ? "text-[#6105dc]" : "text-[#1c1830]"}`}>
                     Todos
                   </span>
                 </button>
                 {favoritos.size > 0 && (
                   <button
                     onClick={() => { setSoloFavoritos((v) => !v); setCategoriaActiva(""); }}
-                    className="shrink-0 w-16 flex flex-col items-center gap-1 active:scale-95 transition"
+                    className="shrink-0 w-16 flex flex-col items-center gap-1.5 active:scale-95 transition"
                   >
                     <span
-                      className={`w-[52px] h-[52px] rounded-2xl flex items-center justify-center shadow-sm border ${
-                        soloFavoritos ? "bg-rose-500 border-rose-500 text-white" : "bg-rose-50 border-rose-200 text-rose-500"
+                      className={`w-[58px] h-[58px] rounded-[20px] flex items-center justify-center ${
+                        soloFavoritos ? "bg-[#6105dc] text-white" : "bg-white ring-1 ring-[#efe6fc] text-[#4d04b0]"
                       }`}
                     >
-                      <i className="fa-solid fa-heart text-lg"></i>
+                      <i className="fa-solid fa-heart text-xl"></i>
                     </span>
-                    <span className={`text-[11px] font-bold truncate w-full text-center ${soloFavoritos ? "text-rose-600" : "text-stone-600"}`}>
+                    <span className={`text-[11px] font-semibold truncate w-full text-center ${soloFavoritos ? "text-[#6105dc]" : "text-[#1c1830]"}`}>
                       Favoritos
                     </span>
                   </button>
@@ -2277,20 +2268,20 @@ function App() {
                   const est = estiloCategoria(c);
                   const activa = categoriaActiva === c;
                   return (
-                    <button key={c} onClick={() => { setCategoriaActiva(c); setSoloFavoritos(false); }} className="shrink-0 w-16 flex flex-col items-center gap-1 active:scale-95 transition">
+                    <button key={c} onClick={() => { setCategoriaActiva(c); setSoloFavoritos(false); }} className="shrink-0 w-16 flex flex-col items-center gap-1.5 active:scale-95 transition">
                       <span
-                        className={`w-[52px] h-[52px] rounded-2xl flex items-center justify-center shadow-sm border ${est.bg} ${est.texto} ${
-                          activa ? est.bordeActivo : est.borde
+                        className={`w-[58px] h-[58px] rounded-[20px] flex items-center justify-center ${
+                          activa ? "bg-[#6105dc] text-white" : "bg-white ring-1 ring-[#efe6fc] text-[#4d04b0]"
                         }`}
                       >
-                        <i className={`fa-solid ${est.icono} text-lg`}></i>
+                        <i className={`fa-solid ${est.icono} text-xl`}></i>
                       </span>
-                      <span className={`text-[11px] font-bold truncate w-full text-center ${activa ? "text-violet-700" : "text-stone-600"}`}>{c}</span>
+                      <span className={`text-[11px] font-semibold truncate w-full text-center ${activa ? "text-[#6105dc]" : "text-[#1c1830]"}`}>{c}</span>
                     </button>
                   );
                 })}
               </div>
-              <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-white to-transparent"></div>
+              <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-[#f7f5fb] to-transparent"></div>
             </div>
           )}
         </div>
@@ -2300,7 +2291,7 @@ function App() {
         <div className="pt-4">
           <div className="px-4 flex items-center justify-between mb-2">
             <p className="text-sm font-bold text-stone-800 flex items-center gap-1.5">
-              <i className="fa-solid fa-gift text-amber-500"></i> Combos con descuento
+              <i className="fa-solid fa-gift text-[#6105dc]"></i> Combos con descuento
             </p>
             {combos.length > 2 && (
               <button onClick={() => setModalTodosCombos(true)} className="text-xs font-semibold text-violet-600">
@@ -2311,10 +2302,10 @@ function App() {
           <div
             ref={comboScrollRef}
             onScroll={manejarScrollCombos}
-            className="flex overflow-x-auto hide-scrollbar px-4 pb-1 snap-x snap-mandatory"
+            className="flex overflow-x-auto hide-scrollbar px-4 pb-1 snap-x snap-mandatory scroll-pl-4"
           >
             {combos.map((combo) => (
-              <div key={combo.id} className="w-full shrink-0 snap-center pr-3 last:pr-0">
+              <div key={combo.id} className="w-[88%] shrink-0 snap-start pr-3 last:pr-0">
                 <TarjetaCombo
                   combo={combo}
                   cantidadCombo={carritoCombos[combo.id] || 0}
@@ -2331,7 +2322,7 @@ function App() {
               {combos.map((_, i) => (
                 <span
                   key={i}
-                  className={`h-1.5 rounded-full transition-all ${i === comboActivo ? "w-4 bg-violet-600" : "w-1.5 bg-stone-300"}`}
+                  className={`h-1.5 rounded-full transition-all ${i === comboActivo ? "w-5 bg-[#6105dc]" : "w-1.5 bg-[#d9cdf3]"}`}
                 ></span>
               ))}
             </div>
@@ -2343,7 +2334,7 @@ function App() {
         <div className="pt-4">
           <div className="px-4 flex items-center justify-between mb-2">
             <p className="text-sm font-bold text-stone-800 flex items-center gap-1.5">
-              <i className="fa-solid fa-star text-amber-500"></i> Destacados
+              <i className="fa-solid fa-star text-[#6105dc]"></i> Destacados
             </p>
             {productosDestacados.length > 2 && (
               <button onClick={() => setModalTodosDestacados(true)} className="text-xs font-semibold text-violet-600">
@@ -2354,33 +2345,34 @@ function App() {
           <div
             ref={destacadoScrollRef}
             onScroll={manejarScrollDestacados}
-            className="flex overflow-x-auto hide-scrollbar px-4 pb-1 snap-x snap-mandatory"
+            className="flex overflow-x-auto hide-scrollbar px-4 pb-1 snap-x snap-mandatory scroll-pl-4"
           >
             {productosDestacados.map((p) => (
-              <div key={p.id} className="w-full shrink-0 snap-center pr-3 last:pr-0">
-                <div className={`relative bg-gradient-to-br ${gradienteDestacado(p.categoria)} rounded-[22px] p-4 pr-28 min-h-[168px] flex flex-col justify-between`}>
-                  <div className="flex items-center gap-2">
-                    <span className="bg-white/90 backdrop-blur text-stone-800 text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                      <i className="fa-solid fa-star text-amber-500"></i> Destacado
-                    </span>
-                    {p.categoria && (
-                      <span className="bg-white/15 backdrop-blur text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
-                        {p.categoria}
-                      </span>
+              <div key={p.id} className="w-[88%] shrink-0 snap-start pr-3 last:pr-0">
+                <div className="flex items-center gap-3 bg-white rounded-[24px] ring-1 ring-[#efe6fc] p-2">
+                  <div
+                    onClick={p.foto_url ? () => setFotoAmpliada(p) : undefined}
+                    className={`w-16 h-16 rounded-2xl bg-[#f4eefe] overflow-hidden shrink-0 flex items-center justify-center ${p.foto_url ? "cursor-zoom-in" : ""}`}
+                  >
+                    {p.foto_url ? (
+                      <img src={p.foto_url} alt={tituloProducto(p.descripcion)} className="w-full h-full object-cover" />
+                    ) : (
+                      <i className="fa-solid fa-image text-[#cfc4ea]"></i>
                     )}
                   </div>
-                  <div>
-                    <p className="text-white text-lg font-bold leading-tight line-clamp-2">{tituloProducto(p.descripcion)}</p>
-                    <p className="text-white/85 text-sm font-semibold mt-1">{formatoMoneda(p.precio_venta)}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-[#1c1830] leading-tight line-clamp-2">{tituloProducto(p.descripcion)}</p>
+                    {p.categoria && <p className="text-xs text-[#78729a] line-clamp-1 mt-0.5">{p.categoria}</p>}
                   </div>
-                  <button
-                    onClick={() => agregarAlCarrito(p)}
-                    className="self-start bg-white text-stone-800 text-xs font-bold px-4 py-2 rounded-full flex items-center gap-1.5 active:scale-95"
-                  >
-                    Pedir ahora <i className="fa-solid fa-arrow-right text-[10px]"></i>
-                  </button>
-                  <div className="absolute right-3 bottom-3 w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 bg-white/10">
-                    <img src={p.foto_url} alt={tituloProducto(p.descripcion)} className="w-full h-full object-cover" />
+                  <div className="flex flex-col items-end gap-1.5 shrink-0 pr-1">
+                    <span className="text-sm font-extrabold text-[#1c1830] tabular-nums">{formatoMoneda(p.precio_venta)}</span>
+                    <button
+                      onClick={() => agregarAlCarrito(p)}
+                      aria-label="Agregar"
+                      className="w-8 h-8 rounded-full bg-[#6105dc] text-white flex items-center justify-center active:scale-90"
+                    >
+                      <i className="fa-solid fa-plus text-xs"></i>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -2391,7 +2383,7 @@ function App() {
               {productosDestacados.map((_, i) => (
                 <span
                   key={i}
-                  className={`h-1.5 rounded-full transition-all ${i === destacadoActivo ? "w-4 bg-violet-600" : "w-1.5 bg-stone-300"}`}
+                  className={`h-1.5 rounded-full transition-all ${i === destacadoActivo ? "w-5 bg-[#6105dc]" : "w-1.5 bg-[#d9cdf3]"}`}
                 ></span>
               ))}
             </div>
@@ -2400,6 +2392,12 @@ function App() {
       )}
 
       <main className="px-4 py-4">
+        {!cargandoProductos && productosFiltrados.length > 0 && (
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-base font-bold text-[#1c1830]">Todos los productos</p>
+            <span className="text-xs font-semibold text-[#6105dc]">{productosFiltrados.length} productos</span>
+          </div>
+        )}
         {cargandoProductos ? (
           <p className="text-center text-stone-400 py-10">Cargando catálogo...</p>
         ) : productos.length === 0 ? (
@@ -2415,7 +2413,7 @@ function App() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
             {productosFiltrados.map((p) => (
               <TarjetaProducto
                 key={p.id}
@@ -2437,7 +2435,7 @@ function App() {
           <p className="text-sm font-bold text-stone-500 flex items-center gap-1.5 mb-2">
             <i className="fa-solid fa-box-open text-stone-400"></i> Agotados por ahora
           </p>
-          <div className="bg-white border border-stone-200 rounded-2xl divide-y divide-stone-100">
+          <div className="bg-white ring-1 ring-[#efe6fc] rounded-2xl divide-y divide-[#f4eefe]">
             {productosAgotados.map((p) => {
               return (
                 <div key={p.id} className="flex items-center gap-3 p-3">
@@ -2462,12 +2460,12 @@ function App() {
       {totalUnidades > 0 && !carritoAbierto && (
         <button
           onClick={() => setCarritoAbierto(true)}
-          className="fixed bottom-4 left-4 right-4 max-w-3xl mx-auto bg-gradient-to-r from-violet-600 to-blue-600 text-white rounded-full pl-2.5 pr-2 py-2 flex items-center justify-between gap-2 shadow-lg shadow-violet-600/30 active:scale-[0.98] transition-transform"
+          className="fixed bottom-4 left-4 right-4 max-w-3xl mx-auto bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white rounded-full pl-2.5 pr-2 py-2 flex items-center justify-between gap-2 shadow-lg shadow-[#6105dc]/25 active:scale-[0.98] transition-transform"
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="relative w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
               <i className="fa-solid fa-bag-shopping text-sm"></i>
-              <span className="absolute -top-1 -right-1 bg-white text-violet-700 font-black text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-white text-[#4d04b0] font-black text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
                 {totalUnidades}
               </span>
             </div>
@@ -2476,7 +2474,7 @@ function App() {
               <span className="text-sm font-extrabold leading-tight">{formatoMoneda(totalCarrito)}</span>
             </div>
           </div>
-          <span className="flex items-center gap-1 bg-white text-violet-700 font-bold text-xs px-3.5 py-2 rounded-full shrink-0">
+          <span className="flex items-center gap-1 bg-white text-[#4d04b0] font-bold text-xs px-3.5 py-2 rounded-full shrink-0">
             Ver pedido <i className="fa-solid fa-arrow-right text-[10px]"></i>
           </span>
         </button>
