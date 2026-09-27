@@ -3440,7 +3440,7 @@ function App() {
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-3">
+            <div className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-3 [&>*]:shrink-0">
               {itemsCarrito.length === 0 && itemsCarritoCombos.length === 0 ? (
                 <div className="text-center py-16 space-y-3">
                   <i className="fa-solid fa-bag-shopping text-3xl text-[#cfc4ea] block"></i>
