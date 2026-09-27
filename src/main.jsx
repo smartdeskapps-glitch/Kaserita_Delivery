@@ -653,7 +653,7 @@ function ModalCuenta({ onCerrar, onGoogle }) {
         </p>
         <p className="text-[11px] text-[#a29cbd] text-center leading-snug">
           Al continuar aceptás los{" "}
-          <a href="https://kaserita.vercel.app/terminos.html" target="_blank" rel="noopener noreferrer" className="underline">Términos</a> y la{" "}
+          <a href="https://kaserita.vercel.app/terminos-delivery.html" target="_blank" rel="noopener noreferrer" className="underline">Términos</a> y la{" "}
           <a href="https://kaserita.vercel.app/privacidad.html" target="_blank" rel="noopener noreferrer" className="underline">Política de privacidad</a>.
         </p>
       </div>
@@ -1922,7 +1922,7 @@ function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarD
           <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-[#78729a] px-3.5 pt-3 pb-1">Legal</p>
           {[
             ["fa-shield-halved", "Política de privacidad", "https://kaserita.vercel.app/privacidad.html"],
-            ["fa-file-lines", "Términos y condiciones", "https://kaserita.vercel.app/terminos.html"],
+            ["fa-file-lines", "Términos y condiciones", "https://kaserita.vercel.app/terminos-delivery.html"],
           ].map(([icono, texto, url], i) => (
             <a
               key={texto}
