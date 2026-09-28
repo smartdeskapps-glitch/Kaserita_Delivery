@@ -2,7 +2,7 @@
 
 Vitrina pública para que los clientes de una bodega armen su pedido y lo manden
 por WhatsApp, sin necesidad de login. Es una app separada de
-[Kaserita](https://kaserita.vercel.app) (el POS), pero lee del mismo proyecto de
+[Kaserita](https://kaserita.smartdeskapps.com) (el POS), pero lee del mismo proyecto de
 Supabase.
 
 ## Cómo funciona

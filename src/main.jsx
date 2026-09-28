@@ -653,8 +653,8 @@ function ModalCuenta({ onCerrar, onGoogle }) {
         </p>
         <p className="text-[11px] text-[#a29cbd] text-center leading-snug">
           Al continuar aceptás los{" "}
-          <a href="https://kaserita.vercel.app/terminos-delivery.html" target="_blank" rel="noopener noreferrer" className="underline">Términos</a> y la{" "}
-          <a href="https://kaserita.vercel.app/privacidad.html" target="_blank" rel="noopener noreferrer" className="underline">Política de privacidad</a>.
+          <a href="https://kaserita.smartdeskapps.com/terminos-delivery.html" target="_blank" rel="noopener noreferrer" className="underline">Términos</a> y la{" "}
+          <a href="https://kaserita.smartdeskapps.com/privacidad.html" target="_blank" rel="noopener noreferrer" className="underline">Política de privacidad</a>.
         </p>
       </div>
     </HojaInferior>
@@ -1619,7 +1619,7 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
               type="text"
               value={linkPegado}
               onChange={(e) => setLinkPegado(e.target.value)}
-              placeholder="https://kaserita-delivery.vercel.app/bodega-demo"
+              placeholder="https://delivery.smartdeskapps.com/bodega-demo"
               className="w-full h-12 rounded-2xl bg-[#f7f4fc] ring-1 ring-[#efe6fc] px-4 text-sm text-[#1c1830] placeholder-[#a29cbd] focus:outline-none focus:ring-2 focus:ring-[#6105dc]/40"
               autoFocus
             />
@@ -1921,8 +1921,8 @@ function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarD
         <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
           <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-[#78729a] px-3.5 pt-3 pb-1">Legal</p>
           {[
-            ["fa-shield-halved", "Política de privacidad", "https://kaserita.vercel.app/privacidad.html"],
-            ["fa-file-lines", "Términos y condiciones", "https://kaserita.vercel.app/terminos-delivery.html"],
+            ["fa-shield-halved", "Política de privacidad", "https://kaserita.smartdeskapps.com/privacidad.html"],
+            ["fa-file-lines", "Términos y condiciones", "https://kaserita.smartdeskapps.com/terminos-delivery.html"],
           ].map(([icono, texto, url], i) => (
             <a
               key={texto}
