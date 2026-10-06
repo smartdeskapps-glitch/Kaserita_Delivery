@@ -683,8 +683,8 @@ function ModalCompletarPerfil({ inicial, onListo, onCancelar }) {
     e.preventDefault();
     setError("");
     const tel = telefono.replace(/\D/g, "");
-    if (tel.length < 6) return setError("Ingresá un celular válido.");
-    if (!nombre.trim()) return setError("Ingresá tu nombre.");
+    if (tel.length < 6) return setError("Ingresa un celular válido.");
+    if (!nombre.trim()) return setError("Ingresa tu nombre.");
     setCargando(true);
     try {
       const { data: userData } = await sbClient.auth.getUser();
@@ -832,7 +832,7 @@ function MapaEntrega({ punto, onCambiar, alto = "h-[200px]", redondeo = "rounded
   if (falloMapa) {
     return (
       <div className={`${alto} ${redondeo} bg-stone-100 flex items-center justify-center text-center px-4 text-xs text-stone-500`}>
-        No se pudo cargar el mapa. Usá el botón “Usar mi ubicación actual”.
+        No se pudo cargar el mapa. Usa el botón “Usar mi ubicación actual”.
       </div>
     );
   }
@@ -841,7 +841,7 @@ function MapaEntrega({ punto, onCambiar, alto = "h-[200px]", redondeo = "rounded
       <div ref={contenedorRef} className="absolute inset-0"></div>
       {!punto && listo && (
         <div className="absolute left-2 bottom-6 z-[500] bg-white/95 rounded-full px-3 py-1 text-[11px] text-stone-600 shadow pointer-events-none">
-          Tocá el mapa para poner el pin
+          Toca el mapa para poner el pin
         </div>
       )}
     </div>
@@ -993,6 +993,8 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
   const [cancelando, setCancelando] = useState(false);
   const [errorCancelar, setErrorCancelar] = useState("");
   const [permisoPush, setPermisoPush] = useState(permisoNotificaciones);
+  const [anuncio, setAnuncio] = useState("");
+  const estadosPrevios = useRef(null); // { [id pedido]: estado } de la lectura anterior
 
   const copiarCodigoPedido = async (p) => {
     try {
@@ -1021,6 +1023,19 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
         setErrorCarga(false);
         const filas = data || [];
         setPedidos(filas);
+        // Si la tienda cambió el estado de un pedido mientras el cliente miraba la
+        // pantalla, se anuncia a lectores de pantalla y, si ya está listo, vibra.
+        const previos = estadosPrevios.current;
+        if (previos) {
+          const cambiados = filas.filter((p) => previos[p.id] && previos[p.id] !== p.estado);
+          if (cambiados.length) {
+            setAnuncio(cambiados.map((p) => `Tu pedido ${p.codigo_corto}: ${etiquetaEstadoPedido(p).texto}`).join(". "));
+            if (cambiados.some((p) => p.estado === "listo") && typeof navigator.vibrate === "function") {
+              navigator.vibrate([200, 100, 200]);
+            }
+          }
+        }
+        estadosPrevios.current = Object.fromEntries(filas.map((p) => [p.id, p.estado]));
         // La cuenta es global por teléfono, no por bodega -- si el cliente
         // compró en más de una, hay que aclarar cuál es cuál.
         const idsUnicos = [...new Set(filas.map((p) => p.bodega_id))];
@@ -1204,7 +1219,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
               type="button"
               onClick={() => copiarCodigoPedido(p)}
               aria-label={`Copiar código ${p.codigo_corto}`}
-              className={`font-mono text-[1.875rem] font-extrabold tracking-[0.2em] leading-tight ${listo ? "text-white" : "text-[#1c1830]"}`}
+              className={`min-h-11 px-2 font-mono text-[1.875rem] font-extrabold tracking-[0.2em] leading-tight ${listo ? "text-white" : "text-[#1c1830]"}`}
             >
               {p.codigo_corto}
             </button>
@@ -1267,8 +1282,8 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
   );
 
   return (
-    <div className="max-w-md mx-auto px-4 py-6 space-y-4 pb-32">
-      <div className="flex items-center gap-3">
+    <div className="max-w-md mx-auto px-4 space-y-4 pb-32">
+      <div className="sticky top-0 z-20 -mx-4 px-4 pt-6 pb-3 bg-[#fafaf9]/90 backdrop-blur flex items-center gap-3">
         <button
           onClick={onVolver}
           aria-label="Volver"
@@ -1297,6 +1312,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
         </div>
       )}
       <p role="status" className={avisoPush ? "text-xs text-[#6b6590]" : "sr-only"}>{avisoPush}</p>
+      <p role="status" aria-live="polite" className="sr-only">{anuncio}</p>
 
       {cargando ? (
         <div role="status" aria-busy="true" className="space-y-3">
@@ -1507,7 +1523,7 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
       streamRef.current = stream;
       setEscaneando(true);
     } catch {
-      setErrorCamara("No se pudo acceder a la cámara. Revisá los permisos, o pegá el link directamente.");
+      setErrorCamara("No se pudo acceder a la cámara. Revisa los permisos, o pega el enlace directamente.");
     }
   };
 
@@ -1667,7 +1683,7 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
         <div className="text-center text-[#78729a] py-10 space-y-2">
           <i className="fa-solid fa-store text-2xl block text-[#cfc4ea]"></i>
           <p>Todavía no compraste en ninguna bodega.</p>
-          <p className="text-xs">En cuanto hagas tu primer pedido, va a aparecer acá.</p>
+          <p className="text-xs">En cuanto hagas tu primer pedido, aparecerá aquí.</p>
         </div>
       ) : tiendasFiltradas.length === 0 ? (
         <p className="text-center text-[#78729a] py-10">No encontramos ninguna bodega con ese nombre.</p>
@@ -1918,7 +1934,7 @@ function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarD
       setEliminando(false);
       setErrorEliminar(
         error.code === "PGRST202" || /could not find the function/i.test(error.message || "")
-          ? "Esta opción todavía no está disponible. Intentá de nuevo más tarde."
+          ? "Esta opción todavía no está disponible. Inténtalo de nuevo más tarde."
           : error.message || "No se pudo eliminar la cuenta."
       );
       return;
@@ -2234,7 +2250,7 @@ function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarD
               Se borrarán tu nombre, teléfono, correo, tus tiendas guardadas y el historial de tus pedidos. Esta acción no se puede deshacer.
             </p>
             <label className="w-full text-left text-[11.5px] font-semibold text-[#78729a] mt-1.5">
-              Para confirmar, escribí <span className="font-extrabold text-[#e11d48]">ELIMINAR</span>
+              Para confirmar, escribe <span className="font-extrabold text-[#e11d48]">ELIMINAR</span>
               <input
                 type="text"
                 value={textoConfirmar}
@@ -2906,11 +2922,11 @@ function App() {
   const problemaEntrega = !esDomicilio
     ? ""
     : !ubicacionEntrega
-    ? "Marcá en el mapa dónde querés recibir tu pedido."
+    ? "Marca en el mapa dónde quieres recibir tu pedido."
     : referenciaEntrega.trim().length < 3
-    ? "Escribí una referencia de tu dirección."
+    ? "Escribe una referencia de tu dirección."
     : telefonoEntregaLimpio.length < 7 || telefonoEntregaLimpio.length > 15
-    ? "Ingresá un teléfono de contacto válido."
+    ? "Ingresa un teléfono de contacto válido."
     : totalCarrito < pedidoMinimo
     ? `El pedido mínimo para delivery es ${formatoMoneda(pedidoMinimo)}.`
     : medioPagoEntrega === "efectivo" && pagaConEntrega && Number(pagaConEntrega) < totalConEnvio
@@ -3002,7 +3018,7 @@ function App() {
         setObteniendoGps(false);
         setErrorGps(
           err.code === 1
-            ? "No diste permiso de ubicación. Podés marcarla tocando el mapa."
+            ? "No diste permiso de ubicación. Puedes marcarla tocando el mapa."
             : "No pudimos obtener tu ubicación. Marcala tocando el mapa."
         );
       },
@@ -3071,12 +3087,12 @@ function App() {
       const msg = err.message || "";
       setError(
         msg.includes("Demasiados pedidos")
-          ? "Hiciste varios pedidos seguidos. Esperá unos minutos e intentá de nuevo."
+          ? "Hiciste varios pedidos seguidos. Espera unos minutos e inténtalo de nuevo."
           : msg.includes("suficiente stock")
           ? `${msg} Bajá la cantidad e intentá de nuevo.`
           : err.code === "P0001" && msg
           ? msg
-          : "No se pudo generar el pedido. Intentá de nuevo en un momento."
+          : "No se pudo generar el pedido. Inténtalo de nuevo en un momento."
       );
       return;
     }
@@ -3169,7 +3185,7 @@ function App() {
               onClick={() => setModalCuentaAbierto(true)}
               className="h-11 px-6 rounded-full bg-white ring-1 ring-[#e6dcf7] text-[#4d04b0] text-sm font-bold active:scale-[0.98] transition"
             >
-              Ingresá para ver tus bodegas guardadas
+              Ingresa para ver tus bodegas guardadas
             </button>
           </div>
         )}
@@ -4210,9 +4226,9 @@ function App() {
             <p className="text-[13px] text-[#78729a]">En iPhone la instalación se hace desde Safari, así:</p>
             <ol className="flex flex-col gap-2">
               {[
-                <>Tocá el botón <i className="fa-solid fa-arrow-up-from-bracket"></i> <strong>Compartir</strong> (abajo o arriba de la pantalla).</>,
-                <>Elegí <strong>"Agregar a inicio"</strong>.</>,
-                <>Tocá <strong>"Agregar"</strong> arriba a la derecha.</>,
+                <>Toca el botón <i className="fa-solid fa-arrow-up-from-bracket"></i> <strong>Compartir</strong> (abajo o arriba de la pantalla).</>,
+                <>Elige <strong>"Agregar a inicio"</strong>.</>,
+                <>Toca <strong>"Agregar"</strong> arriba a la derecha.</>,
               ].map((paso, i) => (
                 <li key={i} className="flex items-start gap-3 bg-[#f4eefe] rounded-2xl px-3.5 py-3 text-[13px] text-[#1c1830] leading-snug">
                   <span className="w-6 h-6 rounded-full bg-[#6105dc] text-white text-xs font-extrabold flex items-center justify-center shrink-0">{i + 1}</span>

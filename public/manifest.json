@@ -1,7 +1,7 @@
 {
   "name": "Kaserita Delivery",
   "short_name": "Kaserita",
-  "description": "Pedí de tu bodega de confianza y mandá el pedido por WhatsApp.",
+  "description": "Pide en tu bodega de confianza y manda el pedido por WhatsApp.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
