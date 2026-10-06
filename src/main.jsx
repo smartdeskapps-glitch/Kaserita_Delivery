@@ -857,6 +857,28 @@ function etiquetaEstadoPedido(p) {
   return ETIQUETAS_ESTADO_PEDIDO[p.estado] || ETIQUETAS_ESTADO_PEDIDO.pendiente;
 }
 
+// Los pedidos que todavía se están moviendo; el resto (retirado, cancelado) es historial.
+const ESTADOS_EN_CURSO = ["pendiente", "listo", "en_camino"];
+
+// "Hoy, 3:45 p. m." / "Ayer, 9:10 a. m." / "12 oct, 7:30 p. m." (con año si es de otro año).
+function fechaPedido(iso) {
+  const d = iso ? new Date(iso) : null;
+  if (!d || Number.isNaN(d.getTime())) return "";
+  const ahora = new Date();
+  const inicioDia = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const dias = Math.round((inicioDia(ahora) - inicioDia(d)) / 86400000);
+  const hora = d.toLocaleTimeString("es-PE", { hour: "numeric", minute: "2-digit" });
+  if (dias === 0) return `Hoy, ${hora}`;
+  if (dias === 1) return `Ayer, ${hora}`;
+  const opciones = { day: "numeric", month: "short" };
+  if (d.getFullYear() !== ahora.getFullYear()) opciones.year = "numeric";
+  return `${d.toLocaleDateString("es-PE", opciones)}, ${hora}`;
+}
+
+function totalPedido(p) {
+  return (p.items || []).reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0) + Number(p.costo_envio || 0);
+}
+
 // Pasos visuales de "Mis pedidos": el mismo estado de siempre
 // (pendiente/listo/retirado/cancelado) pero mostrado como progreso, no
 // solo como una etiqueta de color -- para que el cliente entienda de un
@@ -876,7 +898,21 @@ const PASOS_PEDIDO_DOMICILIO = [
 ];
 const PASO_ACTUAL_DOMICILIO = { pendiente: 1, listo: 1, en_camino: 2, retirado: 3 };
 
+// Con el texto del navegador muy ampliado, cuatro columnas ya no caben sin cortar
+// las palabras: el progreso pasa a una lista vertical.
+function useTextoGrande() {
+  const [grande, setGrande] = useState(false);
+  useEffect(() => {
+    const medir = () => setGrande(parseFloat(getComputedStyle(document.documentElement).fontSize) >= 24);
+    medir();
+    window.addEventListener("resize", medir);
+    return () => window.removeEventListener("resize", medir);
+  }, []);
+  return grande;
+}
+
 function StepperPedido({ estado, tipoEntrega }) {
+  const vertical = useTextoGrande();
   if (estado === "cancelado") {
     return (
       <div className="flex items-center gap-2 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
@@ -886,13 +922,17 @@ function StepperPedido({ estado, tipoEntrega }) {
     );
   }
   const domicilio = tipoEntrega === "domicilio";
-  const pasos = domicilio ? PASOS_PEDIDO_DOMICILIO : PASOS_PEDIDO;
+  // En domicilio, "listo" (armado, sale en breve) cae dentro del paso 2: ahí el
+  // paso se llama "Listo", para que el progreso diga lo mismo que la etiqueta.
+  const pasos = (domicilio ? PASOS_PEDIDO_DOMICILIO : PASOS_PEDIDO).map((paso, i) =>
+    domicilio && estado === "listo" && i === 1 ? { texto: "Listo", icono: "fa-bell-concierge" } : paso
+  );
   const actual = (domicilio ? PASO_ACTUAL_DOMICILIO : PASO_ACTUAL_POR_ESTADO)[estado] ?? 0;
   // El estado de cada paso se ve de tres formas, no solo por color: un check
   // (hecho), el ícono con halo (actual) o un círculo con borde (pendiente); y
   // un lector de pantalla lo oye como texto.
   return (
-    <ol aria-label="Progreso del pedido" className="flex items-start">
+    <ol aria-label="Progreso del pedido" className={vertical ? "flex flex-col" : "flex items-start"}>
       {pasos.map((paso, i) => {
         const esActual = i === actual && estado !== "retirado";
         const hecho = i <= actual && !esActual;
@@ -901,12 +941,12 @@ function StepperPedido({ estado, tipoEntrega }) {
           <li
             key={paso.texto}
             aria-current={esActual ? "step" : undefined}
-            className="relative flex-1 min-w-0 flex flex-col items-center gap-1.5"
+            className={vertical ? "relative flex items-center gap-3 pb-4 last:pb-0" : "relative flex-1 min-w-0 flex flex-col items-center gap-1.5"}
           >
             {i < pasos.length - 1 && (
               <span
                 aria-hidden="true"
-                className={`absolute top-[15px] left-1/2 w-full h-0.5 ${i < actual ? "bg-[#6105dc]" : "bg-[#d9d0ec]"}`}
+                className={`absolute ${vertical ? "left-[calc(1rem-1px)] top-8 bottom-0 w-0.5" : "top-[15px] left-1/2 w-full h-0.5"} ${i < actual ? "bg-[#6105dc]" : "bg-[#d9d0ec]"}`}
               ></span>
             )}
             <span
@@ -921,7 +961,7 @@ function StepperPedido({ estado, tipoEntrega }) {
             >
               <i className={`fa-solid ${hecho ? "fa-check" : paso.icono}`}></i>
             </span>
-            <span className={`text-[10px] font-semibold text-center leading-tight ${hecho || esActual ? "text-[#4d04b0]" : "text-[#6b6590]"}`}>
+            <span className={`text-[0.6875rem] font-semibold leading-tight break-words max-w-full ${vertical ? "text-left" : "text-center"} ${hecho || esActual ? "text-[#4d04b0]" : "text-[#6b6590]"}`}>
               {paso.texto}
               <span className="sr-only"> ({textoEstado})</span>
             </span>
@@ -1058,6 +1098,163 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
     return () => document.removeEventListener("keydown", alTeclear);
   }, [confirmarCancelar, cancelando, cerrarConfirmacion]);
 
+  const enCurso = pedidos.filter((p) => ESTADOS_EN_CURSO.includes(p.estado));
+  const anteriores = pedidos.filter((p) => !ESTADOS_EN_CURSO.includes(p.estado));
+
+  const detalleProductos = (p) => (
+    <>
+      <div className="text-[0.78125rem] text-[#6b6590] space-y-1">
+        {(p.items || []).map((it, i) => (
+          <div key={i} className="flex items-center justify-between gap-2">
+            <span>{it.cantidad} × {it.combo_id ? it.descripcion : tituloProducto(it.descripcion)}</span>
+            <span className="shrink-0 tabular-nums">{formatoMoneda(it.precio_venta * it.cantidad)}</span>
+          </div>
+        ))}
+      </div>
+      {p.tipo_entrega === "domicilio" && (
+        <div className="text-xs text-[#6b6590] space-y-1 pt-2 border-t border-[#efe6fc]">
+          <div className="flex items-center justify-between gap-2">
+            <span>Envío a domicilio</span>
+            <span className="shrink-0 tabular-nums">{formatoMoneda(p.costo_envio)}</span>
+          </div>
+          {p.entrega_referencia && (
+            <p className="flex items-start gap-1.5">
+              <i className="fa-solid fa-location-dot mt-0.5 text-[#6b6590]" aria-hidden="true"></i>
+              <span>{p.entrega_referencia}</span>
+            </p>
+          )}
+          {p.medio_pago && <p>Pagas al recibir: {TEXTO_MEDIO_PAGO[p.medio_pago] || p.medio_pago}</p>}
+        </div>
+      )}
+    </>
+  );
+
+  const botonPedirDeNuevo = (p) =>
+    p.bodega_id === bodegaActualId && (
+      <button
+        onClick={() => onRepetirPedido(p)}
+        className="min-h-11 text-xs font-bold text-[#4d04b0] bg-[#f4eefe] hover:bg-[#ece0fd] rounded-full px-3.5 flex items-center gap-1.5"
+      >
+        <i className="fa-solid fa-rotate-right text-[0.6875rem]" aria-hidden="true"></i> Pedir de nuevo
+      </button>
+    );
+
+  // Pedido que sigue en marcha: tarjeta completa con progreso (y ticket de retiro).
+  const renderPedidoEnCurso = (p) => {
+    // Retiro en tienda aún sin retirar: el código va como ticket, a la vista,
+    // porque es lo que se muestra en caja.
+    const mostrarTicket = p.tipo_entrega !== "domicilio" && (p.estado === "pendiente" || p.estado === "listo");
+    const listo = p.estado === "listo";
+    return (
+      <div key={p.id} className="bg-white rounded-[26px] ring-1 ring-[#efe6fc] p-3.5 space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1.5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              {mostrarTicket ? (
+                <span className="font-bold text-sm text-[#1c1830] truncate">{nombresBodegas[p.bodega_id] || "Pedido"}</span>
+              ) : (
+                <>
+                  <span className="font-mono font-bold text-sm tracking-wide text-[#1c1830]">{p.codigo_corto}</span>
+                  {nombresBodegas[p.bodega_id] && (
+                    <span className="text-[0.6875rem] text-[#6b6590] truncate">{nombresBodegas[p.bodega_id]}</span>
+                  )}
+                </>
+              )}
+            </div>
+            <p className="text-xs text-[#6b6590] mt-0.5">{fechaPedido(p.creado_en)}</p>
+          </div>
+          {/* Con el ticket "listo" a la vista, la etiqueta repetiría lo mismo. */}
+          {!(mostrarTicket && listo) && (
+            <span className={`text-[0.6875rem] font-bold px-2.5 py-1 rounded-full shrink-0 ${etiquetaEstadoPedido(p).color}`}>
+              {etiquetaEstadoPedido(p).texto}
+            </span>
+          )}
+        </div>
+
+        <div className="py-0.5">
+          <StepperPedido estado={p.estado} tipoEntrega={p.tipo_entrega} />
+        </div>
+
+        {detalleProductos(p)}
+
+        {mostrarTicket && (
+          <div
+            className={`relative rounded-[20px] px-3.5 py-3.5 text-center ${
+              listo ? "bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] text-white" : "bg-[#f4eefe]"
+            }`}
+          >
+            <span className="absolute -left-2 top-1/2 -mt-2 w-4 h-4 rounded-full bg-white ring-1 ring-[#efe6fc]"></span>
+            <span className="absolute -right-2 top-1/2 -mt-2 w-4 h-4 rounded-full bg-white ring-1 ring-[#efe6fc]"></span>
+            <p className={`text-[0.6875rem] font-bold tracking-[0.08em] uppercase ${listo ? "text-white" : "text-[#6b6590]"}`}>
+              {listo ? "¡Listo para retirar!" : "Tu código de retiro"}
+            </p>
+            <div className={`border-t-2 border-dashed my-2.5 ${listo ? "border-white/40" : "border-[#d9cdf3]"}`}></div>
+            <button
+              type="button"
+              onClick={() => copiarCodigoPedido(p)}
+              aria-label={`Copiar código ${p.codigo_corto}`}
+              className={`font-mono text-[1.875rem] font-extrabold tracking-[0.2em] leading-tight ${listo ? "text-white" : "text-[#1c1830]"}`}
+            >
+              {p.codigo_corto}
+            </button>
+            <p className={`text-xs mt-0.5 ${listo ? "text-white" : "text-[#6b6590]"}`}>
+              {copiadoId === p.id
+                ? "¡Código copiado!"
+                : listo
+                ? "Muéstralo en caja y pagas al retirar"
+                : "Lo necesitarás al retirar · toca para copiar"}
+            </p>
+          </div>
+        )}
+
+        <div className="flex items-baseline justify-between pt-2.5 border-t border-[#efe6fc]">
+          <span className="text-xs font-semibold text-[#6b6590]">Total</span>
+          <span className="text-lg font-extrabold tracking-tight text-[#1c1830] tabular-nums">{formatoMoneda(totalPedido(p))}</span>
+        </div>
+
+        <div className="flex items-center justify-between gap-2">
+          {(p.estado === "pendiente" || p.estado === "listo") ? (
+            <button
+              onClick={() => pedirCancelar(p)}
+              className="min-h-11 -ml-2 px-2 text-xs font-semibold text-rose-600 underline underline-offset-2"
+            >
+              Cancelar pedido
+            </button>
+          ) : <span></span>}
+          {botonPedirDeNuevo(p)}
+        </div>
+      </div>
+    );
+  };
+
+  // Pedido terminado (retirado o cancelado): una fila compacta que se abre para ver el detalle.
+  const renderPedidoAnterior = (p) => (
+    <details key={p.id} className="group bg-white rounded-[22px] ring-1 ring-[#efe6fc]">
+      <summary className="list-none [&::-webkit-details-marker]:hidden cursor-pointer min-h-14 px-3.5 py-3 flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-mono font-bold text-sm tracking-wide text-[#1c1830]">{p.codigo_corto}</span>
+            {nombresBodegas[p.bodega_id] && (
+              <span className="text-[0.6875rem] text-[#6b6590] truncate">{nombresBodegas[p.bodega_id]}</span>
+            )}
+          </div>
+          <p className="text-xs text-[#6b6590] mt-0.5">{fechaPedido(p.creado_en)}</p>
+        </div>
+        <div className="shrink-0 flex flex-col items-end gap-1">
+          <span className="text-sm font-extrabold text-[#1c1830] tabular-nums">{formatoMoneda(totalPedido(p))}</span>
+          <span className={`text-[0.6875rem] font-bold px-2.5 py-0.5 rounded-full ${etiquetaEstadoPedido(p).color}`}>
+            {etiquetaEstadoPedido(p).texto}
+          </span>
+        </div>
+        <i className="fa-solid fa-chevron-down text-xs text-[#6b6590] transition-transform motion-reduce:transition-none group-open:rotate-180" aria-hidden="true"></i>
+      </summary>
+      <div className="px-3.5 pb-3.5 pt-3 space-y-3 border-t border-[#efe6fc]">
+        {detalleProductos(p)}
+        {p.bodega_id === bodegaActualId && <div className="flex justify-end">{botonPedirDeNuevo(p)}</div>}
+      </div>
+    </details>
+  );
+
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-4 pb-32">
       <div className="flex items-center gap-3">
@@ -1068,7 +1265,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
         >
           <i className="fa-solid fa-arrow-left text-sm"></i>
         </button>
-        <h1 className="text-[22px] font-extrabold tracking-tight text-[#1c1830]">Mis pedidos</h1>
+        <h1 className="text-[1.375rem] font-extrabold tracking-tight text-[#1c1830]">Mis pedidos</h1>
       </div>
 
       <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] px-3.5 py-3 flex items-center justify-between gap-3">
@@ -1095,8 +1292,8 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
           <span className="w-[52px] h-[52px] rounded-full bg-[#fff1f3] text-[#e11d48] flex items-center justify-center">
             <i className="fa-solid fa-triangle-exclamation text-xl" aria-hidden="true"></i>
           </span>
-          <h2 className="text-[17px] font-extrabold text-[#1c1830]">No pudimos cargar tus pedidos</h2>
-          <p className="text-[12.5px] text-[#6b6590] leading-snug">Revisa tu conexión e inténtalo de nuevo.</p>
+          <h2 className="text-[1.0625rem] font-extrabold text-[#1c1830]">No pudimos cargar tus pedidos</h2>
+          <p className="text-[0.78125rem] text-[#6b6590] leading-snug">Revisa tu conexión e inténtalo de nuevo.</p>
           <button
             onClick={() => cargar()}
             className="mt-1 h-11 px-6 rounded-full bg-[#6105dc] text-white text-sm font-bold active:scale-[0.98] transition-transform"
@@ -1107,120 +1304,24 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
       ) : pedidos.length === 0 ? (
         <p className="text-center text-stone-600 py-10">Todavía no hiciste ningún pedido con tu cuenta.</p>
       ) : (
-        <div className="space-y-3">
-          {pedidos.map((p) => {
-            // Retiro en tienda aún sin retirar: el código va como ticket, a la vista,
-            // porque es lo que se muestra en caja.
-            const mostrarTicket = p.tipo_entrega !== "domicilio" && (p.estado === "pendiente" || p.estado === "listo");
-            const listo = p.estado === "listo";
-            return (
-              <div key={p.id} className="bg-white rounded-[26px] ring-1 ring-[#efe6fc] p-3.5 space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    {mostrarTicket ? (
-                      <span className="font-bold text-sm text-[#1c1830] truncate">{nombresBodegas[p.bodega_id] || "Pedido"}</span>
-                    ) : (
-                      <>
-                        <span className="font-mono font-bold text-sm tracking-wide text-[#1c1830]">{p.codigo_corto}</span>
-                        {nombresBodegas[p.bodega_id] && (
-                          <span className="text-[11px] text-[#6b6590] truncate">{nombresBodegas[p.bodega_id]}</span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 ${etiquetaEstadoPedido(p).color}`}>
-                    {etiquetaEstadoPedido(p).texto}
-                  </span>
-                </div>
-
-                <div className="py-0.5">
-                  <StepperPedido estado={p.estado} tipoEntrega={p.tipo_entrega} />
-                </div>
-
-                <div className="text-[12.5px] text-[#6b6590] space-y-1">
-                  {(p.items || []).map((it, i) => (
-                    <div key={i} className="flex items-center justify-between gap-2">
-                      <span>{it.cantidad} x {it.combo_id ? it.descripcion : tituloProducto(it.descripcion)}</span>
-                      <span className="shrink-0 tabular-nums">{formatoMoneda(it.precio_venta * it.cantidad)}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {p.tipo_entrega === "domicilio" && (
-                  <div className="text-xs text-[#6b6590] space-y-1 pt-2 border-t border-[#efe6fc]">
-                    <div className="flex items-center justify-between gap-2">
-                      <span>Envío a domicilio</span>
-                      <span className="shrink-0 tabular-nums">{formatoMoneda(p.costo_envio)}</span>
-                    </div>
-                    {p.entrega_referencia && (
-                      <p className="flex items-start gap-1.5">
-                        <i className="fa-solid fa-location-dot mt-0.5 text-[#6b6590]"></i>
-                        <span>{p.entrega_referencia}</span>
-                      </p>
-                    )}
-                    {p.medio_pago && <p>Pagas al recibir: {TEXTO_MEDIO_PAGO[p.medio_pago] || p.medio_pago}</p>}
-                  </div>
-                )}
-
-                {mostrarTicket && (
-                  <div
-                    className={`relative rounded-[20px] px-3.5 py-3.5 text-center ${
-                      listo ? "bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] text-white" : "bg-[#f4eefe]"
-                    }`}
-                  >
-                    <span className="absolute -left-2 top-1/2 -mt-2 w-4 h-4 rounded-full bg-white ring-1 ring-[#efe6fc]"></span>
-                    <span className="absolute -right-2 top-1/2 -mt-2 w-4 h-4 rounded-full bg-white ring-1 ring-[#efe6fc]"></span>
-                    <p className={`text-[11px] font-bold tracking-[0.08em] uppercase ${listo ? "text-white" : "text-[#6b6590]"}`}>
-                      {listo ? "¡Listo para retirar!" : "Tu código de retiro"}
-                    </p>
-                    <div className={`border-t-2 border-dashed my-2.5 ${listo ? "border-white/40" : "border-[#d9cdf3]"}`}></div>
-                    <button
-                      type="button"
-                      onClick={() => copiarCodigoPedido(p)}
-                      aria-label={`Copiar código ${p.codigo_corto}`}
-                      className={`font-mono text-[30px] font-extrabold tracking-[0.2em] leading-tight ${listo ? "text-white" : "text-[#1c1830]"}`}
-                    >
-                      {p.codigo_corto}
-                    </button>
-                    <p className={`text-xs mt-0.5 ${listo ? "text-white" : "text-[#6b6590]"}`}>
-                      {copiadoId === p.id
-                        ? "¡Código copiado!"
-                        : listo
-                        ? "Muéstralo en caja y pagas al retirar"
-                        : "Lo necesitarás al retirar · toca para copiar"}
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex items-baseline justify-between pt-2.5 border-t border-[#efe6fc]">
-                  <span className="text-xs font-semibold text-[#6b6590]">Total</span>
-                  <span className="text-lg font-extrabold tracking-tight text-[#1c1830] tabular-nums">
-                    {formatoMoneda((p.items || []).reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0) + Number(p.costo_envio || 0))}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between gap-2">
-                  {(p.estado === "pendiente" || p.estado === "listo") ? (
-                    <button
-                      onClick={() => pedirCancelar(p)}
-                      className="min-h-11 -ml-2 px-2 text-xs font-semibold text-rose-600 underline underline-offset-2"
-                    >
-                      Cancelar pedido
-                    </button>
-                  ) : <span></span>}
-                  {p.bodega_id === bodegaActualId && (
-                    <button
-                      onClick={() => onRepetirPedido(p)}
-                      className="text-xs font-bold text-[#4d04b0] bg-[#f4eefe] hover:bg-[#ece0fd] rounded-full px-3.5 py-2 flex items-center gap-1.5"
-                    >
-                      <i className="fa-solid fa-rotate-right text-[10px]"></i> Pedir de nuevo
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <>
+          {enCurso.length > 0 && (
+            <section aria-labelledby="pedidos-en-curso" className="space-y-3">
+              <h2 id="pedidos-en-curso" className="px-1 text-[0.8125rem] font-bold text-[#6b6590]">
+                En curso <span className="font-semibold">({enCurso.length})</span>
+              </h2>
+              {enCurso.map(renderPedidoEnCurso)}
+            </section>
+          )}
+          {anteriores.length > 0 && (
+            <section aria-labelledby="pedidos-anteriores" className="space-y-2">
+              <h2 id="pedidos-anteriores" className="px-1 text-[0.8125rem] font-bold text-[#6b6590]">
+                Anteriores <span className="font-semibold">({anteriores.length})</span>
+              </h2>
+              {anteriores.map(renderPedidoAnterior)}
+            </section>
+          )}
+        </>
       )}
       {confirmarCancelar && (
         <div
@@ -1238,8 +1339,8 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
             <span className="w-[52px] h-[52px] rounded-full bg-[#fff1f3] text-[#e11d48] flex items-center justify-center">
               <i className="fa-solid fa-ban text-xl" aria-hidden="true"></i>
             </span>
-            <h3 id="cancelar-titulo" className="text-[18px] font-extrabold text-[#1c1830]">¿Cancelar este pedido?</h3>
-            <p id="cancelar-detalle" className="text-[12.5px] text-[#6b6590] leading-snug">
+            <h3 id="cancelar-titulo" className="text-[1.125rem] font-extrabold text-[#1c1830]">¿Cancelar este pedido?</h3>
+            <p id="cancelar-detalle" className="text-[0.78125rem] text-[#6b6590] leading-snug">
               Pedido <span className="font-mono font-bold text-[#1c1830]">{confirmarCancelar.codigo_corto}</span>
               {nombresBodegas[confirmarCancelar.bodega_id] ? ` en ${nombresBodegas[confirmarCancelar.bodega_id]}` : ""}. Esta acción no se puede deshacer.
             </p>
