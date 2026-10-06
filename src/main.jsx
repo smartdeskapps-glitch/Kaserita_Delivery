@@ -176,6 +176,15 @@ async function activarNotificaciones(clienteId, silencioso = false) {
   if (error) throw error;
 }
 
+// "default" = todavía no se le ha preguntado; "granted"/"denied" = ya decidió;
+// "no-soportado" = el navegador no tiene push (p. ej. iPhone sin instalar la app).
+function permisoNotificaciones() {
+  if (typeof window === "undefined" || !("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+    return "no-soportado";
+  }
+  return Notification.permission;
+}
+
 function generarCodigoCorto() {
   // Sin caracteres ambiguos (0/O, 1/I) para que sea fácil de leer y transcribir.
   const alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -983,6 +992,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
   const [confirmarCancelar, setConfirmarCancelar] = useState(null); // el pedido que se quiere cancelar
   const [cancelando, setCancelando] = useState(false);
   const [errorCancelar, setErrorCancelar] = useState("");
+  const [permisoPush, setPermisoPush] = useState(permisoNotificaciones);
 
   const copiarCodigoPedido = async (p) => {
     try {
@@ -1056,11 +1066,12 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
     setActivandoPush(true);
     try {
       await activarNotificaciones(cliente.id);
-      setAvisoPush("¡Listo! Te vamos a avisar acá cuando tu pedido esté listo.");
+      setAvisoPush("¡Listo! Te avisaremos aquí cuando tu pedido esté listo.");
     } catch (err) {
       setAvisoPush(err.message || "No se pudo activar.");
     } finally {
       setActivandoPush(false);
+      setPermisoPush(permisoNotificaciones());
     }
   };
 
@@ -1261,32 +1272,53 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
         <button
           onClick={onVolver}
           aria-label="Volver"
-          className="w-10 h-10 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center shrink-0"
+          className="w-11 h-11 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center shrink-0"
         >
-          <i className="fa-solid fa-arrow-left text-sm"></i>
+          <i className="fa-solid fa-arrow-left text-sm" aria-hidden="true"></i>
         </button>
         <h1 className="text-[1.375rem] font-extrabold tracking-tight text-[#1c1830]">Mis pedidos</h1>
       </div>
 
-      <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] px-3.5 py-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="w-9 h-9 rounded-[13px] bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
-            <i className="fa-solid fa-bell text-sm"></i>
-          </span>
-          <p className="text-xs text-[#6b6590] leading-snug">Activa las notificaciones para enterarte apenas tu pedido esté listo.</p>
+      {permisoPush === "default" && (
+        <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] px-3.5 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="w-9 h-9 rounded-[13px] bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+              <i className="fa-solid fa-bell text-sm" aria-hidden="true"></i>
+            </span>
+            <p className="text-xs text-[#6b6590] leading-snug">Activa las notificaciones para enterarte apenas tu pedido esté listo.</p>
+          </div>
+          <button
+            onClick={activarPush}
+            disabled={activandoPush}
+            className="shrink-0 min-h-11 px-4 rounded-full bg-[#6105dc] text-white text-xs font-bold disabled:opacity-50"
+          >
+            {activandoPush ? "Activando..." : "Activar"}
+          </button>
         </div>
-        <button
-          onClick={activarPush}
-          disabled={activandoPush}
-          className="shrink-0 h-9 px-4 rounded-full bg-[#6105dc] text-white text-xs font-bold disabled:opacity-50"
-        >
-          {activandoPush ? "..." : "Activar"}
-        </button>
-      </div>
-      {avisoPush && <p className="text-xs text-[#6b6590]">{avisoPush}</p>}
+      )}
+      <p role="status" className={avisoPush ? "text-xs text-[#6b6590]" : "sr-only"}>{avisoPush}</p>
 
       {cargando ? (
-        <p role="status" className="text-center text-stone-600 py-10">Cargando...</p>
+        <div role="status" aria-busy="true" className="space-y-3">
+          <span className="sr-only">Cargando tus pedidos</span>
+          {[0, 1].map((i) => (
+            <div key={i} aria-hidden="true" className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] p-3.5 space-y-3 animate-pulse motion-reduce:animate-none">
+              <div className="flex items-center justify-between gap-3">
+                <div className="h-4 w-28 rounded-full bg-[#efe6fc]"></div>
+                <div className="h-5 w-20 rounded-full bg-[#f4eefe]"></div>
+              </div>
+              <div className="flex items-center gap-3">
+                {[0, 1, 2, 3].map((j) => (
+                  <div key={j} className="flex-1 flex flex-col items-center gap-1.5">
+                    <div className="w-8 h-8 rounded-full bg-[#efe6fc]"></div>
+                    <div className="h-2.5 w-10 rounded-full bg-[#f4eefe]"></div>
+                  </div>
+                ))}
+              </div>
+              <div className="h-3 w-2/3 rounded-full bg-[#f4eefe]"></div>
+            </div>
+          ))}
+        </div>
       ) : errorCarga ? (
         <div role="alert" className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] px-4 py-7 flex flex-col items-center text-center gap-2">
           <span className="w-[52px] h-[52px] rounded-full bg-[#fff1f3] text-[#e11d48] flex items-center justify-center">
@@ -1302,7 +1334,19 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
           </button>
         </div>
       ) : pedidos.length === 0 ? (
-        <p className="text-center text-stone-600 py-10">Todavía no hiciste ningún pedido con tu cuenta.</p>
+        <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] px-4 py-8 flex flex-col items-center text-center gap-2">
+          <span className="w-[52px] h-[52px] rounded-full bg-[#f4eefe] text-[#4d04b0] flex items-center justify-center">
+            <i className="fa-solid fa-bag-shopping text-xl" aria-hidden="true"></i>
+          </span>
+          <h2 className="text-[1.0625rem] font-extrabold text-[#1c1830]">Aún no tienes pedidos</h2>
+          <p className="text-[0.78125rem] text-[#6b6590] leading-snug">Cuando hagas uno, podrás seguirlo aquí paso a paso.</p>
+          <button
+            onClick={onVolver}
+            className="mt-1 h-11 px-6 rounded-full bg-[#6105dc] text-white text-sm font-bold active:scale-[0.98] transition-transform"
+          >
+            Ver la tienda
+          </button>
+        </div>
       ) : (
         <>
           {enCurso.length > 0 && (
