@@ -880,7 +880,7 @@ function StepperPedido({ estado, tipoEntrega }) {
   if (estado === "cancelado") {
     return (
       <div className="flex items-center gap-2 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
-        <i className="fa-solid fa-circle-xmark text-rose-500 text-xs"></i>
+        <i className="fa-solid fa-circle-xmark text-rose-500 text-xs" aria-hidden="true"></i>
         <span className="text-xs font-semibold text-rose-600">Este pedido fue cancelado</span>
       </div>
     );
@@ -888,32 +888,47 @@ function StepperPedido({ estado, tipoEntrega }) {
   const domicilio = tipoEntrega === "domicilio";
   const pasos = domicilio ? PASOS_PEDIDO_DOMICILIO : PASOS_PEDIDO;
   const actual = (domicilio ? PASO_ACTUAL_DOMICILIO : PASO_ACTUAL_POR_ESTADO)[estado] ?? 0;
+  // El estado de cada paso se ve de tres formas, no solo por color: un check
+  // (hecho), el ícono con halo (actual) o un círculo con borde (pendiente); y
+  // un lector de pantalla lo oye como texto.
   return (
-    <div className="flex items-start">
+    <ol aria-label="Progreso del pedido" className="flex items-start">
       {pasos.map((paso, i) => {
-        const completado = i <= actual;
         const esActual = i === actual && estado !== "retirado";
+        const hecho = i <= actual && !esActual;
+        const textoEstado = hecho ? "completado" : esActual ? "paso actual" : "pendiente";
         return (
-          <React.Fragment key={paso.texto}>
-            <div className="flex flex-col items-center gap-1.5 w-[60px] shrink-0">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs ${
-                  completado ? "bg-[#6105dc] text-white" : "bg-[#f1eff6] text-[#c3bdd6]"
-                } ${esActual ? "shadow-[0_0_0_5px_rgba(97,5,220,0.16)]" : ""}`}
-              >
-                <i className={`fa-solid ${paso.icono}`}></i>
-              </div>
-              <span className={`text-[10px] font-semibold text-center leading-tight ${completado ? "text-[#4d04b0]" : "text-[#a29cbd]"}`}>
-                {paso.texto}
-              </span>
-            </div>
+          <li
+            key={paso.texto}
+            aria-current={esActual ? "step" : undefined}
+            className="relative flex-1 min-w-0 flex flex-col items-center gap-1.5"
+          >
             {i < pasos.length - 1 && (
-              <div className={`flex-1 h-0.5 mt-[15px] ${i < actual ? "bg-[#6105dc]" : "bg-[#e6dcf7]"}`}></div>
+              <span
+                aria-hidden="true"
+                className={`absolute top-[15px] left-1/2 w-full h-0.5 ${i < actual ? "bg-[#6105dc]" : "bg-[#d9d0ec]"}`}
+              ></span>
             )}
-          </React.Fragment>
+            <span
+              aria-hidden="true"
+              className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-xs ${
+                hecho
+                  ? "bg-[#6105dc] text-white"
+                  : esActual
+                  ? "bg-[#6105dc] text-white shadow-[0_0_0_5px_rgba(97,5,220,0.16)]"
+                  : "bg-white text-[#6b6590] border-2 border-[#8f89ab]"
+              }`}
+            >
+              <i className={`fa-solid ${hecho ? "fa-check" : paso.icono}`}></i>
+            </span>
+            <span className={`text-[10px] font-semibold text-center leading-tight ${hecho || esActual ? "text-[#4d04b0]" : "text-[#6b6590]"}`}>
+              {paso.texto}
+              <span className="sr-only"> ({textoEstado})</span>
+            </span>
+          </li>
         );
       })}
-    </div>
+    </ol>
   );
 }
 
@@ -924,6 +939,10 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
   const [activandoPush, setActivandoPush] = useState(false);
   const [avisoPush, setAvisoPush] = useState("");
   const [copiadoId, setCopiadoId] = useState(null);
+  const [errorCarga, setErrorCarga] = useState(false);
+  const [confirmarCancelar, setConfirmarCancelar] = useState(null); // el pedido que se quiere cancelar
+  const [cancelando, setCancelando] = useState(false);
+  const [errorCancelar, setErrorCancelar] = useState("");
 
   const copiarCodigoPedido = async (p) => {
     try {
@@ -941,10 +960,17 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
       .from("pedidos_seguimiento")
       .select("*")
       .order("creado_en", { ascending: false })
-      .then(async ({ data }) => {
+      .then(async ({ data, error }) => {
+        setCargando(false);
+        if (error) {
+          // Un fallo no debe verse como "no tienes pedidos". Si ya había una lista
+          // en pantalla y solo falló una actualización en segundo plano, se deja.
+          if (!silencioso) setErrorCarga(true);
+          return;
+        }
+        setErrorCarga(false);
         const filas = data || [];
         setPedidos(filas);
-        setCargando(false);
         // La cuenta es global por teléfono, no por bodega -- si el cliente
         // compró en más de una, hay que aclarar cuál es cuál.
         const idsUnicos = [...new Set(filas.map((p) => p.bodega_id))];
@@ -998,10 +1024,39 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
     }
   };
 
-  const cancelar = async (id) => {
-    const { error } = await sbClient.rpc("cancelar_seguimiento_pedido", { p_id: id });
-    if (!error) cargar();
+  const pedirCancelar = (p) => {
+    setErrorCancelar("");
+    setConfirmarCancelar(p);
   };
+
+  const cerrarConfirmacion = useCallback(() => {
+    setConfirmarCancelar(null);
+    setErrorCancelar("");
+  }, []);
+
+  const confirmarCancelacion = async () => {
+    if (!confirmarCancelar || cancelando) return;
+    setCancelando(true);
+    setErrorCancelar("");
+    const { error } = await sbClient.rpc("cancelar_seguimiento_pedido", { p_id: confirmarCancelar.id });
+    setCancelando(false);
+    if (error) {
+      // Lo más común: la tienda ya lo despachó y ya no se puede cancelar.
+      setErrorCancelar("No pudimos cancelar el pedido. Puede que la tienda ya lo haya despachado. Actualizamos tu lista.");
+      cargar(true);
+      return;
+    }
+    cerrarConfirmacion();
+    cargar(true);
+  };
+
+  // Escape cierra la confirmación (salvo mientras se cancela).
+  useEffect(() => {
+    if (!confirmarCancelar) return undefined;
+    const alTeclear = (e) => { if (e.key === "Escape" && !cancelando) cerrarConfirmacion(); };
+    document.addEventListener("keydown", alTeclear);
+    return () => document.removeEventListener("keydown", alTeclear);
+  }, [confirmarCancelar, cancelando, cerrarConfirmacion]);
 
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-4 pb-32">
@@ -1021,7 +1076,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
           <span className="w-9 h-9 rounded-[13px] bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
             <i className="fa-solid fa-bell text-sm"></i>
           </span>
-          <p className="text-xs text-[#78729a] leading-snug">Activa las notificaciones para enterarte apenas tu pedido esté listo.</p>
+          <p className="text-xs text-[#6b6590] leading-snug">Activa las notificaciones para enterarte apenas tu pedido esté listo.</p>
         </div>
         <button
           onClick={activarPush}
@@ -1031,12 +1086,26 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
           {activandoPush ? "..." : "Activar"}
         </button>
       </div>
-      {avisoPush && <p className="text-xs text-[#78729a]">{avisoPush}</p>}
+      {avisoPush && <p className="text-xs text-[#6b6590]">{avisoPush}</p>}
 
       {cargando ? (
-        <p className="text-center text-stone-400 py-10">Cargando...</p>
+        <p role="status" className="text-center text-stone-600 py-10">Cargando...</p>
+      ) : errorCarga ? (
+        <div role="alert" className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] px-4 py-7 flex flex-col items-center text-center gap-2">
+          <span className="w-[52px] h-[52px] rounded-full bg-[#fff1f3] text-[#e11d48] flex items-center justify-center">
+            <i className="fa-solid fa-triangle-exclamation text-xl" aria-hidden="true"></i>
+          </span>
+          <h2 className="text-[17px] font-extrabold text-[#1c1830]">No pudimos cargar tus pedidos</h2>
+          <p className="text-[12.5px] text-[#6b6590] leading-snug">Revisa tu conexión e inténtalo de nuevo.</p>
+          <button
+            onClick={() => cargar()}
+            className="mt-1 h-11 px-6 rounded-full bg-[#6105dc] text-white text-sm font-bold active:scale-[0.98] transition-transform"
+          >
+            Reintentar
+          </button>
+        </div>
       ) : pedidos.length === 0 ? (
-        <p className="text-center text-stone-400 py-10">Todavía no hiciste ningún pedido con tu cuenta.</p>
+        <p className="text-center text-stone-600 py-10">Todavía no hiciste ningún pedido con tu cuenta.</p>
       ) : (
         <div className="space-y-3">
           {pedidos.map((p) => {
@@ -1054,7 +1123,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
                       <>
                         <span className="font-mono font-bold text-sm tracking-wide text-[#1c1830]">{p.codigo_corto}</span>
                         {nombresBodegas[p.bodega_id] && (
-                          <span className="text-[11px] text-[#78729a] truncate">{nombresBodegas[p.bodega_id]}</span>
+                          <span className="text-[11px] text-[#6b6590] truncate">{nombresBodegas[p.bodega_id]}</span>
                         )}
                       </>
                     )}
@@ -1068,7 +1137,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
                   <StepperPedido estado={p.estado} tipoEntrega={p.tipo_entrega} />
                 </div>
 
-                <div className="text-[12.5px] text-[#78729a] space-y-1">
+                <div className="text-[12.5px] text-[#6b6590] space-y-1">
                   {(p.items || []).map((it, i) => (
                     <div key={i} className="flex items-center justify-between gap-2">
                       <span>{it.cantidad} x {it.combo_id ? it.descripcion : tituloProducto(it.descripcion)}</span>
@@ -1078,14 +1147,14 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
                 </div>
 
                 {p.tipo_entrega === "domicilio" && (
-                  <div className="text-xs text-[#78729a] space-y-1 pt-2 border-t border-[#efe6fc]">
+                  <div className="text-xs text-[#6b6590] space-y-1 pt-2 border-t border-[#efe6fc]">
                     <div className="flex items-center justify-between gap-2">
                       <span>Envío a domicilio</span>
                       <span className="shrink-0 tabular-nums">{formatoMoneda(p.costo_envio)}</span>
                     </div>
                     {p.entrega_referencia && (
                       <p className="flex items-start gap-1.5">
-                        <i className="fa-solid fa-location-dot mt-0.5 text-[#a29cbd]"></i>
+                        <i className="fa-solid fa-location-dot mt-0.5 text-[#6b6590]"></i>
                         <span>{p.entrega_referencia}</span>
                       </p>
                     )}
@@ -1101,18 +1170,19 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
                   >
                     <span className="absolute -left-2 top-1/2 -mt-2 w-4 h-4 rounded-full bg-white ring-1 ring-[#efe6fc]"></span>
                     <span className="absolute -right-2 top-1/2 -mt-2 w-4 h-4 rounded-full bg-white ring-1 ring-[#efe6fc]"></span>
-                    <p className={`text-[11px] font-bold tracking-[0.08em] uppercase ${listo ? "text-white/85" : "text-[#78729a]"}`}>
+                    <p className={`text-[11px] font-bold tracking-[0.08em] uppercase ${listo ? "text-white" : "text-[#6b6590]"}`}>
                       {listo ? "¡Listo para retirar!" : "Tu código de retiro"}
                     </p>
                     <div className={`border-t-2 border-dashed my-2.5 ${listo ? "border-white/40" : "border-[#d9cdf3]"}`}></div>
                     <button
                       type="button"
                       onClick={() => copiarCodigoPedido(p)}
+                      aria-label={`Copiar código ${p.codigo_corto}`}
                       className={`font-mono text-[30px] font-extrabold tracking-[0.2em] leading-tight ${listo ? "text-white" : "text-[#1c1830]"}`}
                     >
                       {p.codigo_corto}
                     </button>
-                    <p className={`text-xs mt-0.5 ${listo ? "text-white/85" : "text-[#78729a]"}`}>
+                    <p className={`text-xs mt-0.5 ${listo ? "text-white" : "text-[#6b6590]"}`}>
                       {copiadoId === p.id
                         ? "¡Código copiado!"
                         : listo
@@ -1123,7 +1193,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
                 )}
 
                 <div className="flex items-baseline justify-between pt-2.5 border-t border-[#efe6fc]">
-                  <span className="text-xs font-semibold text-[#78729a]">Total</span>
+                  <span className="text-xs font-semibold text-[#6b6590]">Total</span>
                   <span className="text-lg font-extrabold tracking-tight text-[#1c1830] tabular-nums">
                     {formatoMoneda((p.items || []).reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0) + Number(p.costo_envio || 0))}
                   </span>
@@ -1131,7 +1201,10 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
 
                 <div className="flex items-center justify-between gap-2">
                   {(p.estado === "pendiente" || p.estado === "listo") ? (
-                    <button onClick={() => cancelar(p.id)} className="text-xs text-rose-600 underline">
+                    <button
+                      onClick={() => pedirCancelar(p)}
+                      className="min-h-11 -ml-2 px-2 text-xs font-semibold text-rose-600 underline underline-offset-2"
+                    >
                       Cancelar pedido
                     </button>
                   ) : <span></span>}
@@ -1147,6 +1220,48 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
               </div>
             );
           })}
+        </div>
+      )}
+      {confirmarCancelar && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-6 bg-[#1c1830]/45 backdrop-blur-[3px]"
+          onClick={() => !cancelando && cerrarConfirmacion()}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="cancelar-titulo"
+            aria-describedby="cancelar-detalle"
+            onClick={(e) => e.stopPropagation()}
+            className="kd-pop w-full max-w-sm bg-white rounded-[28px] px-[18px] pt-[22px] pb-[18px] flex flex-col items-center text-center gap-2 shadow-[0_24px_50px_-18px_rgba(28,24,48,0.5)]"
+          >
+            <span className="w-[52px] h-[52px] rounded-full bg-[#fff1f3] text-[#e11d48] flex items-center justify-center">
+              <i className="fa-solid fa-ban text-xl" aria-hidden="true"></i>
+            </span>
+            <h3 id="cancelar-titulo" className="text-[18px] font-extrabold text-[#1c1830]">¿Cancelar este pedido?</h3>
+            <p id="cancelar-detalle" className="text-[12.5px] text-[#6b6590] leading-snug">
+              Pedido <span className="font-mono font-bold text-[#1c1830]">{confirmarCancelar.codigo_corto}</span>
+              {nombresBodegas[confirmarCancelar.bodega_id] ? ` en ${nombresBodegas[confirmarCancelar.bodega_id]}` : ""}. Esta acción no se puede deshacer.
+            </p>
+            {errorCancelar && <p role="alert" className="text-xs text-rose-600 text-left w-full">{errorCancelar}</p>}
+            <div className="w-full flex gap-2 mt-1">
+              <button
+                autoFocus
+                onClick={cerrarConfirmacion}
+                disabled={cancelando}
+                className="flex-1 h-[46px] rounded-full bg-[#f4eefe] text-[#4d04b0] text-sm font-bold disabled:opacity-50 active:scale-[0.98] transition-transform"
+              >
+                Mantener pedido
+              </button>
+              <button
+                onClick={confirmarCancelacion}
+                disabled={cancelando}
+                className="flex-1 h-[46px] rounded-full bg-[#e11d48] text-white text-sm font-bold disabled:opacity-40 active:scale-[0.98] transition-transform"
+              >
+                {cancelando ? "Cancelando..." : "Cancelar pedido"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
