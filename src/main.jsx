@@ -9,15 +9,25 @@ const sbClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Aviso sonoro para el cliente cuando su pedido pasa a "listo" -- mismo
 // archivo que usa el dueño en la POS del lado de la bodega. Se crea una
-// sola vez (no un Audio nuevo por evento) para no repetir la descarga.
+// sola vez (no un Audio nuevo por evento) para no repetir la descarga, y
+// recién cuando hace falta: al confirmar un pedido se prepara (ver
+// confirmarPedido) y, si no, la primera vez que suena. Antes se descargaba
+// (71 KB) en cada visita aunque nadie pidiera nada.
 // Solo suena si el cliente tiene la pestaña abierta; para cuando la tiene
 // cerrada ya existe el push (ver activarNotificaciones/enviar-notificacion-pedido-listo).
-const audioAvisoPedidoListo = new Audio("https://cdn.pixabay.com/audio/2025/01/11/audio_5e34842448.mp3");
-audioAvisoPedidoListo.preload = "auto";
+let audioAvisoPedidoListo = null;
+function prepararAvisoPedidoListo() {
+  if (!audioAvisoPedidoListo) {
+    audioAvisoPedidoListo = new Audio("https://cdn.pixabay.com/audio/2025/01/11/audio_5e34842448.mp3");
+    audioAvisoPedidoListo.preload = "auto";
+  }
+  return audioAvisoPedidoListo;
+}
 function sonarAvisoPedidoListo() {
   try {
-    audioAvisoPedidoListo.currentTime = 0;
-    audioAvisoPedidoListo.play().catch((err) => console.warn("No se pudo reproducir el aviso sonoro:", err.message));
+    const audio = prepararAvisoPedidoListo();
+    audio.currentTime = 0;
+    audio.play().catch((err) => console.warn("No se pudo reproducir el aviso sonoro:", err.message));
   } catch (err) {
     console.warn("No se pudo reproducir el aviso sonoro:", err.message);
   }
@@ -59,27 +69,6 @@ function estiloCategoria(nombre) {
   if (/mascota/.test(n)) return { icono: "fa-paw", bg: "bg-indigo-50", texto: "text-indigo-600", borde: "border-indigo-200", bordeActivo: "border-indigo-500 ring-2 ring-indigo-200" };
   if (/higiene|cuidado|personal|farmac/.test(n)) return { icono: "fa-pump-soap", bg: "bg-teal-50", texto: "text-teal-600", borde: "border-teal-200", bordeActivo: "border-teal-500 ring-2 ring-teal-200" };
   return { icono: "fa-tag", bg: "bg-stone-100", texto: "text-stone-600", borde: "border-stone-200", bordeActivo: "border-stone-400 ring-2 ring-stone-200" };
-}
-
-// Gradiente de la tarjeta hero de "Destacados" -- mismo criterio que
-// estiloCategoria (por palabras clave), para que un destacado tenga el
-// color de su categoría real en vez de un violeta genérico siempre. Sin
-// categoría o sin match, cae al violeta/azul de siempre.
-function gradienteDestacado(nombre) {
-  const n = (nombre || "").toLowerCase();
-  if (/agua|hidrata/.test(n)) return "from-sky-500 to-cyan-600";
-  if (/gaseosa|bebida|jugo|néctar|nectar/.test(n)) return "from-rose-500 to-pink-600";
-  if (/cerveza|licor|vino/.test(n)) return "from-amber-500 to-orange-600";
-  if (/carne|embutido|pollo|res/.test(n)) return "from-red-500 to-rose-700";
-  if (/lácte|lacte|leche|queso|yogur/.test(n)) return "from-yellow-500 to-amber-600";
-  if (/pan|panader/.test(n)) return "from-orange-400 to-red-500";
-  if (/limpieza|hogar/.test(n)) return "from-emerald-500 to-teal-600";
-  if (/golosina|snack|dulce|chocolate/.test(n)) return "from-fuchsia-500 to-purple-600";
-  if (/fruta|verdura|abarrote/.test(n)) return "from-lime-500 to-green-600";
-  if (/cigarr|tabaco/.test(n)) return "from-stone-500 to-stone-700";
-  if (/mascota/.test(n)) return "from-indigo-500 to-violet-600";
-  if (/higiene|cuidado|personal|farmac/.test(n)) return "from-teal-500 to-cyan-600";
-  return "from-blue-600 to-violet-700";
 }
 
 // Fecha relativa cortita para "Mis tiendas" (Hoy, Ayer, Hace 3 días...) --
@@ -3107,6 +3096,8 @@ function App() {
       );
       return;
     }
+    // El pedido ya existe: se deja listo el sonido de "tu pedido está listo".
+    prepararAvisoPedidoListo();
     const mensaje = armarMensajeWhatsapp({
       bodegaNombre: bodega.nombre,
       items,
