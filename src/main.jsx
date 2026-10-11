@@ -196,9 +196,12 @@ function generarCodigoCorto() {
 }
 
 function armarMensajeWhatsapp({ bodegaNombre, items, total, codigo, entrega }) {
-  const lineas = items.map(
-    (it) => `• ${it.cantidad} x ${it.descripcion} — ${formatoMoneda(it.precio_venta * it.cantidad)}`
-  );
+  // Los combos van con sus productos debajo (cantidad total a preparar), así
+  // la tienda sabe qué armar sin abrir el combo.
+  const lineas = items.flatMap((it) => [
+    `• ${it.cantidad} x ${it.descripcion} — ${formatoMoneda(it.precio_venta * it.cantidad)}`,
+    ...(it.componentes || []).map((c) => `   - ${c.cantidad * it.cantidad} x ${c.descripcion}`),
+  ]);
   if (entrega) {
     return [
       `Hola ${bodegaNombre}! Quiero hacer este pedido A DOMICILIO:`,
@@ -225,7 +228,7 @@ function armarMensajeWhatsapp({ bodegaNombre, items, total, codigo, entrega }) {
     `Total: ${formatoMoneda(total)}`,
     `Código de referencia: ${codigo}`,
     "",
-    "(mostrá este código en caja para cargar el pedido)",
+    "(muestra este código en caja para cargar el pedido)",
   ].join("\n");
 }
 
@@ -3059,6 +3062,11 @@ function App() {
         descripcion: `Combo: ${it.nombre}`,
         precio_venta: it.precio_venta,
         cantidad: it.cantidad,
+        // Solo para el mensaje de WhatsApp: el pedido guardado lo arma el
+        // servidor (validar_pedido_delivery), que ignora lo que llegue acá.
+        componentes: (it.items || [])
+          .filter((c) => c.descripcion)
+          .map((c) => ({ descripcion: c.descripcion, cantidad: Number(c.cantidad || 0) })),
       })),
     ];
     const insertarPedido = (codigoPedido) => sbClient.from("pedidos_delivery").insert({
