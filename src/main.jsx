@@ -702,7 +702,7 @@ function ModalCompletarPerfil({ inicial, onListo, onCancelar }) {
       }
       onListo(cliente);
     } catch (err) {
-      setError(err.message || "Algo salió mal, intentá de nuevo.");
+      setError(err.message || "Algo salió mal, intenta de nuevo.");
     } finally {
       setCargando(false);
     }
@@ -2635,7 +2635,10 @@ function App() {
         return;
       }
       setBodega(data);
-      setEstadoBodega("ok");
+      // abierta = false: la bodega está desactivada o se le venció la
+      // suscripción (migration_39). Se compara con false para que, si la
+      // función todavía no devuelve ese campo, la tienda siga abierta.
+      setEstadoBodega(data.abierta === false ? "cerrada" : "ok");
     })();
   }, [slug]);
 
@@ -2930,7 +2933,7 @@ function App() {
     : totalCarrito < pedidoMinimo
     ? `El pedido mínimo para delivery es ${formatoMoneda(pedidoMinimo)}.`
     : medioPagoEntrega === "efectivo" && pagaConEntrega && Number(pagaConEntrega) < totalConEnvio
-    ? "El monto con el que pagás no alcanza para el total."
+    ? "El monto con el que pagas no alcanza para el total."
     : "";
   const totalUnidades = useMemo(
     () =>
@@ -3005,7 +3008,7 @@ function App() {
   const usarMiUbicacion = () => {
     setErrorGps("");
     if (!navigator.geolocation) {
-      setErrorGps("Tu navegador no permite obtener la ubicación. Marcala tocando el mapa.");
+      setErrorGps("Tu navegador no permite obtener la ubicación. Márcala tocando el mapa.");
       return;
     }
     setObteniendoGps(true);
@@ -3019,7 +3022,7 @@ function App() {
         setErrorGps(
           err.code === 1
             ? "No diste permiso de ubicación. Puedes marcarla tocando el mapa."
-            : "No pudimos obtener tu ubicación. Marcala tocando el mapa."
+            : "No pudimos obtener tu ubicación. Márcala tocando el mapa."
         );
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
@@ -3089,7 +3092,7 @@ function App() {
         msg.includes("Demasiados pedidos")
           ? "Hiciste varios pedidos seguidos. Espera unos minutos e inténtalo de nuevo."
           : msg.includes("suficiente stock")
-          ? `${msg} Bajá la cantidad e intentá de nuevo.`
+          ? `${msg} Baja la cantidad e intenta de nuevo.`
           : err.code === "P0001" && msg
           ? msg
           : "No se pudo generar el pedido. Inténtalo de nuevo en un momento."
@@ -3226,6 +3229,22 @@ function App() {
         </span>
         <h1 className="text-lg font-extrabold text-[#1c1830]">No encontramos este catálogo</h1>
         <p className="text-sm text-[#78729a]">Puede que el link esté mal escrito o que la bodega no tenga delivery habilitado.</p>
+      </div>
+    );
+  }
+
+  if (estadoBodega === "cerrada") {
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 flex flex-col items-center text-center gap-3">
+        {bodega?.logo_url ? (
+          <img src={bodega.logo_url} alt="" className="w-16 h-16 rounded-full object-cover ring-1 ring-[#efe6fc]" />
+        ) : (
+          <span className="w-16 h-16 rounded-full bg-[#f4eefe] text-[#6105dc] flex items-center justify-center">
+            <i className="fa-solid fa-store text-2xl"></i>
+          </span>
+        )}
+        <h1 className="text-lg font-extrabold text-[#1c1830]">{bodega?.nombre || "Esta tienda"} no está recibiendo pedidos por ahora</h1>
+        <p className="text-sm text-[#78729a]">Vuelve a intentarlo más tarde.</p>
       </div>
     );
   }

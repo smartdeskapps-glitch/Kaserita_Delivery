@@ -27,7 +27,7 @@ solo como secreto de la función:
    cualquiera con la anon key pública podría llamar a la función y mandar
    notificaciones falsas).
 
-`SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` no hace falta configurarlos:
+`SUPABASE_URL` y `SUPABASE_SECRET_KEYS` no hace falta configurarlos:
 Supabase se los da automáticamente a toda función.
 
 ## 2. Desplegar la función
@@ -39,6 +39,8 @@ Supabase se los da automáticamente a toda función.
    [`supabase/functions/enviar-notificacion-pedido-listo/index.ts`](supabase/functions/enviar-notificacion-pedido-listo/index.ts)
    de este repo.
 4. Deploy.
+5. En los ajustes de la función, desactivar **Verify JWT**: la protege el
+   secreto `WEBHOOK_SECRET`, no un JWT.
 
 ## 3. Crear el Database Webhook
 
@@ -53,7 +55,8 @@ crear por SQL Editor. Es un solo webhook para los dos avisos.
 4. Tipo: **Supabase Edge Functions**.
 5. Función: `enviar-notificacion-pedido-listo`.
 6. En **HTTP Headers**, agregar `x-webhook-secret` con el mismo valor que
-   el secreto `WEBHOOK_SECRET` del paso 1.
+   el secreto `WEBHOOK_SECRET` del paso 1, y **borrar** la fila
+   `Authorization` que el Dashboard agrega solo (lleva la clave maestra).
 7. Guardar.
 
 ## 4. Avisos de la tienda a sus clientes ("Seguir tienda")
@@ -69,7 +72,9 @@ clientes" en el POS). Usa los mismos secretos del paso 1.
 3. Dashboard → **Database** → **Webhooks** → **Create a new webhook**:
    tabla `avisos_tienda`, evento solo **Insert**, tipo **Supabase Edge
    Functions**, función `enviar-aviso-tienda`, y el header
-   `x-webhook-secret` con el mismo valor de `WEBHOOK_SECRET`.
+   `x-webhook-secret` con el mismo valor de `WEBHOOK_SECRET` (borrar la
+   fila `Authorization` y desactivar **Verify JWT** en la función, igual
+   que en los pasos 2 y 3).
 
 Para probarlo: con un cliente que tenga notificaciones activadas y la
 bodega en "Mis tiendas", en el POS abrir Mi Link de Pedidos → "Avisar a mis

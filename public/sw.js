@@ -5,7 +5,7 @@ self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", () => self.clients.claim());
 
 self.addEventListener("push", (event) => {
-  let datos = { title: "Kaserita Delivery", body: "Tenés novedades en tu pedido.", url: "/" };
+  let datos = { title: "Kaserita Delivery", body: "Tienes novedades en tu pedido.", url: "/" };
   try {
     if (event.data) datos = { ...datos, ...event.data.json() };
   } catch (e) {}

@@ -14,21 +14,41 @@ import webpush from "npm:web-push@3.6.7";
 const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY")!;
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// Secreto compartido con el Database Webhook (header x-webhook-secret). Es
+// lo único que protege la función (se despliega sin verificación de JWT):
+// si falta, la función no atiende a nadie.
 const WEBHOOK_SECRET = Deno.env.get("WEBHOOK_SECRET");
 const ES_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // Tope de seguridad por aviso (una bodega chica no llega ni cerca).
 const MAX_DESTINATARIOS = 2000;
 const TAMANO_LOTE_IDS = 100;
 const ENVIOS_EN_PARALELO = 10;
-if (!WEBHOOK_SECRET) console.warn("WEBHOOK_SECRET no está configurado: la función acepta llamadas de cualquiera.");
+
+// Clave secreta nueva (sb_secret_...): Supabase la pasa en SUPABASE_SECRET_KEYS,
+// un JSON por nombre de clave. La antigua (SUPABASE_SERVICE_ROLE_KEY) queda
+// solo de respaldo hasta desactivar las claves antiguas en el Dashboard.
+function claveSecreta(): string {
+  try {
+    const claves = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}");
+    if (typeof claves.default === "string" && claves.default) return claves.default;
+  } catch { /* sigue con la antigua */ }
+  return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+}
+const CLAVE = claveSecreta();
 
 webpush.setVapidDetails("mailto:soporte@kaserita.app", VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
-const headers = { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}` };
+// Las claves nuevas van solo en "apikey"; la antigua (un JWT) también en Authorization.
+const headers: Record<string, string> = CLAVE.startsWith("eyJ")
+  ? { apikey: CLAVE, Authorization: `Bearer ${CLAVE}` }
+  : { apikey: CLAVE };
 
 Deno.serve(async (req) => {
-  if (WEBHOOK_SECRET && req.headers.get("x-webhook-secret") !== WEBHOOK_SECRET) {
+  if (!WEBHOOK_SECRET) {
+    console.error("Falta el secreto WEBHOOK_SECRET: la función no atiende llamadas.");
+    return new Response("configuración incompleta", { status: 500 });
+  }
+  if (req.headers.get("x-webhook-secret") !== WEBHOOK_SECRET) {
     return new Response("no autorizado", { status: 401 });
   }
   try {
