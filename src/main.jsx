@@ -3160,7 +3160,7 @@ function App() {
             <div className="space-y-1.5">
               <h1 className="text-[22px] font-extrabold tracking-tight text-[#1c1830]">Kaserita Delivery</h1>
               <p className="text-sm text-[#78729a]">Este es el catálogo de pedidos de Kaserita.</p>
-              <p className="text-sm text-[#78729a]">Pedile a tu bodega el link de su catálogo para empezar a pedir.</p>
+              <p className="text-sm text-[#78729a]">Pídele a tu bodega el link de su catálogo para empezar a pedir.</p>
             </div>
             {ultimaBodega && (
               <a
