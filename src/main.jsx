@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { createClient } from '@supabase/supabase-js';
+import {
+  formatoMoneda,
+  totalPedido,
+  totalCarrito as calcularTotalCarrito,
+  totalUnidades as calcularTotalUnidades,
+  entregaDomicilio,
+  costoEnvio as calcularCostoEnvio,
+  problemaEntrega as calcularProblemaEntrega,
+} from './lib/carrito.js';
 
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://hzmrsbeamtbloudmxjrp.supabase.co";
@@ -31,10 +40,6 @@ function sonarAvisoPedidoListo() {
   } catch (err) {
     console.warn("No se pudo reproducir el aviso sonoro:", err.message);
   }
-}
-
-function formatoMoneda(n) {
-  return `S/ ${Number(n || 0).toFixed(2)}`;
 }
 
 // Los nombres de producto vienen tal cual los cargó la bodega en el POS,
@@ -874,10 +879,6 @@ function fechaPedido(iso) {
   const opciones = { day: "numeric", month: "short" };
   if (d.getFullYear() !== ahora.getFullYear()) opciones.year = "numeric";
   return `${d.toLocaleDateString("es-PE", opciones)}, ${hora}`;
-}
-
-function totalPedido(p) {
-  return (p.items || []).reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0) + Number(p.costo_envio || 0);
 }
 
 // Pasos visuales de "Mis pedidos": el mismo estado de siempre
@@ -2902,35 +2903,29 @@ function App() {
   );
 
   const totalCarrito = useMemo(
-    () =>
-      itemsCarrito.reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0) +
-      itemsCarritoCombos.reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0),
+    () => calcularTotalCarrito(itemsCarrito, itemsCarritoCombos),
     [itemsCarrito, itemsCarritoCombos]
   );
   const entregaDisponible = !!bodega?.delivery_domicilio;
-  const esDomicilio = tipoEntrega === "domicilio" && entregaDisponible;
-  const costoEnvio = esDomicilio ? Number(bodega?.costo_envio) || 0 : 0;
+  const esDomicilio = entregaDomicilio(bodega, tipoEntrega);
+  const costoEnvio = calcularCostoEnvio(bodega, esDomicilio);
   const totalConEnvio = totalCarrito + costoEnvio;
   const telefonoEntregaLimpio = telefonoEntrega.replace(/\D/g, "");
   const pedidoMinimo = Number(bodega?.pedido_minimo) || 0;
   // Qué le falta al cliente para poder enviar un pedido a domicilio.
-  const problemaEntrega = !esDomicilio
-    ? ""
-    : !ubicacionEntrega
-    ? "Marca en el mapa dónde quieres recibir tu pedido."
-    : referenciaEntrega.trim().length < 3
-    ? "Escribe una referencia de tu dirección."
-    : telefonoEntregaLimpio.length < 7 || telefonoEntregaLimpio.length > 15
-    ? "Ingresa un teléfono de contacto válido."
-    : totalCarrito < pedidoMinimo
-    ? `El pedido mínimo para delivery es ${formatoMoneda(pedidoMinimo)}.`
-    : medioPagoEntrega === "efectivo" && pagaConEntrega && Number(pagaConEntrega) < totalConEnvio
-    ? "El monto con el que pagas no alcanza para el total."
-    : "";
+  const problemaEntrega = calcularProblemaEntrega({
+    esDomicilio,
+    ubicacion: ubicacionEntrega,
+    referencia: referenciaEntrega,
+    telefono: telefonoEntrega,
+    total: totalCarrito,
+    totalConEnvio,
+    pedidoMinimo,
+    medioPago: medioPagoEntrega,
+    pagaCon: pagaConEntrega,
+  });
   const totalUnidades = useMemo(
-    () =>
-      itemsCarrito.reduce((acc, it) => acc + it.cantidad, 0) +
-      itemsCarritoCombos.reduce((acc, it) => acc + it.cantidad, 0),
+    () => calcularTotalUnidades(itemsCarrito, itemsCarritoCombos),
     [itemsCarrito, itemsCarritoCombos]
   );
 
