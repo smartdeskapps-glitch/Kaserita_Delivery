@@ -226,6 +226,43 @@ function armarMensajeWhatsapp({ bodegaNombre, items, total, codigo, entrega }) {
   ].join("\n");
 }
 
+// "2026-10-22" -> "jueves 22 de octubre" (sin pasar por UTC: la fecha es la del calendario del cliente).
+function formatoFechaCita(iso) {
+  const [a, m, d] = String(iso || "").split("-").map(Number);
+  if (!a || !m || !d) return iso || "";
+  return new Date(a, m - 1, d).toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" });
+}
+
+// Hoy en formato yyyy-mm-dd con la fecha local del celular (para el mínimo del calendario).
+function hoyISO() {
+  const h = new Date();
+  return `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, "0")}-${String(h.getDate()).padStart(2, "0")}`;
+}
+
+// Mensaje de WhatsApp para una reserva en una barbería. El pedido igual queda
+// registrado con su código (así el local carga los servicios en caja al llegar);
+// el día, la hora y el barbero elegido viajan solo en este mensaje.
+function armarMensajeReserva({ bodegaNombre, items, total, codigo, barbero, fecha, hora }) {
+  const lineas = items.flatMap((it) => [
+    `• ${it.cantidad} x ${it.descripcion} — ${formatoMoneda(it.precio_venta * it.cantidad)}`,
+    ...(it.componentes || []).map((c) => `   - ${c.cantidad * it.cantidad} x ${c.descripcion}`),
+  ]);
+  return [
+    `Hola ${bodegaNombre}! Quiero reservar una cita:`,
+    "",
+    ...lineas,
+    "",
+    `Día: ${formatoFechaCita(fecha)}`,
+    `Hora: ${hora}`,
+    `Barbero: ${barbero || "Cualquiera"}`,
+    "",
+    `Total: ${formatoMoneda(total)}`,
+    `Código de referencia: ${codigo}`,
+    "",
+    "(muestra este código en caja para cargar los servicios)",
+  ].join("\n");
+}
+
 function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onVerFoto, esFavorito, onToggleFavorito }) {
   const stockPoco = producto.stock_disponible != null && producto.stock_disponible <= 3;
   return (
@@ -432,7 +469,7 @@ function VisorFoto({ producto, onCerrar }) {
   );
 }
 
-function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedidos, domicilio, resumen }) {
+function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedidos, domicilio, resumen, reserva }) {
   const [copiado, setCopiado] = useState(false);
   const copiarCodigo = async () => {
     try {
@@ -443,11 +480,17 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedi
   };
   // El pedido ya está registrado y el local lo ve en su sistema; el mensaje de
   // WhatsApp es el aviso directo (y lleva la ubicación en los de domicilio).
-  const pasos = [
-    { titulo: "Pedido registrado", detalle: "El local ya lo ve en su sistema.", estado: "hecho" },
-    { titulo: "Avísale por WhatsApp", detalle: "Envía el mensaje para que lo atiendan más rápido.", estado: "actual" },
-    { titulo: "El local lo prepara", detalle: domicilio ? "Te avisamos cuando salga en camino." : "Te avisamos cuando esté listo.", estado: "pendiente" },
-  ];
+  const pasos = reserva
+    ? [
+        { titulo: "Reserva registrada", detalle: "El local ya la ve en su sistema.", estado: "hecho" },
+        { titulo: "Envíales el mensaje por WhatsApp", detalle: "Así te confirman el horario.", estado: "actual" },
+        { titulo: "Te confirman la cita", detalle: "Te responden por WhatsApp si el horario está libre.", estado: "pendiente" },
+      ]
+    : [
+        { titulo: "Pedido registrado", detalle: "El local ya lo ve en su sistema.", estado: "hecho" },
+        { titulo: "Avísale por WhatsApp", detalle: "Envía el mensaje para que lo atiendan más rápido.", estado: "actual" },
+        { titulo: "El local lo prepara", detalle: domicilio ? "Te avisamos cuando salga en camino." : "Te avisamos cuando esté listo.", estado: "pendiente" },
+      ];
   return (
     <div className="max-w-md mx-auto min-h-screen px-4 pt-9 pb-6 flex flex-col gap-3.5">
       <div className="flex flex-col items-center text-center gap-2">
@@ -458,9 +501,14 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedi
             <i className="fa-solid fa-check text-xl"></i>
           </span>
         </div>
-        <h1 className="text-[23px] font-extrabold tracking-tight text-[#1c1830]">¡Pedido registrado!</h1>
+        <h1 className="text-[23px] font-extrabold tracking-tight text-[#1c1830]">{reserva ? "¡Reserva registrada!" : "¡Pedido registrado!"}</h1>
         <p className="text-[13.5px] text-[#78729a] leading-relaxed max-w-[300px]">
-          {domicilio ? (
+          {reserva ? (
+            <>
+              Ya la tiene <strong className="text-[#1c1830]">{bodega.nombre}</strong>. Envíales el mensaje por WhatsApp para
+              que te confirmen la hora.
+            </>
+          ) : domicilio ? (
             <>
               Ya lo tiene <strong className="text-[#1c1830]">{bodega.nombre}</strong>. Avísale por WhatsApp: el mensaje lleva tu
               ubicación y el detalle para que te lo lleven.
@@ -513,7 +561,20 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedi
         </button>
       </div>
 
-      {resumen && (
+      {reserva && (
+        <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] flex items-center gap-3 px-3.5 py-3">
+          <span className="w-10 h-10 rounded-[14px] bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+            <i className="fa-regular fa-calendar-check text-sm"></i>
+          </span>
+          <div className="min-w-0">
+            <p className="text-[10.5px] font-bold tracking-[0.07em] uppercase text-[#78729a]">Tu cita</p>
+            <p className="text-sm font-bold text-[#1c1830] leading-snug capitalize">{formatoFechaCita(reserva.fecha)} · {reserva.hora}</p>
+            <p className="text-xs text-[#78729a]">Barbero: {reserva.barbero || "Cualquiera"}{bodega.direccion ? ` · ${bodega.direccion}` : ""}</p>
+          </div>
+        </div>
+      )}
+
+      {resumen && !reserva && (
         <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
           {domicilio ? (
             <div className="flex items-center gap-3 px-3.5 py-3">
@@ -2372,7 +2433,12 @@ function App() {
   const [confirmarVaciarAbierto, setConfirmarVaciarAbierto] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
-  const [pedidoConfirmado, setPedidoConfirmado] = useState(null); // { codigo, whatsappUrl, domicilio }
+  const [pedidoConfirmado, setPedidoConfirmado] = useState(null); // { codigo, whatsappUrl, domicilio, reserva }
+  // Barbería: { barberos: [{id, nombre}] } si la tienda es de una barbería (obtener_barberia_delivery).
+  const [barberia, setBarberia] = useState(null);
+  const [reservaBarbero, setReservaBarbero] = useState(""); // nombre del barbero elegido; "" = cualquiera
+  const [reservaFecha, setReservaFecha] = useState("");
+  const [reservaHora, setReservaHora] = useState("");
   // Entrega: "retiro" (en tienda) o "domicilio" (el local reparte).
   const [tipoEntrega, setTipoEntrega] = useState("retiro");
   const [ubicacionEntrega, setUbicacionEntrega] = useState(null); // { lat, lng }
@@ -2822,6 +2888,16 @@ function App() {
       });
   }, [estadoBodega, bodega]);
 
+  // ¿Es una barbería? Si la función no existe o falla, la tienda se ve como siempre.
+  useEffect(() => {
+    if (estadoBodega !== "ok" || !bodega) return;
+    sbClient
+      .rpc("obtener_barberia_delivery", { p_slug: slug })
+      .then(({ data, error: err }) => {
+        if (!err && data?.es_barberia) setBarberia({ barberos: data.barberos || [] });
+      });
+  }, [estadoBodega, bodega]);
+
   const estadoHorario = useMemo(() => estadoAtencionBodega(bodega?.horario_atencion), [bodega]);
 
   const categorias = useMemo(() => {
@@ -2906,14 +2982,28 @@ function App() {
     () => calcularTotalCarrito(itemsCarrito, itemsCarritoCombos),
     [itemsCarrito, itemsCarritoCombos]
   );
-  const entregaDisponible = !!bodega?.delivery_domicilio;
-  const esDomicilio = entregaDomicilio(bodega, tipoEntrega);
+  const esBarberia = !!barberia;
+  // En una barbería hay cita: los servicios (sin stock) y los combos piden día y hora.
+  // Si el carrito solo tiene productos (una pomada), se pide como cualquier pedido.
+  const requiereCita = esBarberia && (itemsCarrito.some((it) => it.stock_disponible == null) || itemsCarritoCombos.length > 0);
+  // Una barbería no hace delivery de servicios: se retira / se asiste en el local.
+  const entregaDisponible = !!bodega?.delivery_domicilio && !esBarberia;
+  const esDomicilio = !esBarberia && entregaDomicilio(bodega, tipoEntrega);
   const costoEnvio = calcularCostoEnvio(bodega, esDomicilio);
   const totalConEnvio = totalCarrito + costoEnvio;
   const telefonoEntregaLimpio = telefonoEntrega.replace(/\D/g, "");
   const pedidoMinimo = Number(bodega?.pedido_minimo) || 0;
   // Qué le falta al cliente para poder enviar un pedido a domicilio.
-  const problemaEntrega = calcularProblemaEntrega({
+  const problemaReserva = !requiereCita
+    ? ""
+    : !reservaFecha
+    ? "Elige el día de tu cita."
+    : reservaFecha < hoyISO()
+    ? "El día de la cita no puede ser anterior a hoy."
+    : !reservaHora
+    ? "Elige la hora de tu cita."
+    : "";
+  const problemaEntrega = problemaReserva || calcularProblemaEntrega({
     esDomicilio,
     ubicacion: ubicacionEntrega,
     referencia: referenciaEntrega,
@@ -3093,7 +3183,10 @@ function App() {
     }
     // El pedido ya existe: se deja listo el sonido de "tu pedido está listo".
     prepararAvisoPedidoListo();
-    const mensaje = armarMensajeWhatsapp({
+    const reserva = requiereCita ? { fecha: reservaFecha, hora: reservaHora, barbero: reservaBarbero } : null;
+    const mensaje = reserva
+      ? armarMensajeReserva({ bodegaNombre: bodega.nombre, items, total: totalCarrito, codigo, ...reserva })
+      : armarMensajeWhatsapp({
       bodegaNombre: bodega.nombre,
       items,
       total: totalCarrito,
@@ -3116,6 +3209,7 @@ function App() {
       codigo,
       whatsappUrl,
       domicilio: esDomicilio,
+      reserva,
       resumen: {
         unidades: totalUnidades,
         total: totalConEnvio,
@@ -3127,6 +3221,9 @@ function App() {
       },
     });
     setPagaConEntrega("");
+    setReservaFecha("");
+    setReservaHora("");
+    setReservaBarbero("");
     setCarrito({});
     setCarritoCombos({});
     setCarritoAbierto(false);
@@ -3250,6 +3347,7 @@ function App() {
         codigo={pedidoConfirmado.codigo}
         whatsappUrl={pedidoConfirmado.whatsappUrl}
         domicilio={pedidoConfirmado.domicilio}
+        reserva={pedidoConfirmado.reserva}
         resumen={pedidoConfirmado.resumen}
         onVerPedidos={clienteSesion ? () => { setPedidoConfirmado(null); setVistaMisPedidos(true); } : undefined}
         onVolver={() => setPedidoConfirmado(null)}
@@ -3721,7 +3819,7 @@ function App() {
               >
                 <i className="fa-solid fa-arrow-left text-sm"></i>
               </button>
-              <h2 className="flex-1 text-[19px] font-extrabold tracking-tight text-[#1c1830]">Tu pedido</h2>
+              <h2 className="flex-1 text-[19px] font-extrabold tracking-tight text-[#1c1830]">{requiereCita ? "Tu reserva" : "Tu pedido"}</h2>
               {(itemsCarrito.length > 0 || itemsCarritoCombos.length > 0) && (
                 <button onClick={vaciarPedido} className="text-[12.5px] font-semibold text-[#6105dc]">
                   Vaciar
@@ -3759,6 +3857,7 @@ function App() {
                     </div>
                   </div>
 
+                  {!esBarberia && (
                   <div className="grid grid-cols-2 gap-1.5 bg-white rounded-[22px] p-1.5 ring-1 ring-[#efe6fc]">
                     {[
                       ["domicilio", "Delivery", "fa-motorcycle", entregaDisponible ? formatoMoneda(Number(bodega?.costo_envio) || 0) : "No disponible"],
@@ -3788,7 +3887,8 @@ function App() {
                       );
                     })}
                   </div>
-                  {!entregaDisponible && (
+                  )}
+                  {!esBarberia && !entregaDisponible && (
                     <p className="text-[11px] text-[#78729a] -mt-1.5 px-1">Este local no tiene entrega a domicilio por ahora.</p>
                   )}
 
@@ -3832,6 +3932,54 @@ function App() {
                       </div>
                     )}
 
+                    {requiereCita ? (
+                      <div className="px-3.5 py-3 border-t border-[#efe6fc] flex flex-col gap-2.5">
+                        <div className="flex items-center gap-3">
+                          <span className="w-10 h-10 rounded-[14px] bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
+                            <i className="fa-regular fa-calendar-check text-sm"></i>
+                          </span>
+                          <span className="flex-1 min-w-0">
+                            <span className="block text-sm font-bold text-[#1c1830]">Elige tu cita</span>
+                            <span className="block text-xs text-[#78729a]">El local te confirma el horario por WhatsApp</span>
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <label className="flex flex-col gap-1 text-[11px] font-semibold text-[#78729a]">
+                            Día
+                            <input
+                              type="date"
+                              min={hoyISO()}
+                              value={reservaFecha}
+                              onChange={(e) => { setReservaFecha(e.target.value); setError(""); }}
+                              className="h-11 rounded-xl bg-[#f9f8fb] ring-1 ring-[#efe6fc] px-2.5 text-sm font-semibold text-[#1c1830]"
+                            />
+                          </label>
+                          <label className="flex flex-col gap-1 text-[11px] font-semibold text-[#78729a]">
+                            Hora
+                            <input
+                              type="time"
+                              step="900"
+                              value={reservaHora}
+                              onChange={(e) => { setReservaHora(e.target.value); setError(""); }}
+                              className="h-11 rounded-xl bg-[#f9f8fb] ring-1 ring-[#efe6fc] px-2.5 text-sm font-semibold text-[#1c1830]"
+                            />
+                          </label>
+                        </div>
+                        <label className="flex flex-col gap-1 text-[11px] font-semibold text-[#78729a]">
+                          Barbero
+                          <select
+                            value={reservaBarbero}
+                            onChange={(e) => setReservaBarbero(e.target.value)}
+                            className="h-11 rounded-xl bg-[#f9f8fb] ring-1 ring-[#efe6fc] px-2.5 text-sm font-semibold text-[#1c1830]"
+                          >
+                            <option value="">Cualquiera</option>
+                            {(barberia?.barberos || []).map((b) => (
+                              <option key={b.id} value={b.nombre}>{b.nombre}</option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                    ) : (
                     <div className="flex items-center gap-3 px-3.5 py-3 border-t border-[#efe6fc]">
                       <span className="w-10 h-10 rounded-[14px] bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
                         <i className="fa-regular fa-clock text-sm"></i>
@@ -3843,6 +3991,7 @@ function App() {
                         </span>
                       </span>
                     </div>
+                    )}
 
                     {esDomicilio ? (
                       <>
@@ -4010,7 +4159,11 @@ function App() {
                     disabled={(itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) || enviando || !!problemaEntrega}
                     className="flex-1 h-[54px] rounded-full bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white font-bold text-[15px] disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {enviando ? "Enviando pedido..." : (
+                    {enviando ? (requiereCita ? "Enviando reserva..." : "Enviando pedido...") : requiereCita ? (
+                      <>
+                        <i className="fa-regular fa-calendar-check text-lg"></i> Reservar cita
+                      </>
+                    ) : (
                       <>
                         <i className="fa-solid fa-bag-shopping text-lg"></i> Realizar pedido
                       </>
