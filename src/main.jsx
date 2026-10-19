@@ -1191,6 +1191,12 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
           </div>
         ))}
       </div>
+      {p.cita_fecha && (
+        <p className="text-xs text-[#6b6590] pt-2 border-t border-[#efe6fc] capitalize">
+          Cita: {formatoFechaCita(p.cita_fecha)} · {p.cita_hora}
+          {p.cita_barbero ? ` · ${p.cita_barbero}` : ""}
+        </p>
+      )}
       {p.tipo_entrega === "domicilio" && (
         <div className="text-xs text-[#6b6590] space-y-1 pt-2 border-t border-[#efe6fc]">
           <div className="flex items-center justify-between gap-2">
@@ -3148,6 +3154,9 @@ function App() {
       bodega_id: bodega.bodega_id,
       items,
       cliente_id: clienteSesion?.id || null,
+      ...(requiereCita
+        ? { cita_fecha: reservaFecha, cita_hora: reservaHora, cita_barbero: reservaBarbero || null }
+        : {}),
       ...(esDomicilio
         ? {
             tipo_entrega: "domicilio",
