@@ -248,13 +248,13 @@ function hoyISO() {
 // Mensaje de WhatsApp para una reserva en una barbería. El pedido igual queda
 // registrado con su código (así el local carga los servicios en caja al llegar);
 // el día, la hora y el barbero elegido viajan solo en este mensaje.
-function armarMensajeReserva({ bodegaNombre, items, total, codigo, barbero, fecha, hora }) {
+function armarMensajeReserva({ bodegaNombre, items, total, codigo, barbero, fecha, hora, agenda }) {
   const lineas = items.flatMap((it) => [
     `• ${it.cantidad} x ${it.descripcion} — ${formatoMoneda(it.precio_venta * it.cantidad)}`,
     ...(it.componentes || []).map((c) => `   - ${c.cantidad * it.cantidad} x ${c.descripcion}`),
   ]);
   return [
-    `Hola ${bodegaNombre}! Quiero reservar una cita:`,
+    agenda ? `Hola ${bodegaNombre}! Reservé una cita:` : `Hola ${bodegaNombre}! Quiero reservar una cita:`,
     "",
     ...lineas,
     "",
@@ -486,7 +486,13 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedi
   };
   // El pedido ya está registrado y el local lo ve en su sistema; el mensaje de
   // WhatsApp es el aviso directo (y lleva la ubicación en los de domicilio).
-  const pasos = reserva
+  const pasos = reserva?.agenda
+    ? [
+        { titulo: "Cita reservada", detalle: "Tu hora quedó apartada con tu barbero.", estado: "hecho" },
+        { titulo: "Avísale por WhatsApp", detalle: "Es opcional: así saben que vienes.", estado: "actual" },
+        { titulo: "Te esperan en el local", detalle: "Si no puedes ir, cancela la cita desde Pedidos.", estado: "pendiente" },
+      ]
+    : reserva
     ? [
         { titulo: "Reserva registrada", detalle: "El local ya la ve en su sistema.", estado: "hecho" },
         { titulo: "Envíales el mensaje por WhatsApp", detalle: "Así te confirman el horario.", estado: "actual" },
@@ -507,9 +513,14 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedi
             <i className="fa-solid fa-check text-xl"></i>
           </span>
         </div>
-        <h1 className="text-[23px] font-extrabold tracking-tight text-[#1c1830]">{reserva ? "¡Reserva registrada!" : "¡Pedido registrado!"}</h1>
+        <h1 className="text-[23px] font-extrabold tracking-tight text-[#1c1830]">{reserva?.agenda ? "¡Cita reservada!" : reserva ? "¡Reserva registrada!" : "¡Pedido registrado!"}</h1>
         <p className="text-[13.5px] text-[#78729a] leading-relaxed max-w-[300px]">
-          {reserva ? (
+          {reserva?.agenda ? (
+            <>
+              Tu hora en <strong className="text-[#1c1830]">{bodega.nombre}</strong> quedó apartada. Si quieres, avísales por
+              WhatsApp.
+            </>
+          ) : reserva ? (
             <>
               Ya la tiene <strong className="text-[#1c1830]">{bodega.nombre}</strong>. Envíales el mensaje por WhatsApp para
               que te confirmen la hora.
@@ -2453,6 +2464,9 @@ function App() {
   const [reservaBarbero, setReservaBarbero] = useState(""); // nombre del barbero elegido; "" = cualquiera
   const [reservaFecha, setReservaFecha] = useState("");
   const [reservaHora, setReservaHora] = useState("");
+  // Barbería con agenda: horas libres del día elegido, según lo que hay en el carrito.
+  const [horasLibres, setHorasLibres] = useState({ cargando: false, horas: [], duracion: 0 });
+  const [refrescoHoras, setRefrescoHoras] = useState(0);
   // Entrega: "retiro" (en tienda) o "domicilio" (el local reparte).
   const [tipoEntrega, setTipoEntrega] = useState("retiro");
   const [ubicacionEntrega, setUbicacionEntrega] = useState(null); // { lat, lng }
@@ -2908,7 +2922,7 @@ function App() {
     sbClient
       .rpc("obtener_barberia_delivery", { p_slug: slug })
       .then(({ data, error: err }) => {
-        if (!err && data?.es_barberia) setBarberia({ barberos: data.barberos || [] });
+        if (!err && data?.es_barberia) setBarberia({ barberos: data.barberos || [], agenda: data.agenda === true });
       });
   }, [estadoBodega, bodega]);
 
@@ -3017,6 +3031,35 @@ function App() {
     : !reservaHora
     ? "Elige la hora de tu cita."
     : "";
+  // Agenda real: la barbería cargó horarios, así que la hora se elige entre las libres.
+  const agendaActiva = !!barberia?.agenda;
+  const reservaBarberoId = (barberia?.barberos || []).find((b) => b.nombre === reservaBarbero)?.id || null;
+  const itemsAgenda = JSON.stringify([
+    ...itemsCarrito.map((it) => ({ id: it.id, cantidad: it.cantidad })),
+    ...itemsCarritoCombos.map((it) => ({ combo_id: it.id, cantidad: it.cantidad })),
+  ]);
+  useEffect(() => {
+    if (!agendaActiva || !requiereCita || !reservaFecha || reservaFecha < hoyISO()) {
+      setHorasLibres({ cargando: false, horas: [], duracion: 0 });
+      return undefined;
+    }
+    let vivo = true;
+    setHorasLibres((h) => ({ ...h, cargando: true }));
+    sbClient
+      .rpc("obtener_disponibilidad_barberia", {
+        p_slug: slug,
+        p_fecha: reservaFecha,
+        p_items: JSON.parse(itemsAgenda),
+        p_barbero: reservaBarberoId,
+      })
+      .then(({ data, error: err }) => {
+        if (!vivo) return;
+        const horas = !err && Array.isArray(data?.horas) ? data.horas : [];
+        setHorasLibres({ cargando: false, horas, duracion: data?.duracion || 0 });
+        setReservaHora((h) => (horas.includes(h) ? h : ""));
+      });
+    return () => { vivo = false; };
+  }, [agendaActiva, requiereCita, reservaFecha, reservaBarberoId, itemsAgenda, refrescoHoras]);
   const problemaEntrega = problemaReserva || calcularProblemaEntrega({
     esDomicilio,
     ubicacion: ubicacionEntrega,
@@ -3163,7 +3206,12 @@ function App() {
       items,
       cliente_id: clienteSesion?.id || null,
       ...(requiereCita
-        ? { cita_fecha: reservaFecha, cita_hora: reservaHora, cita_barbero: reservaBarbero || null }
+        ? {
+            cita_fecha: reservaFecha,
+            cita_hora: reservaHora,
+            cita_barbero: reservaBarbero || null,
+            ...(agendaActiva ? { cita_barbero_id: reservaBarberoId } : {}),
+          }
         : {}),
       ...(esDomicilio
         ? {
@@ -3196,11 +3244,25 @@ function App() {
           ? msg
           : "No se pudo generar el pedido. Inténtalo de nuevo en un momento."
       );
+      // La hora pudo haberla tomado otro cliente: se vuelven a pedir las horas libres.
+      if (agendaActiva && requiereCita) setRefrescoHoras((n) => n + 1);
       return;
     }
     // El pedido ya existe: se deja listo el sonido de "tu pedido está listo".
     prepararAvisoPedidoListo();
-    const reserva = requiereCita ? { fecha: reservaFecha, hora: reservaHora, barbero: reservaBarbero } : null;
+    let barberoCita = reservaBarbero;
+    if (agendaActiva && requiereCita) {
+      // Con "Cualquiera" el servidor elige el barbero: se lee el que quedó asignado.
+      const { data: guardado } = await sbClient
+        .from("pedidos_seguimiento")
+        .select("cita_barbero")
+        .eq("codigo_corto", codigo)
+        .maybeSingle();
+      if (guardado?.cita_barbero) barberoCita = guardado.cita_barbero;
+    }
+    const reserva = requiereCita
+      ? { fecha: reservaFecha, hora: reservaHora, barbero: barberoCita, agenda: agendaActiva }
+      : null;
     const mensaje = reserva
       ? armarMensajeReserva({ bodegaNombre: bodega.nombre, items, total: totalCarrito, codigo, ...reserva })
       : armarMensajeWhatsapp({
@@ -3961,44 +4023,111 @@ function App() {
                           </span>
                           <span className="flex-1 min-w-0">
                             <span className="block text-sm font-bold text-[#1c1830]">Elige tu cita</span>
-                            <span className="block text-xs text-[#78729a]">El local te confirma el horario por WhatsApp</span>
+                            <span className="block text-xs text-[#78729a]">
+                              {agendaActiva ? "Elige una hora libre con tu barbero" : "El local te confirma el horario por WhatsApp"}
+                            </span>
                           </span>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <label className="flex flex-col gap-1 text-[11px] font-semibold text-[#78729a]">
-                            Día
-                            <input
-                              type="date"
-                              min={hoyISO()}
-                              value={reservaFecha}
-                              onChange={(e) => { setReservaFecha(e.target.value); setError(""); }}
-                              className="h-11 rounded-xl bg-[#f9f8fb] ring-1 ring-[#efe6fc] px-2.5 text-sm font-semibold text-[#1c1830]"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1 text-[11px] font-semibold text-[#78729a]">
-                            Hora
-                            <input
-                              type="time"
-                              step="900"
-                              value={reservaHora}
-                              onChange={(e) => { setReservaHora(e.target.value); setError(""); }}
-                              className="h-11 rounded-xl bg-[#f9f8fb] ring-1 ring-[#efe6fc] px-2.5 text-sm font-semibold text-[#1c1830]"
-                            />
-                          </label>
-                        </div>
-                        <label className="flex flex-col gap-1 text-[11px] font-semibold text-[#78729a]">
-                          Barbero
-                          <select
-                            value={reservaBarbero}
-                            onChange={(e) => setReservaBarbero(e.target.value)}
-                            className="h-11 rounded-xl bg-[#f9f8fb] ring-1 ring-[#efe6fc] px-2.5 text-sm font-semibold text-[#1c1830]"
-                          >
-                            <option value="">Cualquiera</option>
-                            {(barberia?.barberos || []).map((b) => (
-                              <option key={b.id} value={b.nombre}>{b.nombre}</option>
-                            ))}
-                          </select>
-                        </label>
+                        {agendaActiva ? (
+                          <>
+                            <div className="grid grid-cols-2 gap-2">
+                              <label className="flex flex-col gap-1 text-[11px] font-semibold text-[#78729a]">
+                                Barbero
+                                <select
+                                  value={reservaBarbero}
+                                  onChange={(e) => { setReservaBarbero(e.target.value); setReservaHora(""); setError(""); }}
+                                  className="h-11 rounded-xl bg-[#f9f8fb] ring-1 ring-[#efe6fc] px-2.5 text-sm font-semibold text-[#1c1830]"
+                                >
+                                  <option value="">Cualquiera</option>
+                                  {(barberia?.barberos || []).map((b) => (
+                                    <option key={b.id} value={b.nombre}>{b.nombre}</option>
+                                  ))}
+                                </select>
+                              </label>
+                              <label className="flex flex-col gap-1 text-[11px] font-semibold text-[#78729a]">
+                                Día
+                                <input
+                                  type="date"
+                                  min={hoyISO()}
+                                  value={reservaFecha}
+                                  onChange={(e) => { setReservaFecha(e.target.value); setReservaHora(""); setError(""); }}
+                                  className="h-11 rounded-xl bg-[#f9f8fb] ring-1 ring-[#efe6fc] px-2.5 text-sm font-semibold text-[#1c1830]"
+                                />
+                              </label>
+                            </div>
+                            {reservaFecha && (
+                              <div className="flex flex-col gap-1.5">
+                                <span className="text-[11px] font-semibold text-[#78729a]">
+                                  Hora{horasLibres.duracion > 0 ? ` · tu cita dura unos ${horasLibres.duracion} min` : ""}
+                                </span>
+                                {horasLibres.cargando ? (
+                                  <p className="text-xs text-[#78729a]">Buscando horas libres...</p>
+                                ) : horasLibres.horas.length === 0 ? (
+                                  <p className="text-xs text-[#78729a]">
+                                    No quedan horas libres ese día. Prueba con otro día o con otro barbero.
+                                  </p>
+                                ) : (
+                                  <div className="grid grid-cols-4 gap-1.5" role="radiogroup" aria-label="Horas libres">
+                                    {horasLibres.horas.map((h) => (
+                                      <button
+                                        key={h}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={reservaHora === h}
+                                        onClick={() => { setReservaHora(h); setError(""); }}
+                                        className={`h-10 rounded-xl text-sm font-bold tabular-nums ${
+                                          reservaHora === h
+                                            ? "bg-[#6105dc] text-white"
+                                            : "bg-[#f9f8fb] ring-1 ring-[#efe6fc] text-[#1c1830]"
+                                        }`}
+                                      >
+                                        {h}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <div className="grid grid-cols-2 gap-2">
+                              <label className="flex flex-col gap-1 text-[11px] font-semibold text-[#78729a]">
+                                Día
+                                <input
+                                  type="date"
+                                  min={hoyISO()}
+                                  value={reservaFecha}
+                                  onChange={(e) => { setReservaFecha(e.target.value); setError(""); }}
+                                  className="h-11 rounded-xl bg-[#f9f8fb] ring-1 ring-[#efe6fc] px-2.5 text-sm font-semibold text-[#1c1830]"
+                                />
+                              </label>
+                              <label className="flex flex-col gap-1 text-[11px] font-semibold text-[#78729a]">
+                                Hora
+                                <input
+                                  type="time"
+                                  step="900"
+                                  value={reservaHora}
+                                  onChange={(e) => { setReservaHora(e.target.value); setError(""); }}
+                                  className="h-11 rounded-xl bg-[#f9f8fb] ring-1 ring-[#efe6fc] px-2.5 text-sm font-semibold text-[#1c1830]"
+                                />
+                              </label>
+                            </div>
+                            <label className="flex flex-col gap-1 text-[11px] font-semibold text-[#78729a]">
+                              Barbero
+                              <select
+                                value={reservaBarbero}
+                                onChange={(e) => setReservaBarbero(e.target.value)}
+                                className="h-11 rounded-xl bg-[#f9f8fb] ring-1 ring-[#efe6fc] px-2.5 text-sm font-semibold text-[#1c1830]"
+                              >
+                                <option value="">Cualquiera</option>
+                                {(barberia?.barberos || []).map((b) => (
+                                  <option key={b.id} value={b.nombre}>{b.nombre}</option>
+                                ))}
+                              </select>
+                            </label>
+                          </>
+                        )}
                       </div>
                     ) : (
                     <div className="flex items-center gap-3 px-3.5 py-3 border-t border-[#efe6fc]">
