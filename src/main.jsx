@@ -233,6 +233,12 @@ function formatoFechaCita(iso) {
   return new Date(a, m - 1, d).toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long" });
 }
 
+// Igual que formatoFechaCita pero con la primera letra en mayúscula ("Jueves 22 de octubre"), para mostrar en pantalla.
+function fechaCitaTitulo(iso) {
+  const t = formatoFechaCita(iso);
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 // Hoy en formato yyyy-mm-dd con la fecha local del celular (para el mínimo del calendario).
 function hoyISO() {
   const h = new Date();
@@ -568,7 +574,7 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedi
           </span>
           <div className="min-w-0">
             <p className="text-[10.5px] font-bold tracking-[0.07em] uppercase text-[#78729a]">Tu cita</p>
-            <p className="text-sm font-bold text-[#1c1830] leading-snug capitalize">{formatoFechaCita(reserva.fecha)} · {reserva.hora}</p>
+            <p className="text-sm font-bold text-[#1c1830] leading-snug">{fechaCitaTitulo(reserva.fecha)} ·{reserva.hora}</p>
             <p className="text-xs text-[#78729a]">Barbero: {reserva.barbero || "Cualquiera"}{bodega.direccion ? ` · ${bodega.direccion}` : ""}</p>
           </div>
         </div>
@@ -1192,8 +1198,8 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
         ))}
       </div>
       {p.cita_fecha && (
-        <p className="text-xs text-[#6b6590] pt-2 border-t border-[#efe6fc] capitalize">
-          Cita: {formatoFechaCita(p.cita_fecha)} · {p.cita_hora}
+        <p className="text-xs text-[#6b6590] pt-2 border-t border-[#efe6fc]">
+          Cita: {fechaCitaTitulo(p.cita_fecha)} ·{p.cita_hora}
           {p.cita_barbero ? ` · ${p.cita_barbero}` : ""}
         </p>
       )}
