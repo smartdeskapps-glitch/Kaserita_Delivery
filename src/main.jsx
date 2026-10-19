@@ -1068,9 +1068,11 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
 
   const cargar = useCallback((silencioso = false) => {
     if (!silencioso) setCargando(true);
-    sbClient
-      .from("pedidos_seguimiento")
-      .select("*")
+    // Solo los pedidos de la tienda que se tiene abierta (la cuenta del cliente
+    // es una sola para todas las tiendas, pero cada tienda muestra los suyos).
+    let consulta = sbClient.from("pedidos_seguimiento").select("*");
+    if (bodegaActualId) consulta = consulta.eq("bodega_id", bodegaActualId);
+    consulta
       .order("creado_en", { ascending: false })
       .then(async ({ data, error }) => {
         setCargando(false);
@@ -1106,7 +1108,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
           setNombresBodegas(mapa);
         }
       });
-  }, []);
+  }, [bodegaActualId]);
 
   useEffect(() => { cargar(); }, [cargar]);
 
@@ -3399,10 +3401,14 @@ function App() {
     setVistaMisPedidos(false);
     setPerfilAbierto(true);
   };
+  // El contador y el aviso cuentan solo los pedidos en curso de esta tienda.
+  const pedidosActivosAqui = bodega?.bodega_id
+    ? pedidosActivos.filter((pa) => pa.bodega_id === bodega.bodega_id)
+    : pedidosActivos;
   const barraNavegacion = (activa) => (
     <BarraNavegacion
       activa={activa}
-      contadorPedidos={pedidosActivos.length}
+      contadorPedidos={pedidosActivosAqui.length}
       onInicio={irAInicio}
       onTiendas={irATiendas}
       onPedidos={irAPedidos}
@@ -3506,10 +3512,10 @@ function App() {
       </header>
 
       {(() => {
-        const activoAqui = pedidosActivos.find((pa) => pa.bodega_id === bodega.bodega_id);
+        const activoAqui = pedidosActivosAqui[0];
         if (!activoAqui) return null;
         const et = etiquetaEstadoPedido(activoAqui);
-        const otros = pedidosActivos.length - 1;
+        const otros = pedidosActivosAqui.length - 1;
         return (
           <div className="mx-4 mt-2 mb-1 rounded-[22px] bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] text-white px-3.5 py-3 flex items-center gap-3">
             <span className="w-10 h-10 rounded-[14px] bg-white/20 shrink-0 flex items-center justify-center">
@@ -3777,7 +3783,7 @@ function App() {
 
       <BarraNavegacion
         activa={perfilAbierto ? "perfil" : "inicio"}
-        contadorPedidos={pedidosActivos.length}
+        contadorPedidos={pedidosActivosAqui.length}
         onInicio={irAInicio}
         onTiendas={irATiendas}
         onPedidos={irAPedidos}
