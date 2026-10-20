@@ -3336,7 +3336,7 @@ function App() {
         {clienteSesion ? (
           <div className="max-w-md mx-auto px-4 pt-4">
             <div className="flex items-center justify-between mb-1">
-              <img src="/logo-horizontal-color.svg" alt="Kaserita" width="2068" height="642" className="h-7 w-auto" />
+              <img src="/logo-horizontal-delivery.svg" alt="Kaserita Delivery" width="2824" height="746" className="h-8 w-auto" />
               <button onClick={salir} className="h-8 px-3.5 rounded-full bg-white ring-1 ring-[#efe6fc] text-xs font-bold text-[#78729a]">
                 Cerrar sesión
               </button>
@@ -3347,9 +3347,9 @@ function App() {
           <PantallaMisTiendas esInicio />
         ) : (
           <div className="max-w-md mx-auto px-4 py-14 flex flex-col items-center text-center gap-5">
-            <img src="/favicon.svg" alt="" width="72" height="72" className="w-[72px] h-[72px] rounded-2xl shadow-lg shadow-[#6105dc]/25" />
+            <img src="/logo-vertical-delivery.svg" alt="Kaserita Delivery" width="1490" height="1386" className="w-44 h-auto" />
             <div className="space-y-1.5">
-              <h1 className="text-[22px] font-extrabold tracking-tight text-[#1c1830]">Kaserita Delivery</h1>
+              <h1 className="sr-only">Kaserita Delivery</h1>
               <p className="text-sm text-[#78729a]">Este es el catálogo de pedidos de Kaserita.</p>
               <p className="text-sm text-[#78729a]">Pídele a tu bodega el link de su catálogo para empezar a pedir.</p>
             </div>

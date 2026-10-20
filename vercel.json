@@ -20,7 +20,7 @@
       ]
     },
     {
-      "source": "/(icon-192.png|icon-512.png|icon-maskable-192.png|icon-maskable-512.png|apple-touch-icon.png|badge-96.png|favicon.svg|logo-horizontal-color.svg|og-image.jpg)",
+      "source": "/(icon-192.png|icon-512.png|icon-maskable-192.png|icon-maskable-512.png|apple-touch-icon.png|badge-96.png|favicon.svg|logo-horizontal-color.svg|logo-horizontal-delivery.svg|logo-vertical-delivery.svg|og-image.jpg)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
       ]
