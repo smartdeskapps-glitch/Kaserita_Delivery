@@ -13,7 +13,7 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(datos.title, {
       body: datos.body,
       icon: "/icon-192.png",
-      badge: "/icon-192.png",
+      badge: "/badge-96.png",
       data: { url: datos.url },
       silent: false,
       vibrate: [200, 100, 200],
