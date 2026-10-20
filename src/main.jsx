@@ -3314,7 +3314,7 @@ function App() {
         {clienteSesion ? (
           <div className="max-w-md mx-auto px-4 pt-4">
             <div className="flex items-center justify-between mb-1">
-              <span className="font-extrabold text-lg tracking-tight text-[#4d04b0]">Kaserita</span>
+              <img src="/logo-horizontal-color.svg" alt="Kaserita" width="2068" height="642" className="h-7 w-auto" />
               <button onClick={salir} className="h-8 px-3.5 rounded-full bg-white ring-1 ring-[#efe6fc] text-xs font-bold text-[#78729a]">
                 Cerrar sesión
               </button>
