@@ -363,10 +363,32 @@ function TarjetaCombo({ combo, cantidadCombo, productosPorId, onAgregar, onQuita
         ) : <span></span>}
         {stockLimitado && <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Stock limitado</span>}
       </div>
-      <p className="text-base font-bold text-[#1c1830] leading-snug line-clamp-1">{combo.nombre}</p>
-      <p className="text-[11px] text-stone-500 line-clamp-2 flex-1">
-        {(combo.items || []).map((it) => `${tituloProducto(it.descripcion)} (x${it.cantidad})`).join(", ")}
-      </p>
+      <div className="flex items-start gap-3 flex-1">
+        {/* Fotos de lo que incluye, encimadas: se ve de un vistazo qué trae el combo. */}
+        <div className="flex shrink-0 pt-0.5">
+          {(combo.items || []).slice(0, 3).map((it, i) => {
+            const foto = productosPorId[it.producto_id]?.foto_url;
+            return (
+              <span key={it.producto_id} className={`${i > 0 ? "-ml-3" : ""} block w-11 h-11 rounded-[14px] bg-[#f4eefe] overflow-hidden border-2 border-white ring-1 ring-[#e4d6fb]`}>
+                {foto ? (
+                  <img src={foto} alt="" loading="lazy" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="w-full h-full flex items-center justify-center text-[#6105dc]/40"><i className="fa-solid fa-box text-sm"></i></span>
+                )}
+              </span>
+            );
+          })}
+          {(combo.items || []).length > 3 && (
+            <span className="-ml-3 w-11 h-11 rounded-[14px] border-2 border-white ring-1 ring-[#e4d6fb] bg-[#6105dc] text-white text-xs font-extrabold flex items-center justify-center">+{combo.items.length - 3}</span>
+          )}
+        </div>
+        <div className="min-w-0 flex-1 flex flex-col gap-1">
+          <p className="text-base font-bold text-[#1c1830] leading-snug line-clamp-2">{combo.nombre}</p>
+          <p className="text-[11px] text-stone-500 line-clamp-2">
+            {(combo.items || []).map((it) => `${tituloProducto(it.descripcion)} (x${it.cantidad})`).join(", ")}
+          </p>
+        </div>
+      </div>
       <div className="flex items-end justify-between gap-2 pt-2 border-t border-[#efe6fc]">
         <div className="flex flex-col leading-tight gap-0.5">
           {porcentajeOff > 0 && <span className="text-[11px] text-stone-400 line-through">{formatoMoneda(precioOriginal)}</span>}
