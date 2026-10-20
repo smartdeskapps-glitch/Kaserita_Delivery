@@ -3325,9 +3325,7 @@ function App() {
           <PantallaMisTiendas esInicio />
         ) : (
           <div className="max-w-md mx-auto px-4 py-14 flex flex-col items-center text-center gap-5">
-            <span className="w-[72px] h-[72px] rounded-[26px] bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] text-white flex items-center justify-center shadow-lg shadow-[#6105dc]/25">
-              <i className="fa-solid fa-store text-3xl"></i>
-            </span>
+            <img src="/favicon.svg" alt="" width="72" height="72" className="w-[72px] h-[72px] rounded-2xl shadow-lg shadow-[#6105dc]/25" />
             <div className="space-y-1.5">
               <h1 className="text-[22px] font-extrabold tracking-tight text-[#1c1830]">Kaserita Delivery</h1>
               <p className="text-sm text-[#78729a]">Este es el catálogo de pedidos de Kaserita.</p>
