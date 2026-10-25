@@ -507,29 +507,25 @@ body { overflow-x: clip; }
 .kcb-fw { position: relative; }
 .kcb-panel {
   position: relative;
-  aspect-ratio: 1.18 / 1;
+  aspect-ratio: 1.7 / 1;
   border-radius: 22px;
   background: var(--t);
   overflow: hidden;
-  padding-bottom: 20px;
+  padding: 30px 0 20px;
 }
-@container kcb (min-width: 300px) { .kcb-panel { aspect-ratio: 1.9 / 1; } }
-/* Carrusel (tarjeta ancha): las fotos se achican para que se distingan las tres. */
-@container kcb (min-width: 300px) {
-  .kcb-fotos .c { width: 38%; height: 94%; }
-  .kcb-fotos .l { left: 7%; width: 34%; height: 80%; }
-  .kcb-fotos .r { right: 7%; width: 34%; height: 80%; }
-  .kcb-fotos.dos .c { left: 20%; }
-  .kcb-fotos.dos .r { right: 14%; }
+/* Las fotos van una al lado de la otra, cada una en su casilla: sin encimarse,
+   así se ven bien sea cual sea la forma de cada foto. */
+.kcb-fotos { display: flex; gap: 6px; width: 100%; height: 100%; padding: 0 8px; }
+.kcb-fotos span {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.6);
 }
-.kcb-fotos { position: relative; width: 100%; height: 100%; }
-.kcb-fotos span { position: absolute; bottom: 2%; mix-blend-mode: multiply; display: block; }
-.kcb-fotos img { width: 100%; height: 100%; object-fit: contain; }
-.kcb-fotos .c { left: 50%; width: 54%; height: 98%; transform: translateX(-50%); z-index: 3; }
-.kcb-fotos .l { left: 6%; width: 40%; height: 74%; bottom: 6%; z-index: 2; }
-.kcb-fotos .r { right: 6%; width: 40%; height: 74%; bottom: 6%; z-index: 2; }
-.kcb-fotos.dos .c { left: 30%; transform: none; }
-.kcb-fotos.dos .r { right: 12%; }
+.kcb-fotos img { width: 86%; height: 86%; object-fit: contain; mix-blend-mode: multiply; }
 .kcb-mas {
   position: absolute;
   right: 10px; bottom: 30px;
