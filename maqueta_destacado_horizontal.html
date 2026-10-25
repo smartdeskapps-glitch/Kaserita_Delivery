@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Destacados horizontal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--p:#6105dc;--p-dark:#4d04b0;--ring:#efe6fc;--ink:#1c1830;--mut:#78729a;--f-head:'Plus Jakarta Sans',system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:#e9e4f5;-webkit-font-smoothing:antialiased;min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+h3{margin:0}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.bar{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;justify-content:space-between;padding:10px 20px;background:#1c1830;color:#fff;font-size:12.5px;position:sticky;top:0;z-index:80}
+.bar b{font-family:var(--f-head);font-size:13.5px}
+.bar .grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bar .tog{display:inline-flex;background:rgba(255,255,255,.1);border-radius:999px;padding:3px}
+.bar .tog button{color:#d9d2ee;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600}
+.bar .tog button.on{background:#fff;color:#1c1830}
+.bar .reset{border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:999px;padding:5px 13px;font-size:12px}
+.stage{display:flex;gap:26px;justify-content:center;align-items:flex-start;padding:24px 14px 40px;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:8px}
+.etq{font-family:var(--f-head);font-weight:700;font-size:12.5px;color:#4d3f86;display:flex;gap:8px;align-items:center;padding-left:6px}
+.etq i{font-style:normal;font-size:11px;padding:2px 9px;border-radius:999px;background:#fff;color:var(--mut)}
+.etq i.n{background:var(--p);color:#fff}
+.phone{width:390px;max-width:100%;background:#faf7ff;border-radius:34px;border:1px solid #fff;box-shadow:0 30px 70px -22px rgba(60,20,120,.4);overflow:hidden;padding-bottom:22px}
+.ph-top{padding:16px 16px 10px;display:flex;flex-direction:column;gap:10px}
+.ph-brand{display:flex;justify-content:space-between;align-items:center}
+.ph-brand b{font-family:var(--f-head);font-size:17px;font-weight:800;color:var(--p)}
+.ph-brand span{font-size:11px;color:var(--mut)}
+.ph-cats{display:flex;gap:6px;overflow:hidden}
+.ph-cats span{font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:999px;background:#fff;color:#5b5478;white-space:nowrap;box-shadow:0 0 0 1px var(--ring)}
+.ph-cats span.on{background:var(--p);color:#fff;box-shadow:none}
+.sec{padding:8px 16px;display:flex;justify-content:space-between;align-items:center}
+.sec b{font-size:14px;display:flex;gap:6px;align-items:center}.sec b .ic{color:var(--p)}
+.sec a{font-size:12px;font-weight:600;color:#7c3aed}
+.rail{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 16px 6px;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rail>*{flex:none;width:88%;padding-right:12px;scroll-snap-align:start}
+.dots{display:flex;justify-content:center;gap:6px;padding-top:6px}
+.dots i{width:6px;height:6px;border-radius:99px;background:#d9cdf3}.dots i.on{width:20px;background:var(--p)}
+
+/* actual */
+.dact{display:flex;align-items:center;gap:12px;background:#fff;border-radius:24px;box-shadow:0 0 0 1px var(--ring);padding:8px}
+.dact-f{width:64px;height:64px;border-radius:16px;background:#f4eefe;overflow:hidden;flex:none}
+.dact-f svg{width:100%;height:100%}
+.dact-t{min-width:0;flex:1}.dact-t b{display:block;font-size:14px;font-weight:700;line-height:1.2}.dact-t span{font-size:12px;color:var(--mut)}
+.dact-p{display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding-right:4px}.dact-p b{font-size:14px;font-weight:800}
+.dact-p button{width:32px;height:32px;border-radius:50%;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px}
+
+/* nueva: fila horizontal con foto grande y control en la tarjeta */
+.dh{display:flex;align-items:stretch;gap:14px;background:#fff;border-radius:28px;box-shadow:0 0 0 1px var(--ring),0 14px 28px -18px rgba(97,5,220,.35);padding:10px;cursor:pointer}
+.dh-f{position:relative;flex:none;width:104px;border-radius:20px;background:var(--t);overflow:hidden;display:flex;align-items:center;justify-content:center;padding-bottom:18px}
+.dh-f .fo{width:82%;height:82%;mix-blend-mode:multiply}
+.dh-f .fo svg{width:100%;height:100%}
+.dh-tab{position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:flex;align-items:center;gap:4px;height:19px;padding:0 8px;border-radius:10px 10px 0 0;background:#fff;font-size:9.5px;font-weight:700;white-space:nowrap}
+.dh-tab .ic{font-size:9.5px;color:#e0a400}.dh-tab.warn{color:#b45309}.dh-tab.warn .ic{color:#e8780a}
+.dh-tab:before,.dh-tab:after{content:"";position:absolute;bottom:0;width:10px;height:10px}
+.dh-tab:before{right:100%;background:radial-gradient(circle at 0 0,transparent 9.5px,#fff 10px)}
+.dh-tab:after{left:100%;background:radial-gradient(circle at 100% 0,transparent 9.5px,#fff 10px)}
+.dh-b{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;padding:2px 2px 0 0}
+.dh-b h3{font-family:var(--f-head);font-size:16.5px;font-weight:800;line-height:1.15;letter-spacing:-.01em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dh-chip{align-self:flex-start;margin-top:6px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--t);color:var(--td)}
+.dh-pie{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
+.dh-precio{font-family:var(--f-head);font-weight:800;font-size:18px;letter-spacing:-.01em;white-space:nowrap}
+.dh-precio small{font-size:11px;color:var(--mut);margin-right:2px}
+/* píldora violeta de marca */
+.pill{display:flex;align-items:center;gap:2px;height:34px;border-radius:999px;background:var(--p);color:#fff;box-shadow:0 8px 16px -8px rgba(97,5,220,.85);padding:3px}
+.pill button{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(255,255,255,.18)}
+.pill span{min-width:26px;text-align:center;font-family:var(--f-head);font-weight:800;font-size:14px}
+.pill.add{padding:3px 3px 3px 12px;gap:8px;font-size:12px;font-weight:700}
+.pill.add u{text-decoration:none;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:11px}
+.notas{width:min(900px,calc(100% - 28px));margin:0 auto 60px;background:#fff;border-radius:22px;padding:18px 20px;box-shadow:0 0 0 1px var(--ring);font-size:13px;line-height:1.6;color:#4a4468}
+.notas b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Maqueta · Destacados horizontal</b>
+  <div class="grp"><span>Tarjeta</span>
+    <div class="tog" data-k="ver"><button data-v="comparar" class="on">Comparar</button><button data-v="nueva">Nueva</button><button data-v="actual">Actual</button></div>
+    <button class="reset" id="reset">Reiniciar</button></div>
+</div>
+<div class="stage" id="stage"></div>
+<div class="notas">
+  <b>Qué cambia respecto al Destacados de hoy:</b> la foto pasa de 64 a 104 px dentro de un cuadro con el color de su categoría (con el mismo filtro de las tarjetas), el nombre sube de tamaño, el aviso (<i>Destacado</i> / <i>Quedan 3</i>) se integra en la foto con la pestaña blanca, y el <b>+</b> se convierte en un control de cantidad en píldora violeta de marca: <i>Agregar +</i> antes de comprar y <i>− 2 +</i> después. Tocar la tarjeta abre el detalle del producto.
+  <br><b>No incluye</b> la foto que sale del borde de la tarjeta de la referencia: necesita fotos recortadas sin fondo.
+</div>
+<script>
+const TONOS={lila:['#ece0fd','#6a3fc4'],rosa:['#fde3ea','#c0405f'],cielo:['#dfeafd','#3b66b8'],menta:['#dcf3e6','#238458']};
+const P=[
+ {id:1,n:'Agua Cristalina Sin Gas Botella 500ml',c:'Bebidas',pr:1.5,t:'cielo',f:'agua',a:['star','Destacado']},
+ {id:2,n:'Yogurt de fresa 1 L',c:'Lácteos',pr:8.9,t:'rosa',f:'yogurt',a:['alerta','Quedan 3'],w:1},
+ {id:3,n:'Gaseosa 500 ml',c:'Bebidas',pr:2.5,t:'lila',f:'botella',a:['star','Destacado']},
+ {id:4,n:'Manzana delicia',c:'Frutas',pr:6.5,t:'menta',f:'manzana',a:['star','Destacado']}
+];
+let cart={1:2};
+const IC={plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',alerta:'<path d="M12 4l9 16H3zM12 10v4M12 17.5v.01"/>'};
+const ic=k=>`<svg class="ic" viewBox="0 0 24 24">${IC[k]}</svg>`;
+function foto(k){const f={
+ agua:'<rect x="52" y="14" width="16" height="9" rx="2.5" fill="#2f6fd0"/><path d="M54 23h12v14c0 4 11 8 11 18v44a6 6 0 0 1-6 6H49a6 6 0 0 1-6-6V55c0-10 11-14 11-18z" fill="#bfe3f7"/><rect x="43" y="62" width="34" height="22" fill="#2f6fd0"/><rect x="49" y="69" width="22" height="3.5" rx="1.7" fill="#fff"/>',
+ botella:'<rect x="52" y="14" width="16" height="9" rx="2.5" fill="#e11d48"/><path d="M54 23h12v14c0 4 11 8 11 18v44a6 6 0 0 1-6 6H49a6 6 0 0 1-6-6V55c0-10 11-14 11-18z" fill="#f2a516"/><rect x="43" y="62" width="34" height="24" fill="#fff" opacity=".92"/><rect x="49" y="69" width="22" height="3.5" rx="1.7" fill="#e11d48"/>',
+ yogurt:'<rect x="50" y="14" width="20" height="11" rx="3" fill="#fff" stroke="#e2d7ee" stroke-width="1.3"/><path d="M52 25h16v10c0 4 11 6 11 17v50a6 6 0 0 1-6 6H47a6 6 0 0 1-6-6V52c0-11 11-13 11-17z" fill="#f6b3c6"/><rect x="41" y="60" width="38" height="28" fill="#fff" opacity=".95"/><circle cx="60" cy="74" r="8" fill="#e5446d"/>',
+ manzana:'<path d="M60 36c-8-6-26-3-28 18-2 24 12 46 28 46s30-22 28-46c-2-21-20-24-28-18z" fill="#d92d3a"/><path d="M60 38c0-8 2-14 7-18" stroke="#6b4423" stroke-width="3.2" stroke-linecap="round" fill="none"/><path d="M63 28c8-8 18-6 20-4-2 8-12 12-20 4z" fill="#3aa05c"/>'}[k];
+ return `<svg viewBox="0 0 120 120"><rect width="120" height="120" fill="#fff"/><ellipse cx="60" cy="108" rx="30" ry="4.5" fill="#1c1830" opacity=".13"/>${f}</svg>`}
+const money=n=>'S/ '+n.toFixed(2);
+function actual(p){return `<div class="dact"><div class="dact-f">${foto(p.f)}</div><div class="dact-t"><b>${p.n}</b><span>${p.c}</span></div><div class="dact-p"><b>${money(p.pr)}</b><button data-add="${p.id}">${ic('plus')}</button></div></div>`}
+function nueva(p){
+  const q=cart[p.id]||0,[t,td]=TONOS[p.t];
+  const ctl=q?`<div class="pill"><button data-menos="${p.id}">${ic('minus')}</button><span>${q}</span><button data-add="${p.id}">${ic('plus')}</button></div>`:`<button class="pill add" data-add="${p.id}">Agregar<u>${ic('plus')}</u></button>`;
+  return `<div class="dh" style="--t:${t};--td:${td}"><div class="dh-f"><div class="fo">${foto(p.f)}</div><div class="dh-tab ${p.w?'warn':''}">${ic(p.a[0])}${p.a[1]}</div></div><div class="dh-b"><div><h3>${p.n}</h3><span class="dh-chip">${p.c}</span></div><div class="dh-pie"><div class="dh-precio"><small>S/</small>${p.pr.toFixed(2)}</div>${ctl}</div></div></div>`}
+function phone(fn){return `<div class="phone"><div class="ph-top"><div class="ph-brand"><b>Bodega Demo</b><span>Abierto ahora</span></div><div class="ph-cats"><span class="on">Todo</span><span>Bebidas</span><span>Lácteos</span><span>Abarrotes</span><span>Frutas</span></div></div><div class="sec"><b>${ic('star')} Destacados</b><a>Ver todos</a></div><div class="rail">${P.map(p=>`<div>${fn(p)}</div>`).join('')}</div><div class="dots">${P.map((_,i)=>`<i class="${i?'':'on'}"></i>`).join('')}</div></div>`}
+const col=(l,b,n,h)=>`<div class="col"><div class="etq">${l}<i class="${n?'n':''}">${b}</i></div>${h}</div>`;
+let ver='comparar';
+function render(){const st=document.getElementById('stage');const sc=[...st.querySelectorAll('.rail')].map(r=>r.scrollLeft);
+ st.innerHTML=ver==='nueva'?col('Destacados nuevo','propuesta',1,phone(nueva)):ver==='actual'?col('Destacados actual','hoy',0,phone(actual)):col('Actual','hoy',0,phone(actual))+col('Nuevo','propuesta',1,phone(nueva));
+ st.querySelectorAll('.rail').forEach((r,i)=>r.scrollLeft=sc[i]||0)}
+document.querySelector('.tog').onclick=e=>{const b=e.target.closest('button');if(!b)return;ver=b.dataset.v;document.querySelectorAll('.tog button').forEach(x=>x.classList.toggle('on',x===b));render()};
+document.getElementById('reset').onclick=()=>{cart={1:2};render()};
+document.getElementById('stage').onclick=e=>{const a=e.target.closest('[data-add]'),m=e.target.closest('[data-menos]');
+ if(a){const id=+a.dataset.add;cart[id]=(cart[id]||0)+1;render()}else if(m){const id=+m.dataset.menos;cart[id]--;if(!cart[id])delete cart[id];render()}};
+render();
+</script>
+</body>
+</html>

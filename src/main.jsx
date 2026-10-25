@@ -522,6 +522,66 @@ function HojaProducto({ producto, cantidadEnCarrito, onAgregar, onCerrar, onVerF
   );
 }
 
+// Tarjeta del carrusel "Destacados": fila horizontal con foto grande (cuadro del
+// color de la categoría), nombre, categoría, precio y el control de cantidad
+// violeta: "Agregar +" antes de comprar y "- 2 +" después. Tocarla abre el detalle.
+function TarjetaDestacado({ producto, cantidadEnCarrito, onAgregar, onQuitar, onAbrir }) {
+  const tono = tonoCategoria(producto.categoria);
+  const stock = producto.stock_disponible;
+  const stockPoco = stock != null && stock <= 3;
+  const detener = (fn) => (e) => { e.stopPropagation(); fn(e); };
+  return (
+    <div
+      onClick={() => onAbrir(producto)}
+      className="kh"
+      style={{ "--t": tono.t, "--td": tono.td }}
+    >
+      <div className="kh-foto">
+        {producto.foto_url ? (
+          <div className="kh-img">
+            <img src={producto.foto_url} alt={tituloProducto(producto.descripcion)} loading="lazy" />
+          </div>
+        ) : (
+          <i className="fa-solid fa-image kc-sinfoto"></i>
+        )}
+        <div className={`kh-tab ${stockPoco ? "kh-tab-warn" : ""}`}>
+          <i className={`fa-solid ${stockPoco ? "fa-triangle-exclamation" : "fa-star"}`}></i>
+          {stockPoco ? `Quedan ${stock}` : "Destacado"}
+        </div>
+      </div>
+      <div className="kh-cuerpo">
+        <div>
+          <h3>{tituloProducto(producto.descripcion)}</h3>
+          {producto.categoria && <span className="kh-chip">{producto.categoria}</span>}
+        </div>
+        <div className="kh-pie">
+          <div className="kh-precio"><small>S/</small>{Number(producto.precio_venta).toFixed(2)}</div>
+          {cantidadEnCarrito === 0 ? (
+            <button
+              className="kh-pildora kh-agregar"
+              onClick={detener((e) => { volarAlCarrito(e.currentTarget, producto.foto_url, producto.categoria); onAgregar(producto); })}
+            >
+              Agregar
+              <u><i className="fa-solid fa-plus"></i></u>
+            </button>
+          ) : (
+            <div className="kh-pildora" onClick={(e) => e.stopPropagation()}>
+              <button onClick={() => onQuitar(producto)} aria-label="Quitar uno"><i className="fa-solid fa-minus"></i></button>
+              <span>{cantidadEnCarrito}</span>
+              <button
+                onClick={(e) => { volarAlCarrito(e.currentTarget, producto.foto_url, producto.categoria); onAgregar(producto); }}
+                aria-label="Agregar uno"
+              >
+                <i className="fa-solid fa-plus"></i>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TarjetaCombo({ combo, cantidadCombo, productosPorId, onAgregar, onQuitar, ancho }) {
   // Precio "normal" = lo que costaría cada producto suelto, a como está
   // hoy en la vitrina -- así el %OFF y el "ahorras" salen de datos
@@ -3945,32 +4005,13 @@ function App() {
           >
             {productosDestacados.map((p) => (
               <div key={p.id} className="w-[88%] shrink-0 snap-start pr-3 last:pr-0">
-                <div className="flex items-center gap-3 bg-white rounded-[24px] ring-1 ring-[#efe6fc] p-2">
-                  <div
-                    onClick={() => setProductoDetalleId(p.id)}
-                    className="w-16 h-16 rounded-2xl bg-[#f4eefe] overflow-hidden shrink-0 flex items-center justify-center cursor-pointer"
-                  >
-                    {p.foto_url ? (
-                      <img src={p.foto_url} alt={tituloProducto(p.descripcion)} className="w-full h-full object-cover" />
-                    ) : (
-                      <i className="fa-solid fa-image text-[#cfc4ea]"></i>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-[#1c1830] leading-tight line-clamp-2">{tituloProducto(p.descripcion)}</p>
-                    {p.categoria && <p className="text-xs text-[#78729a] line-clamp-1 mt-0.5">{p.categoria}</p>}
-                  </div>
-                  <div className="flex flex-col items-end gap-1.5 shrink-0 pr-1">
-                    <span className="text-sm font-extrabold text-[#1c1830] tabular-nums">{formatoMoneda(p.precio_venta)}</span>
-                    <button
-                      onClick={(e) => { volarAlCarrito(e.currentTarget, p.foto_url, p.categoria); agregarAlCarrito(p); }}
-                      aria-label="Agregar"
-                      className="w-8 h-8 rounded-full bg-[#6105dc] text-white flex items-center justify-center active:scale-90"
-                    >
-                      <i className="fa-solid fa-plus text-xs"></i>
-                    </button>
-                  </div>
-                </div>
+                <TarjetaDestacado
+                  producto={p}
+                  cantidadEnCarrito={carrito[p.id] || 0}
+                  onAgregar={agregarAlCarrito}
+                  onQuitar={quitarDelCarrito}
+                  onAbrir={(prod) => setProductoDetalleId(prod.id)}
+                />
               </div>
             ))}
           </div>
