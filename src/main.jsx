@@ -644,7 +644,10 @@ function TarjetaCombo({ combo, cantidadCombo, productosPorId, onAgregar, onQuita
       <div className="kcb-pie">
         <span className="kcb-cant">{items.length} {items.length === 1 ? "producto" : "productos"}</span>
         {cantidadCombo === 0 ? (
-          <button className="kh-pildora kh-agregar" onClick={() => onAgregar(combo)}>
+          <button
+            className="kh-pildora kh-agregar"
+            onClick={(e) => { volarAlCarrito(e.currentTarget, fotos[0], null); onAgregar(combo); }}
+          >
             Agregar
             <u><i className="fa-solid fa-plus"></i></u>
           </button>
@@ -652,7 +655,12 @@ function TarjetaCombo({ combo, cantidadCombo, productosPorId, onAgregar, onQuita
           <div className="kh-pildora">
             <button onClick={() => onQuitar(combo)} aria-label="Quitar uno"><i className="fa-solid fa-minus"></i></button>
             <span>{cantidadCombo}</span>
-            <button onClick={() => onAgregar(combo)} aria-label="Agregar uno"><i className="fa-solid fa-plus"></i></button>
+            <button
+              onClick={(e) => { volarAlCarrito(e.currentTarget, fotos[0], null); onAgregar(combo); }}
+              aria-label="Agregar uno"
+            >
+              <i className="fa-solid fa-plus"></i>
+            </button>
           </div>
         )}
       </div>
@@ -2759,7 +2767,7 @@ function BarraNavegacion({ activa, contadorPedidos, onInicio, onTiendas, onPedid
               <div className="kdock-chip" key={cantidad}>
                 <div className="flex shrink-0 pl-0.5">
                   {carrito.miniaturas.slice(-3).map((m, i) => (
-                    <span key={m.id} className={`kc-mini ${i > 0 ? "-ml-3" : ""}`} style={{ background: tonoCategoria(m.categoria).t }}>
+                    <span key={m.id} className={`kc-mini ${m.categoria === "combo" ? "kc-mini-combo" : ""} ${i > 0 ? "-ml-3" : ""}`} style={{ background: tonoCategoria(m.categoria).t }}>
                       {m.foto ? (
                         <img src={m.foto} alt="" />
                       ) : (

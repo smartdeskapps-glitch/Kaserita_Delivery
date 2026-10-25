@@ -860,3 +860,21 @@ body { overflow-x: clip; }
 /* El filtro (multiply) de las fotos se mezcla solo con el color de su propio cuadro,
    no con toda la página detrás: el navegador trabaja mucho menos al desplazarse. */
 .kc-panel, .kh-foto, .kcb-panel, .kc-hoja-foto { isolation: isolate; }
+
+/* Un combo en el chip del dock lleva un regalito para distinguirlo de un producto. */
+.kc-mini { position: relative; }
+.kc-mini-combo::after {
+  content: "06b";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  position: absolute;
+  right: -1px; bottom: -1px;
+  width: 15px; height: 15px;
+  border-radius: 9999px;
+  background: #6105dc;
+  color: #fff;
+  font-size: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
