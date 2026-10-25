@@ -54,28 +54,6 @@ function tituloProducto(texto) {
     .replace(/(^|[\s/(-])([a-záéíóúñ])/g, (_, sep, letra) => sep + letra.toUpperCase());
 }
 
-// Ícono + color aproximados por nombre de categoría (texto libre que carga
-// cada bodega) -- no hay un catálogo fijo de categorías, así que se matchea
-// por palabras clave comunes en bodegas/abarrotes y se cae a un estilo
-// genérico. El color es solo para diferenciar de un vistazo (como en apps
-// de delivery), no tiene relación con la marca.
-function estiloCategoria(nombre) {
-  const n = (nombre || "").toLowerCase();
-  if (/agua|hidrata/.test(n)) return { icono: "fa-droplet", bg: "bg-sky-50", texto: "text-sky-600", borde: "border-sky-200", bordeActivo: "border-sky-500 ring-2 ring-sky-200" };
-  if (/gaseosa|bebida|jugo|néctar|nectar/.test(n)) return { icono: "fa-bottle-water", bg: "bg-rose-50", texto: "text-rose-600", borde: "border-rose-200", bordeActivo: "border-rose-500 ring-2 ring-rose-200" };
-  if (/cerveza|licor|vino/.test(n)) return { icono: "fa-beer-mug-empty", bg: "bg-amber-50", texto: "text-amber-600", borde: "border-amber-200", bordeActivo: "border-amber-500 ring-2 ring-amber-200" };
-  if (/carne|embutido|pollo|res/.test(n)) return { icono: "fa-drumstick-bite", bg: "bg-red-50", texto: "text-red-600", borde: "border-red-200", bordeActivo: "border-red-500 ring-2 ring-red-200" };
-  if (/lácte|lacte|leche|queso|yogur/.test(n)) return { icono: "fa-cheese", bg: "bg-yellow-50", texto: "text-yellow-600", borde: "border-yellow-200", bordeActivo: "border-yellow-500 ring-2 ring-yellow-200" };
-  if (/pan|panader/.test(n)) return { icono: "fa-bread-slice", bg: "bg-orange-50", texto: "text-orange-600", borde: "border-orange-200", bordeActivo: "border-orange-500 ring-2 ring-orange-200" };
-  if (/limpieza|hogar/.test(n)) return { icono: "fa-spray-can-sparkles", bg: "bg-emerald-50", texto: "text-emerald-600", borde: "border-emerald-200", bordeActivo: "border-emerald-500 ring-2 ring-emerald-200" };
-  if (/golosina|snack|dulce|chocolate/.test(n)) return { icono: "fa-cookie-bite", bg: "bg-fuchsia-50", texto: "text-fuchsia-600", borde: "border-fuchsia-200", bordeActivo: "border-fuchsia-500 ring-2 ring-fuchsia-200" };
-  if (/fruta|verdura|abarrote/.test(n)) return { icono: "fa-basket-shopping", bg: "bg-lime-50", texto: "text-lime-700", borde: "border-lime-200", bordeActivo: "border-lime-500 ring-2 ring-lime-200" };
-  if (/cigarr|tabaco/.test(n)) return { icono: "fa-smoking", bg: "bg-stone-100", texto: "text-stone-600", borde: "border-stone-200", bordeActivo: "border-stone-400 ring-2 ring-stone-200" };
-  if (/mascota/.test(n)) return { icono: "fa-paw", bg: "bg-indigo-50", texto: "text-indigo-600", borde: "border-indigo-200", bordeActivo: "border-indigo-500 ring-2 ring-indigo-200" };
-  if (/higiene|cuidado|personal|farmac/.test(n)) return { icono: "fa-pump-soap", bg: "bg-teal-50", texto: "text-teal-600", borde: "border-teal-200", bordeActivo: "border-teal-500 ring-2 ring-teal-200" };
-  return { icono: "fa-tag", bg: "bg-stone-100", texto: "text-stone-600", borde: "border-stone-200", bordeActivo: "border-stone-400 ring-2 ring-stone-200" };
-}
-
 // Fecha relativa cortita para "Mis tiendas" (Hoy, Ayer, Hace 3 días...) --
 // nada de fechas exactas, es solo una referencia rápida de cuándo compraste ahí.
 function fechaRelativa(fechaIso) {
@@ -3892,55 +3870,31 @@ function App() {
           </div>
           {categorias.length > 0 && (
             <div className="relative -mx-4">
-              <div className="flex gap-3 overflow-x-auto hide-scrollbar px-4 py-1">
+              {/* Categorías: solo texto, en píldoras que se deslizan de lado. */}
+              <div className="flex gap-2 overflow-x-auto hide-scrollbar px-4 py-1">
                 <button
                   onClick={() => { setCategoriaActiva(""); setSoloFavoritos(false); }}
-                  className="shrink-0 w-16 flex flex-col items-center gap-1.5 active:scale-95 transition"
+                  className={`kcat ${categoriaActiva === "" && !soloFavoritos ? "kcat-on" : ""}`}
                 >
-                  <span
-                    className={`w-[58px] h-[58px] rounded-[20px] flex items-center justify-center ${
-                      categoriaActiva === "" && !soloFavoritos ? "bg-[#6105dc] text-white" : "bg-white ring-1 ring-[#efe6fc] text-[#4d04b0]"
-                    }`}
-                  >
-                    <i className="fa-solid fa-border-all text-xl"></i>
-                  </span>
-                  <span className={`text-[11px] font-semibold truncate w-full text-center ${categoriaActiva === "" && !soloFavoritos ? "text-[#6105dc]" : "text-[#1c1830]"}`}>
-                    Todos
-                  </span>
+                  Todos
                 </button>
                 {favoritos.size > 0 && (
                   <button
                     onClick={() => { setSoloFavoritos((v) => !v); setCategoriaActiva(""); }}
-                    className="shrink-0 w-16 flex flex-col items-center gap-1.5 active:scale-95 transition"
+                    className={`kcat ${soloFavoritos ? "kcat-on" : ""}`}
                   >
-                    <span
-                      className={`w-[58px] h-[58px] rounded-[20px] flex items-center justify-center ${
-                        soloFavoritos ? "bg-[#6105dc] text-white" : "bg-white ring-1 ring-[#efe6fc] text-[#4d04b0]"
-                      }`}
-                    >
-                      <i className="fa-solid fa-heart text-xl"></i>
-                    </span>
-                    <span className={`text-[11px] font-semibold truncate w-full text-center ${soloFavoritos ? "text-[#6105dc]" : "text-[#1c1830]"}`}>
-                      Favoritos
-                    </span>
+                    Favoritos
                   </button>
                 )}
-                {categorias.map((c) => {
-                  const est = estiloCategoria(c);
-                  const activa = categoriaActiva === c;
-                  return (
-                    <button key={c} onClick={() => { setCategoriaActiva(c); setSoloFavoritos(false); }} className="shrink-0 w-16 flex flex-col items-center gap-1.5 active:scale-95 transition">
-                      <span
-                        className={`w-[58px] h-[58px] rounded-[20px] flex items-center justify-center ${
-                          activa ? "bg-[#6105dc] text-white" : "bg-white ring-1 ring-[#efe6fc] text-[#4d04b0]"
-                        }`}
-                      >
-                        <i className={`fa-solid ${est.icono} text-xl`}></i>
-                      </span>
-                      <span className={`text-[11px] font-semibold truncate w-full text-center ${activa ? "text-[#6105dc]" : "text-[#1c1830]"}`}>{c}</span>
-                    </button>
-                  );
-                })}
+                {categorias.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => { setCategoriaActiva(c); setSoloFavoritos(false); }}
+                    className={`kcat ${categoriaActiva === c ? "kcat-on" : ""}`}
+                  >
+                    {c}
+                  </button>
+                ))}
               </div>
               <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-[#f7f5fb] to-transparent"></div>
             </div>

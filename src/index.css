@@ -606,3 +606,24 @@ body { overflow-x: clip; }
 }
 .kcb-pie { display: flex; align-items: center; justify-content: space-between; padding: 0 2px 2px; }
 .kcb-cant { font-size: 11px; color: #78729a; }
+
+/* Categorías de la tienda: píldoras de solo texto que se deslizan de lado. */
+.kcat {
+  flex: none;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: 0 0 0 1px #efe6fc;
+  color: #1c1830;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.kcat:active { transform: scale(0.96); }
+.kcat-on {
+  background: #6105dc;
+  color: #fff;
+  box-shadow: 0 8px 16px -8px rgba(97, 5, 220, 0.8);
+}
