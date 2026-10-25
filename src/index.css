@@ -273,3 +273,103 @@ body { overflow-x: clip; }
 @keyframes kc-mini-pop { from { transform: scale(0.3); opacity: 0; } }
 @keyframes kc-latido { 40% { transform: scale(1.03); } }
 @media (prefers-reduced-motion: reduce) { .kc-mini, .kc-barra { animation: none; } }
+
+/* Efecto al agregar: bolita con la foto que vuela hacia la barra del carrito. */
+.kc-vuelo {
+  position: fixed;
+  z-index: 60;
+  width: 46px; height: 46px;
+  border-radius: 9999px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 18px rgba(60, 20, 120, 0.4);
+  pointer-events: none;
+}
+.kc-vuelo img { width: 90%; height: 90%; object-fit: contain; mix-blend-mode: multiply; }
+
+/* Detalle del producto: hoja que sube desde abajo. */
+.kc-hoja {
+  position: relative;
+  width: 100%;
+  max-width: 28rem;
+  background: #fff;
+  border-radius: 30px 30px 0 0;
+  padding: 10px 16px calc(18px + env(safe-area-inset-bottom));
+  box-shadow: 0 -20px 50px -20px rgba(20, 10, 60, 0.5);
+  transform: translateY(105%);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.3, 1);
+  max-height: 92vh;
+  overflow-y: auto;
+}
+.kc-hoja-on { transform: none; }
+.kc-hoja-asa { width: 42px; height: 4px; border-radius: 9px; background: #e4dcf5; margin: 0 auto 10px; }
+.kc-hoja-foto {
+  position: relative;
+  aspect-ratio: 1 / 0.82;
+  border-radius: 24px;
+  background: var(--t);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 22px;
+}
+.kc-hoja-img { width: 68%; height: 80%; mix-blend-mode: multiply; cursor: zoom-in; }
+.kc-hoja-img img { width: 100%; height: 100%; object-fit: contain; }
+.kc-hoja-btn {
+  position: absolute;
+  top: 10px;
+  z-index: 2;
+  width: 32px; height: 32px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #5b5478;
+}
+.kc-hoja-puntos { position: absolute; bottom: 30px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; }
+.kc-hoja-puntos span { width: 6px; height: 6px; border-radius: 9999px; background: rgba(28, 24, 48, 0.25); }
+.kc-hoja-puntos span.on { width: 16px; background: #6105dc; }
+.kc-hoja-foto .kc-banda { height: 26px; font-size: 11.5px; }
+.kc-hoja-cuerpo { padding: 14px 4px 4px; }
+.kc-hoja-cuerpo h2 { margin: 8px 0 0; font-size: 22px; font-weight: 800; line-height: 1.15; color: #1c1830; }
+.kc-chip-neutro { background: #f7f3fe; color: #5b5478; font-size: 12px; padding: 5px 11px; }
+.kc-hoja-cuerpo .kc-chip { font-size: 11px; }
+.kc-hoja-fila { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+.kc-hoja-precio { font-weight: 800; font-size: 26px; letter-spacing: -0.01em; color: #1c1830; }
+.kc-hoja-precio small { font-size: 13px; color: #78729a; margin-right: 3px; }
+.kc-hoja-cant { display: flex; align-items: center; gap: 4px; background: #f4eefe; border-radius: 9999px; padding: 3px; }
+.kc-hoja-cant button {
+  width: 34px; height: 34px;
+  border-radius: 9999px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #6105dc;
+  box-shadow: 0 1px 3px rgba(60, 20, 120, 0.15);
+}
+.kc-hoja-cant button:disabled { opacity: 0.4; }
+.kc-hoja-cant span { min-width: 30px; text-align: center; font-weight: 800; font-size: 16px; }
+.kc-hoja-cta {
+  width: 100%;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 6px 6px 22px;
+  border-radius: 9999px;
+  background: #6105dc;
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  box-shadow: 0 12px 24px -12px rgba(97, 5, 220, 0.8);
+}
+.kc-hoja-cta:active { transform: scale(0.98); }
+.kc-hoja-cta u { text-decoration: none; background: rgba(255, 255, 255, 0.2); border-radius: 9999px; padding: 11px 18px; font-size: 15px; }
+@media (prefers-reduced-motion: reduce) { .kc-hoja { transition: none; } }

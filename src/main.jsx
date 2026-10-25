@@ -287,7 +287,7 @@ function tonoCategoria(categoria) {
   return TONOS_TARJETA[h % TONOS_TARJETA.length];
 }
 
-function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onVerFoto, esFavorito, onToggleFavorito }) {
+function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onVerFoto, onAbrir, esFavorito, onToggleFavorito }) {
   const stockPoco = producto.stock_disponible != null && producto.stock_disponible <= 3;
   const tono = tonoCategoria(producto.categoria);
   // Franja inferior del panel: un solo lugar para el aviso que importa.
@@ -303,8 +303,8 @@ function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onV
     >
       <div className="kc-fw">
         <div
-          onClick={producto.foto_url ? () => onVerFoto(producto) : undefined}
-          className={`kc-panel ${producto.foto_url ? "cursor-zoom-in" : ""}`}
+          onClick={onAbrir ? () => onAbrir(producto) : producto.foto_url ? () => onVerFoto(producto) : undefined}
+          className={`kc-panel ${onAbrir || producto.foto_url ? "cursor-pointer" : ""}`}
         >
           {producto.foto_url ? (
             <div className="kc-foto">
@@ -332,14 +332,17 @@ function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onV
         )}
       </div>
       <div className="kc-body">
-        <h3>{tituloProducto(producto.descripcion)}</h3>
+        <h3 onClick={onAbrir ? () => onAbrir(producto) : undefined} className={onAbrir ? "cursor-pointer" : ""}>{tituloProducto(producto.descripcion)}</h3>
         {producto.categoria && (
           <div className="kc-chips"><span className="kc-chip">{producto.categoria}</span></div>
         )}
       </div>
       <div className="kc-act">
         {cantidadEnCarrito === 0 ? (
-          <button onClick={() => onAgregar(producto)} className="kc-add">
+          <button
+            onClick={(e) => { volarAlCarrito(e.currentTarget, producto.foto_url, producto.categoria); onAgregar(producto); }}
+            className="kc-add"
+          >
             Agregar
             <u><i className="fa-solid fa-plus"></i></u>
           </button>
@@ -347,11 +350,175 @@ function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onV
           <div className="kc-st">
             <button onClick={() => onQuitar(producto)} aria-label="Quitar uno"><i className="fa-solid fa-minus"></i></button>
             <span>{cantidadEnCarrito}</span>
-            <button onClick={() => onAgregar(producto)} className="kc-mas" aria-label="Agregar uno"><i className="fa-solid fa-plus"></i></button>
+            <button
+              onClick={(e) => { volarAlCarrito(e.currentTarget, producto.foto_url, producto.categoria); onAgregar(producto); }}
+              className="kc-mas"
+              aria-label="Agregar uno"
+            ><i className="fa-solid fa-plus"></i></button>
           </div>
         )}
       </div>
     </article>
+  );
+}
+
+// Efecto al agregar: una bolita con la foto del producto vuela desde el botón
+// hasta la barra del carrito. Si la barra todavía no existe (primer producto),
+// apunta a donde va a aparecer. Se omite con "reducir movimiento".
+function volarAlCarrito(origen, fotoUrl, categoria) {
+  if (!origen || typeof origen.getBoundingClientRect !== "function") return;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const a = origen.getBoundingClientRect();
+  const barra = document.querySelector(".kc-barra");
+  const b = barra
+    ? barra.getBoundingClientRect()
+    : { left: 16, top: window.innerHeight - 94 - 52, width: 60, height: 52 };
+  const el = document.createElement("div");
+  el.className = "kc-vuelo";
+  el.style.background = tonoCategoria(categoria).t;
+  el.style.left = `${a.left + a.width / 2 - 23}px`;
+  el.style.top = `${a.top + a.height / 2 - 23}px`;
+  if (fotoUrl) {
+    const img = document.createElement("img");
+    img.src = fotoUrl;
+    img.alt = "";
+    el.appendChild(img);
+  }
+  document.body.appendChild(el);
+  const dx = b.left + 34 - (a.left + a.width / 2);
+  const dy = b.top + b.height / 2 - (a.top + a.height / 2);
+  const anim = el.animate(
+    [
+      { transform: "translate(0, 0) scale(1)", opacity: 1 },
+      { transform: `translate(${dx * 0.6}px, ${dy * 0.5 - 40}px) scale(0.9)`, opacity: 1, offset: 0.55 },
+      { transform: `translate(${dx}px, ${dy}px) scale(0.4)`, opacity: 0.2 },
+    ],
+    { duration: 620, easing: "cubic-bezier(0.5, 0, 0.7, 1)" }
+  );
+  anim.onfinish = () => el.remove();
+  anim.oncancel = () => el.remove();
+}
+
+// Detalle del producto: hoja que sube desde abajo al tocar una tarjeta. Foto
+// grande (con deslizar si tiene más fotos; tocarla la abre a pantalla completa),
+// categoría, stock, precio, contador y "Agregar al pedido" con el total.
+function HojaProducto({ producto, cantidadEnCarrito, onAgregar, onCerrar, onVerFoto, esFavorito, onToggleFavorito }) {
+  const [cantidad, setCantidad] = useState(1);
+  const [visible, setVisible] = useState(false);
+  const [indice, setIndice] = useState(0);
+  const inicioToqueX = useRef(null);
+  const botonAgregarRef = useRef(null);
+  const fotos = [producto.foto_url, ...(producto.fotos_extra || [])].filter(Boolean);
+  const tono = tonoCategoria(producto.categoria);
+  const stock = producto.stock_disponible;
+  const stockPoco = stock != null && stock <= 3;
+  const maximo = stock != null ? Math.max(1, stock - cantidadEnCarrito) : 99;
+  const aviso = stockPoco
+    ? { texto: `Quedan ${stock}`, clase: "kc-banda-warn", icono: "fa-triangle-exclamation" }
+    : producto.es_destacado
+      ? { texto: "Destacado", clase: "", icono: "fa-star" }
+      : null;
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  const cerrar = () => {
+    setVisible(false);
+    setTimeout(onCerrar, 300);
+  };
+  const agregar = () => {
+    volarAlCarrito(botonAgregarRef.current, fotos[0], producto.categoria);
+    for (let i = 0; i < cantidad; i++) onAgregar(producto);
+    setTimeout(cerrar, 180);
+  };
+  const tocarInicio = (e) => { inicioToqueX.current = e.touches[0].clientX; };
+  const tocarFin = (e) => {
+    if (inicioToqueX.current == null || fotos.length <= 1) return;
+    const delta = e.changedTouches[0].clientX - inicioToqueX.current;
+    inicioToqueX.current = null;
+    if (Math.abs(delta) < 40) return;
+    setIndice((i) => (delta < 0 ? (i + 1) % fotos.length : (i - 1 + fotos.length) % fotos.length));
+  };
+
+  return (
+    <div className="fixed inset-0 z-[28] flex items-end justify-center">
+      <div
+        onClick={cerrar}
+        className={`absolute inset-0 bg-[#140a32]/50 transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0"}`}
+      ></div>
+      <div
+        className={`kc-hoja ${visible ? "kc-hoja-on" : ""}`}
+        style={{ "--t": tono.t, "--td": tono.td }}
+      >
+        <div className="kc-hoja-asa"></div>
+        <div className="kc-hoja-foto" onTouchStart={tocarInicio} onTouchEnd={tocarFin}>
+          <button onClick={cerrar} aria-label="Cerrar" className="kc-hoja-btn left-2.5">
+            <i className="fa-solid fa-xmark"></i>
+          </button>
+          {onToggleFavorito && (
+            <button
+              onClick={() => onToggleFavorito(producto.id)}
+              aria-label={esFavorito ? "Quitar de favoritos" : "Agregar a favoritos"}
+              className={`kc-hoja-btn right-2.5 ${esFavorito ? "text-[#6105dc]" : ""}`}
+            >
+              <i className={`${esFavorito ? "fa-solid" : "fa-regular"} fa-heart`}></i>
+            </button>
+          )}
+          {fotos.length > 0 ? (
+            <div className="kc-hoja-img" onClick={() => onVerFoto(producto)}>
+              <img src={fotos[indice]} alt={tituloProducto(producto.descripcion)} />
+            </div>
+          ) : (
+            <i className="fa-solid fa-image kc-sinfoto" style={{ fontSize: 44 }}></i>
+          )}
+          {fotos.length > 1 && (
+            <div className="kc-hoja-puntos">
+              {fotos.map((_, i) => (
+                <span key={i} className={i === indice ? "on" : ""}></span>
+              ))}
+            </div>
+          )}
+          {aviso && (
+            <div className={`kc-banda ${aviso.clase}`}>
+              <i className={`fa-solid ${aviso.icono}`}></i>
+              {aviso.texto}
+            </div>
+          )}
+        </div>
+        <div className="kc-hoja-cuerpo">
+          <div className="flex flex-wrap gap-1.5">
+            {producto.categoria && <span className="kc-chip">{producto.categoria}</span>}
+            {stock != null && (
+              <span className="kc-chip kc-chip-neutro">
+                <i className="kc-dot" style={{ background: stockPoco ? "#f59e0b" : "#10b981" }}></i>
+                {stockPoco ? `Quedan ${stock}` : `${stock} disponibles`}
+              </span>
+            )}
+            {cantidadEnCarrito > 0 && (
+              <span className="kc-chip kc-chip-neutro">Ya tienes {cantidadEnCarrito} en tu pedido</span>
+            )}
+          </div>
+          <h2>{tituloProducto(producto.descripcion)}</h2>
+          <div className="kc-hoja-fila">
+            <div className="kc-hoja-precio"><small>S/</small>{Number(producto.precio_venta).toFixed(2)}</div>
+            <div className="kc-hoja-cant">
+              <button onClick={() => setCantidad((c) => Math.max(1, c - 1))} aria-label="Quitar uno">
+                <i className="fa-solid fa-minus"></i>
+              </button>
+              <span>{cantidad}</span>
+              <button onClick={() => setCantidad((c) => Math.min(maximo, c + 1))} aria-label="Agregar uno" disabled={cantidad >= maximo}>
+                <i className="fa-solid fa-plus"></i>
+              </button>
+            </div>
+          </div>
+          <button ref={botonAgregarRef} onClick={agregar} className="kc-hoja-cta">
+            Agregar al pedido
+            <u>{formatoMoneda(Number(producto.precio_venta) * cantidad)}</u>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -2533,6 +2700,7 @@ function App() {
   const [busqueda, setBusqueda] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState("");
   const [fotoAmpliada, setFotoAmpliada] = useState(null); // producto
+  const [productoDetalleId, setProductoDetalleId] = useState(null); // id del producto en la hoja de detalle
   const [modalTodosCombos, setModalTodosCombos] = useState(false);
   const [modalTodosDestacados, setModalTodosDestacados] = useState(false);
   // Puntitos de página de los carruseles de combos/destacados -- se
@@ -3779,8 +3947,8 @@ function App() {
               <div key={p.id} className="w-[88%] shrink-0 snap-start pr-3 last:pr-0">
                 <div className="flex items-center gap-3 bg-white rounded-[24px] ring-1 ring-[#efe6fc] p-2">
                   <div
-                    onClick={p.foto_url ? () => setFotoAmpliada(p) : undefined}
-                    className={`w-16 h-16 rounded-2xl bg-[#f4eefe] overflow-hidden shrink-0 flex items-center justify-center ${p.foto_url ? "cursor-zoom-in" : ""}`}
+                    onClick={() => setProductoDetalleId(p.id)}
+                    className="w-16 h-16 rounded-2xl bg-[#f4eefe] overflow-hidden shrink-0 flex items-center justify-center cursor-pointer"
                   >
                     {p.foto_url ? (
                       <img src={p.foto_url} alt={tituloProducto(p.descripcion)} className="w-full h-full object-cover" />
@@ -3795,7 +3963,7 @@ function App() {
                   <div className="flex flex-col items-end gap-1.5 shrink-0 pr-1">
                     <span className="text-sm font-extrabold text-[#1c1830] tabular-nums">{formatoMoneda(p.precio_venta)}</span>
                     <button
-                      onClick={() => agregarAlCarrito(p)}
+                      onClick={(e) => { volarAlCarrito(e.currentTarget, p.foto_url, p.categoria); agregarAlCarrito(p); }}
                       aria-label="Agregar"
                       className="w-8 h-8 rounded-full bg-[#6105dc] text-white flex items-center justify-center active:scale-90"
                     >
@@ -3850,6 +4018,7 @@ function App() {
                 onAgregar={agregarAlCarrito}
                 onQuitar={quitarDelCarrito}
                 onVerFoto={setFotoAmpliada}
+                onAbrir={(prod) => setProductoDetalleId(prod.id)}
                 esFavorito={favoritos.has(p.id)}
                 onToggleFavorito={toggleFavorito}
               />
@@ -4485,6 +4654,19 @@ function App() {
         </div>
       )}
 
+      {productoDetalleId && productosPorId[productoDetalleId] && (
+        <HojaProducto
+          key={productoDetalleId}
+          producto={productosPorId[productoDetalleId]}
+          cantidadEnCarrito={carrito[productoDetalleId] || 0}
+          onAgregar={agregarAlCarrito}
+          onCerrar={() => setProductoDetalleId(null)}
+          onVerFoto={setFotoAmpliada}
+          esFavorito={favoritos.has(productoDetalleId)}
+          onToggleFavorito={toggleFavorito}
+        />
+      )}
+
       {fotoAmpliada && (
         <VisorFoto producto={fotoAmpliada} onCerrar={() => setFotoAmpliada(null)} />
       )}
@@ -4518,6 +4700,7 @@ function App() {
                   onAgregar={agregarAlCarrito}
                   onQuitar={quitarDelCarrito}
                   onVerFoto={setFotoAmpliada}
+                  onAbrir={(prod) => { setModalTodosDestacados(false); setProductoDetalleId(prod.id); }}
                   esFavorito={favoritos.has(p.id)}
                   onToggleFavorito={toggleFavorito}
                 />
