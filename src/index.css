@@ -254,3 +254,22 @@ body { overflow-x: clip; }
   .kc-add u { width: 22px; height: 22px; }
   .kc-st button { width: 24px; height: 24px; }
 }
+
+/* Barra del carrito: miniaturas redondas de lo agregado. La barra late al
+   cambiar la cantidad (se vuelve a montar con key) y la última miniatura entra
+   con un pequeño rebote. */
+.kc-mini {
+  width: 36px; height: 36px;
+  border-radius: 9999px;
+  border: 2px solid #5a08cc;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: kc-mini-pop 0.35s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+.kc-mini img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
+.kc-barra { animation: kc-latido 0.45s ease; }
+@keyframes kc-mini-pop { from { transform: scale(0.3); opacity: 0; } }
+@keyframes kc-latido { 40% { transform: scale(1.03); } }
+@media (prefers-reduced-motion: reduce) { .kc-mini, .kc-barra { animation: none; } }

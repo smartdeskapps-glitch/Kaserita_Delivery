@@ -3910,28 +3910,59 @@ function App() {
         />
       )}
 
-      {totalUnidades > 0 && !carritoAbierto && (
-        <button
-          onClick={() => setCarritoAbierto(true)}
-          className="fixed z-[24] bottom-[94px] left-4 right-4 max-w-3xl mx-auto bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white rounded-full pl-2.5 pr-2 py-2 flex items-center justify-between gap-2 shadow-lg shadow-[#6105dc]/25 active:scale-[0.98] transition-transform"
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="relative w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-              <i className="fa-solid fa-bag-shopping text-sm"></i>
-              <span className="absolute -top-1 -right-1 bg-white text-[#4d04b0] font-black text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
-                {totalUnidades}
-              </span>
+      {totalUnidades > 0 && !carritoAbierto && (() => {
+        // Miniaturas de lo agregado (las 3 últimas, redondas y encimadas):
+        // se ve de un vistazo qué lleva el pedido. Un combo muestra la foto
+        // de su primer producto; sin foto, un ícono.
+        const miniaturas = [
+          ...itemsCarrito.map((it) => ({ id: `p${it.id}`, foto: it.foto_url, categoria: it.categoria })),
+          ...itemsCarritoCombos.map((c) => ({
+            id: `c${c.id}`,
+            foto: productosPorId[c.items?.[0]?.producto_id]?.foto_url,
+            categoria: "combo",
+          })),
+        ];
+        const visibles = miniaturas.slice(-3);
+        const extra = miniaturas.length - visibles.length;
+        return (
+          <button
+            key={totalUnidades}
+            onClick={() => setCarritoAbierto(true)}
+            className="kc-barra fixed z-[24] bottom-[94px] left-4 right-4 max-w-3xl mx-auto bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white rounded-full pl-2.5 pr-2 py-2 flex items-center justify-between gap-2 shadow-lg shadow-[#6105dc]/25 active:scale-[0.98] transition-transform"
+          >
+            <span className="absolute -top-2.5 left-5 bg-[#ffc81a] text-[#1c1830] text-[10.5px] font-extrabold px-2.5 py-0.5 rounded-full shadow">
+              {totalUnidades} {totalUnidades === 1 ? "producto" : "productos"}
+            </span>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex shrink-0 pl-0.5">
+                {visibles.map((m, i) => (
+                  <span
+                    key={m.id}
+                    className={`kc-mini ${i > 0 ? "-ml-3" : ""}`}
+                    style={{ background: tonoCategoria(m.categoria).t }}
+                  >
+                    {m.foto ? (
+                      <img src={m.foto} alt="" />
+                    ) : (
+                      <i className={`fa-solid ${m.categoria === "combo" ? "fa-gift" : "fa-bag-shopping"} text-[11px] text-[#6105dc]/60`}></i>
+                    )}
+                  </span>
+                ))}
+                {extra > 0 && (
+                  <span className="kc-mini -ml-3 !bg-[#ffc81a] text-[#1c1830] text-[11px] font-extrabold">+{extra}</span>
+                )}
+              </div>
+              <div className="flex flex-col items-start min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wide text-white/80 leading-none">Mi pedido</span>
+                <span className="text-sm font-extrabold leading-tight">{formatoMoneda(totalCarrito)}</span>
+              </div>
             </div>
-            <div className="flex flex-col items-start min-w-0">
-              <span className="text-[10px] font-bold uppercase tracking-wide text-white/80 leading-none">Mi pedido</span>
-              <span className="text-sm font-extrabold leading-tight">{formatoMoneda(totalCarrito)}</span>
-            </div>
-          </div>
-          <span className="flex items-center gap-1 bg-white text-[#4d04b0] font-bold text-xs px-3.5 py-2 rounded-full shrink-0">
-            Ver pedido <i className="fa-solid fa-arrow-right text-[10px]"></i>
-          </span>
-        </button>
-      )}
+            <span className="flex items-center gap-1 bg-white text-[#4d04b0] font-bold text-xs px-3.5 py-2 rounded-full shrink-0">
+              Ver pedido <i className="fa-solid fa-arrow-right text-[10px]"></i>
+            </span>
+          </button>
+        );
+      })()}
 
       {carritoAbierto && (
         <div className="fixed inset-0 z-30 flex flex-col bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">
