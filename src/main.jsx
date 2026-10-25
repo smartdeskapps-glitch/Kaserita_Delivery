@@ -4672,7 +4672,7 @@ function App() {
         </div>
       )}
 
-      {(carritoAbierto || perfilAbierto) && ubicacionAbierta && (
+      {ubicacionAbierta && (
         <div className="fixed inset-0 z-40 flex flex-col bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">
           <div className="max-w-md w-full mx-auto flex flex-col h-full min-h-0">
             <div className="relative">
