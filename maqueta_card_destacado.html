@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Destacados noche</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --p:#6105dc; --p-dark:#4d04b0; --p-soft:#f4eefe; --p-ring:#efe6fc;
+  --ink:#1c1830; --mut:#78729a;
+  --f-head:'Plus Jakarta Sans',system-ui,sans-serif; --f-body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{font-family:var(--f-body);color:var(--ink);background:#e9e4f5;-webkit-font-smoothing:antialiased;min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+h3,p{margin:0}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* ---- barra de la maqueta (no es parte del producto) ---- */
+.bar{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;justify-content:space-between;padding:10px 20px;background:#1c1830;color:#fff;font-size:12.5px;position:sticky;top:0;z-index:50}
+.bar b{font-family:var(--f-head);font-size:13.5px}
+.bar .grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bar .tog{display:inline-flex;background:rgba(255,255,255,.1);border-radius:999px;padding:3px}
+.bar .tog button{color:#d9d2ee;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600}
+.bar .tog button.on{background:#fff;color:#1c1830}
+.bar .reset{border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:999px;padding:5px 13px;font-size:12px}
+
+.stage{display:flex;flex-wrap:wrap;gap:26px;justify-content:center;align-items:flex-start;padding:26px 14px 24px}
+.col{display:flex;flex-direction:column;gap:8px;min-width:0}
+.etq{font-family:var(--f-head);font-weight:700;font-size:12.5px;color:#4d3f86;display:flex;align-items:center;gap:8px;padding-left:6px}
+.etq i{font-style:normal;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:#fff;color:var(--mut)}
+.etq i.nuevo{background:var(--p);color:#fff}
+
+.phone{width:390px;max-width:100%;background:#faf7ff;border-radius:34px;border:1px solid #fff;box-shadow:0 30px 70px -22px rgba(60,20,120,.4);overflow:hidden;padding-bottom:18px}
+.ph-top{padding:16px 16px 10px;display:flex;flex-direction:column;gap:10px}
+.ph-brand{display:flex;align-items:center;justify-content:space-between}
+.ph-brand b{font-family:var(--f-head);font-size:17px;font-weight:800;color:var(--p)}
+.ph-brand span{font-size:11px;color:var(--mut);display:flex;align-items:center;gap:5px}
+.ph-brand span:before{content:"";width:7px;height:7px;border-radius:50%;background:#16a34a}
+.ph-cats{display:flex;gap:6px;overflow:hidden}
+.ph-cats span{font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:999px;background:#fff;color:#5b5478;white-space:nowrap;box-shadow:0 0 0 1px var(--p-ring)}
+.ph-cats span.on{background:var(--p);color:#fff;box-shadow:none}
+.sec{padding:12px 16px 8px;display:flex;align-items:center;justify-content:space-between}
+.sec b{font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px}
+.sec b .ic{color:var(--p)}
+.sec a{font-size:12px;font-weight:600;color:#7c3aed}
+.rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:16px 16px 6px;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rail>*{scroll-snap-align:start;flex:none}
+.dots{display:flex;justify-content:center;gap:6px;padding-top:6px}
+.dots i{width:6px;height:6px;border-radius:99px;background:#d9cdf3}
+.dots i.on{width:20px;background:var(--p)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 12px}
+
+/* =====================  DESTACADO ACTUAL  ===================== */
+.dact{width:340px;display:flex;align-items:center;gap:12px;background:#fff;border-radius:24px;box-shadow:0 0 0 1px var(--p-ring);padding:8px}
+.dact-f{width:64px;height:64px;border-radius:16px;background:#f4eefe;overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center}
+.dact-f svg{width:100%;height:100%}
+.dact-t{min-width:0;flex:1}
+.dact-t b{display:block;font-size:14px;font-weight:700;line-height:1.2}
+.dact-t span{font-size:12px;color:var(--mut)}
+.dact-p{display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding-right:4px}
+.dact-p b{font-size:14px;font-weight:800}
+.dact-p button{width:32px;height:32px;border-radius:50%;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px}
+
+/* =====================  DESTACADO NOCHE  ===================== */
+.nd{position:relative;width:196px;border-radius:26px;padding:20px 10px 12px;background:linear-gradient(172deg,#2a1d6b 0%,#171236 62%,#120e2a 100%);box-shadow:0 0 0 1px rgba(168,148,255,.34),0 18px 34px -16px rgba(60,20,160,.7);color:#fff}
+.nd-tab{position:absolute;top:-1px;left:50%;transform:translateX(-50%);min-width:96px;text-align:center;padding:5px 18px 6px;font-size:11px;font-weight:700;letter-spacing:.01em;color:#e7defd;background:#33258a;
+  clip-path:polygon(0 0,100% 0,92% 100%,8% 100%);border-radius:0 0 4px 4px;white-space:nowrap}
+.nd-tab.warn{background:#a8480a;color:#fff}
+.nd-tab i{font-size:9px;margin-right:5px}
+.nd-panel{position:relative;aspect-ratio:1/1.02;border-radius:18px;background:var(--t);overflow:hidden;display:flex;align-items:center;justify-content:center;margin-top:6px}
+.nd-foto{width:80%;height:80%;display:flex;align-items:center;justify-content:center}
+.nd-foto svg{width:100%;height:100%}
+.fundir .nd-foto,.fundir .kc-foto{mix-blend-mode:multiply}
+.nd-fav{position:absolute;right:7px;top:7px;width:26px;height:26px;border-radius:9px;background:rgba(23,18,54,.78);color:#d7ccff;display:flex;align-items:center;justify-content:center;font-size:11px;box-shadow:0 0 0 1px rgba(168,148,255,.4)}
+.nd-fav.on{color:#ff8fb6}
+.nd-precio{position:relative;z-index:2;display:flex;justify-content:center;margin:-15px 0 8px}
+.nd-precio span{background:#120e2a;border-radius:999px;padding:6px 18px;font-family:var(--f-head);font-weight:800;font-size:15px;letter-spacing:-.005em;font-variant-numeric:tabular-nums;box-shadow:0 0 0 1px rgba(168,148,255,.4);white-space:nowrap}
+.nd-precio small{font-size:10.5px;font-weight:700;color:#b9aef0;margin-right:3px}
+.nd-body{padding:0 4px}
+.nd-body h3{font-family:var(--f-head);font-size:15px;font-weight:800;line-height:1.2;min-height:36px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nd-cat{display:flex;align-items:center;gap:7px;margin-top:6px;font-size:11.5px;font-weight:500;color:#b9aef0}
+.nd-cat u{text-decoration:none;width:20px;height:20px;border-radius:50%;background:var(--td);color:#fff;font-size:9.5px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px rgba(255,255,255,.25)}
+.nd-act{margin-top:11px}
+.nd-add{width:100%;display:flex;align-items:center;justify-content:space-between;padding:4px 4px 4px 14px;border-radius:999px;background:linear-gradient(180deg,#7a2cf0,#6105dc);color:#fff;font-size:12.5px;font-weight:700;box-shadow:0 8px 16px -8px rgba(124,58,237,.9),inset 0 1px 0 rgba(255,255,255,.25)}
+.nd-add u{text-decoration:none;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:12px}
+.nd-st{display:flex;align-items:center;justify-content:space-between;background:rgba(5,150,105,.2);border-radius:999px;padding:3px;box-shadow:0 0 0 1px rgba(52,211,153,.45)}
+.nd-st span{font-family:var(--f-head);font-weight:800;font-size:13px;color:#6ee7b7}
+.nd-st button{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.12);color:#6ee7b7;display:flex;align-items:center;justify-content:center;font-size:11px}
+.nd-st button.mas{background:#059669;color:#fff}
+
+/* tarjeta blanca de la grilla (la ya publicada), para ver como conviven */
+.kc{position:relative;background:#fff;border-radius:26px;padding:8px;display:flex;flex-direction:column;gap:8px;box-shadow:0 0 0 1px #efe6fc,0 10px 24px -16px rgba(97,5,220,.28)}
+.kc-fw{position:relative}
+.kc-panel{position:relative;aspect-ratio:1/1;border-radius:20px;background:var(--t);overflow:hidden;display:flex;align-items:center;justify-content:center;padding-bottom:22px}
+.kc-foto{width:78%;height:78%;display:flex;align-items:center;justify-content:center}
+.kc-foto svg{width:100%;height:100%}
+.kc-precio{position:absolute;top:0;right:0;background:#fff;padding:6px 4px 8px 12px;border-bottom-left-radius:18px;font-weight:800;font-size:16px;line-height:1;font-family:var(--f-head)}
+.kc-precio small{font-size:10px;color:#78729a;margin-right:2px}
+.kc-precio:before{content:"";position:absolute;right:100%;top:0;width:16px;height:16px;background:radial-gradient(circle at 0 100%,transparent 15.5px,#fff 16px)}
+.kc-banda{position:absolute;left:0;right:0;bottom:0;height:24px;display:flex;align-items:center;justify-content:center;background:var(--td);color:#fff;font-size:10.5px;font-weight:600}
+.kc h3{font-family:var(--f-head);font-size:14px;font-weight:700;padding:0 4px;min-height:34px;line-height:1.22}
+.kc-add{width:100%;display:flex;align-items:center;justify-content:space-between;padding:4px 4px 4px 14px;border-radius:999px;background:var(--p);color:#fff;font-size:12.5px;font-weight:700}
+.kc-add u{text-decoration:none;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:11px}
+
+/* ---- notas ---- */
+.notas{width:min(1120px,calc(100% - 28px));margin:6px auto 60px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.nota{background:#fff;border-radius:22px;padding:18px 20px;box-shadow:0 0 0 1px var(--p-ring)}
+.nota h4{margin:0 0 10px;font-family:var(--f-head);font-size:14.5px;font-weight:800}
+.nota ul{margin:0;padding-left:18px;font-size:13px;line-height:1.55;color:#4a4468;display:flex;flex-direction:column;gap:5px}
+.nota b{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <b>Maqueta · Destacados noche</b>
+  <div class="grp">
+    <span>Tarjeta</span>
+    <div class="tog" data-k="ver"><button data-v="noche" class="on">Noche</button><button data-v="actual">Actual</button><button data-v="comparar">Comparar</button></div>
+    <span>Foto</span>
+    <div class="tog" data-k="foto"><button data-v="fundir" class="on">Se funde</button><button data-v="tal">Tal cual</button></div>
+    <button class="reset" id="reset">Reiniciar carrito</button>
+  </div>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<div class="notas">
+  <div class="nota">
+    <h4>Qué tomé de la referencia</h4>
+    <ul>
+      <li><b>Pestaña superior</b> en el borde de la tarjeta: dice <i>Destacado</i> o, si quedan pocas unidades, <i>Quedan 3</i> en naranja.</li>
+      <li><b>Precio en píldora oscura</b> que cruza el borde inferior de la foto.</li>
+      <li><b>Nombre y categoría</b> abajo, con un círculo de color de la categoría como el avatar de la referencia.</li>
+      <li><b>Corazón de favoritos</b> como el icono del borde de la foto.</li>
+    </ul>
+  </div>
+  <div class="nota">
+    <h4>Cómo lo adapté a Kaserita</h4>
+    <ul>
+      <li><b>Violeta de marca</b> en vez del azul de la referencia: fondo de noche <code>#171236</code> con borde luminoso lila.</li>
+      <li><b>Botón Agregar</b> y contador − 1 + dentro de la tarjeta (en la referencia es solo vitrina).</li>
+      <li><b>Misma foto</b> con el color de la categoría detrás, igual que la tarjeta blanca de la grilla, para que se vean de la misma familia.</li>
+      <li>Es <b>solo para el carrusel Destacados</b> de la home. La grilla de “Todos los productos” sigue blanca.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+const TONOS={lila:{t:'#ece0fd',td:'#6a3fc4'},cielo:{t:'#dfeafd',td:'#3b66b8'},durazno:{t:'#fde8d6',td:'#c0662a'},mantequilla:{t:'#fff1c7',td:'#a97c10'},menta:{t:'#dcf3e6',td:'#238458'},rosa:{t:'#fde3ea',td:'#c0405f'}};
+const P=[
+ {id:1,n:'Gaseosa 500 ml',c:'Bebidas',pr:2.5,t:'lila',foto:'botella',stock:48},
+ {id:7,n:'Yogurt de fresa 1 L',c:'Lácteos',pr:8.9,t:'rosa',foto:'yogurt',stock:14},
+ {id:2,n:'Leche evaporada 400 g',c:'Lácteos',pr:4.9,t:'cielo',foto:'lata',stock:3},
+ {id:6,n:'Manzana delicia',c:'Frutas',pr:6.5,t:'menta',foto:'manzana',stock:12},
+ {id:4,n:'Galletas de soda',c:'Galletas',pr:3.6,t:'mantequilla',foto:'galleta',stock:25}
+];
+const S={ver:'noche',foto:'fundir'};
+let carrito={1:1};
+const money=n=>'S/ '+Number(n).toFixed(2);
+const IC={plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',alerta:'<path d="M12 4l9 16H3zM12 10v4M12 17.5v.01"/>'};
+const ic=k=>`<svg class="ic" viewBox="0 0 24 24">${IC[k]}</svg>`;
+function foto(k){
+  const bg='<rect width="120" height="120" fill="#fff"/>';
+  const sh='<ellipse cx="60" cy="108" rx="30" ry="4.5" fill="#1c1830" opacity=".13"/>';
+  const f={
+   botella:'<rect x="52" y="14" width="16" height="9" rx="2.5" fill="#e11d48"/><path d="M54 23h12v14c0 4 11 8 11 18v44a6 6 0 0 1-6 6H49a6 6 0 0 1-6-6V55c0-10 11-14 11-18z" fill="#f2a516"/><rect x="43" y="62" width="34" height="24" fill="#fff" opacity=".92"/><rect x="49" y="69" width="22" height="3.5" rx="1.7" fill="#e11d48"/><rect x="49" y="76" width="14" height="3" rx="1.5" fill="#cbb98a"/>',
+   lata:'<rect x="38" y="24" width="44" height="82" rx="7" fill="#f3f6fc" stroke="#c9d4ea" stroke-width="1.5"/><rect x="38" y="24" width="44" height="11" rx="5" fill="#b9c7e6"/><rect x="38" y="48" width="44" height="34" fill="#3b6fd8"/><circle cx="60" cy="65" r="11" fill="#fff"/><path d="M55 66c3-7 7-7 10 0" stroke="#3b6fd8" stroke-width="2.6" fill="none" stroke-linecap="round"/><rect x="38" y="94" width="44" height="12" rx="5" fill="#b9c7e6"/>',
+   galleta:'<rect x="30" y="38" width="60" height="66" rx="6" fill="#d8791f"/><rect x="30" y="38" width="60" height="9" rx="4" fill="#b8620f"/><circle cx="60" cy="74" r="19" fill="#f6dba0"/><circle cx="60" cy="74" r="15" fill="#efc77a"/><g fill="#a86a1c"><circle cx="54" cy="69" r="1.6"/><circle cx="64" cy="68" r="1.6"/><circle cx="59" cy="76" r="1.6"/><circle cx="67" cy="78" r="1.6"/><circle cx="52" cy="79" r="1.6"/></g>',
+   manzana:'<path d="M60 36c-8-6-26-3-28 18-2 24 12 46 28 46s30-22 28-46c-2-21-20-24-28-18z" fill="#d92d3a"/><path d="M60 38c0-8 2-14 7-18" stroke="#6b4423" stroke-width="3.2" stroke-linecap="round" fill="none"/><path d="M63 28c8-8 18-6 20-4-2 8-12 12-20 4z" fill="#3aa05c"/><path d="M42 58c-2 8 0 16 4 22" stroke="#fff" stroke-width="3.2" opacity=".35" stroke-linecap="round" fill="none"/>',
+   yogurt:'<rect x="50" y="14" width="20" height="11" rx="3" fill="#fff" stroke="#e2d7ee" stroke-width="1.3"/><path d="M52 25h16v10c0 4 11 6 11 17v50a6 6 0 0 1-6 6H47a6 6 0 0 1-6-6V52c0-11 11-13 11-17z" fill="#f6b3c6"/><rect x="41" y="60" width="38" height="28" fill="#fff" opacity=".95"/><circle cx="60" cy="74" r="8" fill="#e5446d"/><path d="M60 66c-2-3-5-3-6-2M60 66c2-3 5-3 6-2" stroke="#2f9e5b" stroke-width="2" fill="none" stroke-linecap="round"/>'
+  }[k];
+  return `<svg viewBox="0 0 120 120" aria-hidden="true">${bg}${sh}${f}</svg>`;
+}
+const estado=p=>p.stock<=3?'bajo':'ok';
+
+function cardNoche(p){
+  const t=TONOS[p.t], q=carrito[p.id]||0, bajo=estado(p)==='bajo';
+  const act=q===0
+    ? `<button class="nd-add" data-add="${p.id}">Agregar<u>${ic('plus')}</u></button>`
+    : `<div class="nd-st"><button data-menos="${p.id}">${ic('minus')}</button><span>${q}</span><button class="mas" data-add="${p.id}">${ic('plus')}</button></div>`;
+  return `<article class="nd ${S.foto==='fundir'?'fundir':''}" style="--t:${t.t};--td:${t.td}">
+    <div class="nd-tab ${bajo?'warn':''}">${bajo?ic('alerta'):ic('star')}${bajo?`Quedan ${p.stock}`:'Destacado'}</div>
+    <div class="nd-panel"><div class="nd-foto">${foto(p.foto)}</div><span class="nd-fav ${p.id===7?'on':''}">${ic('heart')}</span></div>
+    <div class="nd-precio"><span><small>S/</small>${Number(p.pr).toFixed(2)}</span></div>
+    <div class="nd-body"><h3>${p.n}</h3><div class="nd-cat"><u>${p.c[0]}</u>${p.c}</div></div>
+    <div class="nd-act">${act}</div>
+  </article>`;
+}
+function cardActual(p){
+  return `<div class="dact"><div class="dact-f">${foto(p.foto)}</div>
+    <div class="dact-t"><b>${p.n}</b><span>${p.c}</span></div>
+    <div class="dact-p"><b>${money(p.pr)}</b><button data-add="${p.id}">${ic('plus')}</button></div></div>`;
+}
+function cardBlanca(p){
+  const t=TONOS[p.t];
+  return `<article class="kc ${S.foto==='fundir'?'fundir':''}" style="--t:${t.t};--td:${t.td}">
+    <div class="kc-fw"><div class="kc-panel"><div class="kc-foto">${foto(p.foto)}</div></div><div class="kc-precio"><small>S/</small>${Number(p.pr).toFixed(2)}</div></div>
+    <h3>${p.n}</h3><button class="kc-add" data-add="${p.id}">Agregar<u>${ic('plus')}</u></button></article>`;
+}
+function frame(version){
+  const noche=version==='noche';
+  return `<div class="phone">
+    <div class="ph-top"><div class="ph-brand"><b>Bodega Demo</b><span>Abierto ahora</span></div>
+      <div class="ph-cats"><span class="on">Todo</span><span>Bebidas</span><span>Lácteos</span><span>Abarrotes</span><span>Frutas</span></div></div>
+    <div class="sec"><b>${ic('star')} Destacados</b><a>Ver todos</a></div>
+    <div class="rail">${P.map(noche?cardNoche:cardActual).join('')}</div>
+    <div class="dots">${P.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>
+    <div class="sec" style="padding-top:18px"><b style="font-size:15px">Todos los productos</b><a>24 productos</a></div>
+    <div class="grid2">${cardBlanca(P[2])}${cardBlanca(P[3])}</div>
+  </div>`;
+}
+function col(label,badge,html,nuevo){return `<div class="col"><div class="etq">${label}<i class="${nuevo?'nuevo':''}">${badge}</i></div>${html}</div>`;}
+function render(){
+  let out='';
+  if(S.ver==='noche') out=col('Destacados noche','propuesta',frame('noche'),true);
+  else if(S.ver==='actual') out=col('Destacados actual','en producción',frame('actual'),false);
+  else out=col('Actual','hoy',frame('actual'),false)+col('Noche','propuesta',frame('noche'),true);
+  const st=document.getElementById('stage'); const sc=[...st.querySelectorAll('.rail')].map(r=>r.scrollLeft);
+  st.innerHTML=out; st.querySelectorAll('.rail').forEach((r,i)=>r.scrollLeft=sc[i]||0);
+}
+document.querySelectorAll('.tog').forEach(g=>g.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S[g.dataset.k]=b.dataset.v;g.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));render();}));
+document.getElementById('reset').onclick=()=>{carrito={1:1};render();};
+document.getElementById('stage').addEventListener('click',e=>{
+  const a=e.target.closest('[data-add]'),m=e.target.closest('[data-menos]');
+  if(a){const id=+a.dataset.add;carrito[id]=(carrito[id]||0)+1;render();}
+  else if(m){const id=+m.dataset.menos;carrito[id]=Math.max(0,(carrito[id]||0)-1);if(!carrito[id])delete carrito[id];render();}
+});
+render();
+</script>
+</body>
+</html>
