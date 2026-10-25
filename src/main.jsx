@@ -347,10 +347,16 @@ function volarAlCarrito(origen, fotoUrl, categoria) {
   if (!origen || typeof origen.getBoundingClientRect !== "function") return;
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const a = origen.getBoundingClientRect();
-  const barra = document.querySelector(".kc-barra");
-  const b = barra
-    ? barra.getBoundingClientRect()
-    : { left: 16, top: window.innerHeight - 94 - 52, width: 60, height: 52 };
+  const chip = document.querySelector(".kdock-chip");
+  const dock = document.querySelector(".kdock");
+  const rc = chip ? chip.getBoundingClientRect() : null;
+  const rd = dock ? dock.getBoundingClientRect() : null;
+  // Si el chip aún no se despliega (primer producto), apunta a donde va a aparecer.
+  const b = rc && rc.width > 60
+    ? rc
+    : rd
+      ? { left: rd.left + rd.width * 0.5, top: rd.top, width: 60, height: rd.height }
+      : { left: 16, top: window.innerHeight - 76, width: 60, height: 62 };
   const el = document.createElement("div");
   el.className = "kc-vuelo";
   el.style.background = tonoCategoria(categoria).t;
@@ -2633,7 +2639,7 @@ function marcarPestana(id) {
   pestanaActual = i;
 }
 
-function BarraNavegacion({ activa, contadorPedidos, onInicio, onTiendas, onPedidos, onPerfil }) {
+function BarraNavegacion({ activa, contadorPedidos, onInicio, onTiendas, onPedidos, onPerfil, carrito, acciones }) {
   const tabs = [
     { id: "inicio", icono: "fa-house", texto: "Inicio", onClick: onInicio },
     { id: "pedidos", icono: "fa-receipt", texto: "Pedidos", contador: contadorPedidos, onClick: onPedidos },
@@ -2656,39 +2662,122 @@ function BarraNavegacion({ activa, contadorPedidos, onInicio, onTiendas, onPedid
       if (r2) cancelAnimationFrame(r2);
     };
   }, [indice]);
+
+  // Dock que se transforma: con productos en el pedido, las pestañas se encogen
+  // a un botón redondo (la pestaña actual) y el espacio lo ocupa el chip del
+  // carrito. Tocar el botón redondo despliega las pestañas otra vez.
+  const [desplegada, setDesplegada] = useState(false);
+  const [abanico, setAbanico] = useState(false);
+  const cantidad = carrito ? carrito.cantidad : 0;
+  const modoCarrito = cantidad > 0 && !desplegada;
+  const cantidadPrevia = useRef(0);
+  useEffect(() => {
+    // Al agregar algo, el dock vuelve a mostrar el chip del carrito.
+    if (cantidad > cantidadPrevia.current) { setDesplegada(false); setAbanico(false); }
+    cantidadPrevia.current = cantidad;
+  }, [cantidad]);
+  useEffect(() => {
+    // Las pestañas desplegadas con carrito se pliegan solas a los 4 segundos.
+    if (!desplegada || abanico) return;
+    const id = setTimeout(() => setDesplegada(false), 4000);
+    return () => clearTimeout(id);
+  }, [desplegada, abanico]);
+
+  const hayAbanico = !!(acciones && acciones.length > 0);
+  const tocar = (t) => {
+    if (modoCarrito) { setDesplegada(true); return; }
+    if (t.id === "perfil" && hayAbanico) { setAbanico((v) => !v); return; }
+    setAbanico(false);
+    t.onClick();
+  };
+
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-[25] rounded-t-[28px] bg-white/95 supports-[backdrop-filter]:bg-white/70 backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_-1px_0_rgba(97,5,220,0.08)]">
-      <div className="relative max-w-3xl mx-auto grid grid-cols-4 items-center h-[78px] px-2.5 pb-2">
-        <div
-          aria-hidden="true"
-          className="absolute left-2.5 top-[13px] w-[calc((100%-20px)/4)] h-[52px] flex justify-center pointer-events-none transition-transform duration-[450ms] ease-[cubic-bezier(0.3,1.35,0.5,1)]"
-          style={{ transform: `translateX(${pos * 100}%)` }}
-        >
-          <span className="w-[76px] h-[52px] rounded-[18px] bg-[#6105dc]/[0.11]"></span>
+    <>
+      <div className={`kdock-velo ${abanico ? "on" : ""}`} onClick={() => setAbanico(false)}></div>
+      <nav className="kdock-nav" aria-label="Navegación">
+        <svg width="0" height="0" className="absolute" aria-hidden="true">
+          <filter id="kdock-goo">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b" />
+            <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -10" />
+          </filter>
+        </svg>
+        <div className={`kdock ${modoCarrito ? "kdock-carrito" : ""}`}>
+          {hayAbanico && (
+            <>
+              {/* Las burbujas de color van en una capa con filtro "líquido": salen del botón como gotas. */}
+              <div className={`kdock-goo ${abanico ? "on" : ""}`} aria-hidden="true">
+                <span className="kdock-gs"></span>
+                {acciones.map((a, k) => (
+                  <span key={a.texto} className="kdock-gb" style={{ background: a.color, bottom: 72 + 52 * k, "--k": k, "--dy": `${62 + 52 * k}px` }}></span>
+                ))}
+              </div>
+              <div className={`kdock-fan ${abanico ? "on" : ""}`}>
+                {acciones.map((a, k) => (
+                  <button
+                    key={a.texto}
+                    className="kdock-fi"
+                    style={{ "--k": k, "--dy": `${62 + 52 * k}px`, order: -k }}
+                    tabIndex={abanico ? 0 : -1}
+                    onClick={() => { setAbanico(false); a.onClick(); }}
+                  >
+                    <span>{a.texto}</span>
+                    <i><b className={`fa-solid ${a.icono}`}></b></i>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          <div className="kdock-tabs">
+            <div
+              aria-hidden="true"
+              className="kdock-capsula"
+              style={{ transform: `translateX(${pos * 100}%)` }}
+            ></div>
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => tocar(t)}
+                className={`kdock-tab ${t.id === activa ? "on" : ""}`}
+              >
+                <i className={`fa-solid ${t.icono}`}></i>
+                <span>{t.texto}</span>
+                {t.contador > 0 && <em>{t.contador}</em>}
+              </button>
+            ))}
+          </div>
+          {carrito && (
+            <div className="kdock-chipwrap">
+              {cantidad > 0 && (
+                <span className="kdock-cnt">{cantidad} {cantidad === 1 ? "producto" : "productos"}</span>
+              )}
+              <div className="kdock-chip" key={cantidad}>
+                <div className="flex shrink-0 pl-0.5">
+                  {carrito.miniaturas.slice(-3).map((m, i) => (
+                    <span key={m.id} className={`kc-mini ${i > 0 ? "-ml-3" : ""}`} style={{ background: tonoCategoria(m.categoria).t }}>
+                      {m.foto ? (
+                        <img src={m.foto} alt="" />
+                      ) : (
+                        <i className={`fa-solid ${m.categoria === "combo" ? "fa-gift" : "fa-bag-shopping"} text-[11px] text-[#6105dc]/60`}></i>
+                      )}
+                    </span>
+                  ))}
+                  {carrito.miniaturas.length > 3 && (
+                    <span className="kc-mini -ml-3 !bg-[#ffc81a] text-[#1c1830] text-[11px] font-extrabold">+{carrito.miniaturas.length - 3}</span>
+                  )}
+                </div>
+                <div className="kdock-tx">
+                  <small>MI PEDIDO</small>
+                  <b>{formatoMoneda(carrito.total)}</b>
+                </div>
+                <button className="kdock-ver" onClick={carrito.onVer} tabIndex={modoCarrito ? 0 : -1}>
+                  Ver pedido <i className="fa-solid fa-arrow-right text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={t.onClick}
-            className={`relative z-[1] justify-self-center w-[76px] h-[52px] rounded-[18px] flex flex-col items-center justify-center gap-0.5 transition-colors ${
-              t.id === activa ? "text-[#4d04b0]" : "text-[#78729a]"
-            }`}
-          >
-            <i
-              className={`fa-solid ${t.icono} text-lg transition-transform duration-[350ms] ease-[cubic-bezier(0.3,1.6,0.5,1)] ${
-                t.id === activa ? "-translate-y-px scale-110" : ""
-              }`}
-            ></i>
-            <span className="text-[10.5px] font-semibold">{t.texto}</span>
-            {t.contador > 0 && (
-              <span className="absolute right-3 -top-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#6105dc] text-white text-[10.5px] font-extrabold flex items-center justify-center border-2 border-white">
-                {t.contador}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 }
 
@@ -3720,6 +3809,28 @@ function App() {
   const pedidosActivosAqui = bodega?.bodega_id
     ? pedidosActivos.filter((pa) => pa.bodega_id === bodega.bodega_id)
     : pedidosActivos;
+  // Opciones del menú en abanico de "Perfil" (de abajo hacia arriba). Solo con
+  // sesión iniciada; sin sesión, tocar Perfil pide entrar como siempre.
+  const accionesPerfil = (conDireccion) => {
+    if (!clienteSesion) return null;
+    const a = [{ icono: "fa-user", texto: "Mi perfil", color: "#6105dc", onClick: irAPerfil }];
+    if (conDireccion) a.push({ icono: "fa-location-dot", texto: "Mi dirección", color: "#0ea5e9", onClick: () => setUbicacionAbierta(true) });
+    if (eventoInstalacion || (esIOS && !yaInstalada)) {
+      a.push({ icono: "fa-download", texto: "Instalar app", color: "#f59e0b", onClick: () => { if (eventoInstalacion) instalarApp(); else setInstruccionesIOSAbiertas(true); } });
+    }
+    a.push({ icono: "fa-right-from-bracket", texto: "Cerrar sesión", color: "#e11d48", onClick: () => { setPerfilAbierto(false); salir(); } });
+    return a;
+  };
+  // Miniaturas de lo agregado para el chip del dock: un combo muestra la foto de
+  // su primer producto; sin foto, un ícono.
+  const miniaturasDock = () => [
+    ...itemsCarrito.map((it) => ({ id: `p${it.id}`, foto: it.foto_url, categoria: it.categoria })),
+    ...itemsCarritoCombos.map((c) => ({
+      id: `c${c.id}`,
+      foto: productosPorId[c.items?.[0]?.producto_id]?.foto_url,
+      categoria: "combo",
+    })),
+  ];
   const barraNavegacion = (activa) => (
     <BarraNavegacion
       activa={activa}
@@ -3728,6 +3839,7 @@ function App() {
       onTiendas={irATiendas}
       onPedidos={irAPedidos}
       onPerfil={irAPerfil}
+      acciones={accionesPerfil(false)}
     />
   );
 
@@ -4061,6 +4173,12 @@ function App() {
         onTiendas={irATiendas}
         onPedidos={irAPedidos}
         onPerfil={irAPerfil}
+        carrito={
+          totalUnidades > 0 && !carritoAbierto
+            ? { cantidad: totalUnidades, total: totalCarrito, miniaturas: miniaturasDock(), onVer: () => setCarritoAbierto(true) }
+            : null
+        }
+        acciones={accionesPerfil(true)}
       />
 
       {perfilAbierto && clienteSesion && (
@@ -4078,60 +4196,6 @@ function App() {
           onSalir={() => { setPerfilAbierto(false); salir(); }}
         />
       )}
-
-      {totalUnidades > 0 && !carritoAbierto && (() => {
-        // Miniaturas de lo agregado (las 3 últimas, redondas y encimadas):
-        // se ve de un vistazo qué lleva el pedido. Un combo muestra la foto
-        // de su primer producto; sin foto, un ícono.
-        const miniaturas = [
-          ...itemsCarrito.map((it) => ({ id: `p${it.id}`, foto: it.foto_url, categoria: it.categoria })),
-          ...itemsCarritoCombos.map((c) => ({
-            id: `c${c.id}`,
-            foto: productosPorId[c.items?.[0]?.producto_id]?.foto_url,
-            categoria: "combo",
-          })),
-        ];
-        const visibles = miniaturas.slice(-3);
-        const extra = miniaturas.length - visibles.length;
-        return (
-          <button
-            key={totalUnidades}
-            onClick={() => setCarritoAbierto(true)}
-            className="kc-barra fixed z-[24] bottom-[94px] left-4 right-4 max-w-3xl mx-auto bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white rounded-full pl-2.5 pr-2 py-2 flex items-center justify-between gap-2 shadow-lg shadow-[#6105dc]/25 active:scale-[0.98] transition-transform"
-          >
-            <span className="absolute -top-2.5 left-5 bg-[#ffc81a] text-[#1c1830] text-[10.5px] font-extrabold px-2.5 py-0.5 rounded-full shadow">
-              {totalUnidades} {totalUnidades === 1 ? "producto" : "productos"}
-            </span>
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="flex shrink-0 pl-0.5">
-                {visibles.map((m, i) => (
-                  <span
-                    key={m.id}
-                    className={`kc-mini ${i > 0 ? "-ml-3" : ""}`}
-                    style={{ background: tonoCategoria(m.categoria).t }}
-                  >
-                    {m.foto ? (
-                      <img src={m.foto} alt="" />
-                    ) : (
-                      <i className={`fa-solid ${m.categoria === "combo" ? "fa-gift" : "fa-bag-shopping"} text-[11px] text-[#6105dc]/60`}></i>
-                    )}
-                  </span>
-                ))}
-                {extra > 0 && (
-                  <span className="kc-mini -ml-3 !bg-[#ffc81a] text-[#1c1830] text-[11px] font-extrabold">+{extra}</span>
-                )}
-              </div>
-              <div className="flex flex-col items-start min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wide text-white/80 leading-none">Mi pedido</span>
-                <span className="text-sm font-extrabold leading-tight">{formatoMoneda(totalCarrito)}</span>
-              </div>
-            </div>
-            <span className="flex items-center gap-1 bg-white text-[#4d04b0] font-bold text-xs px-3.5 py-2 rounded-full shrink-0">
-              Ver pedido <i className="fa-solid fa-arrow-right text-[10px]"></i>
-            </span>
-          </button>
-        );
-      })()}
 
       {carritoAbierto && (
         <div className="fixed inset-0 z-30 flex flex-col bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">

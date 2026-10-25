@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Dock que se transforma</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--p:#6105dc;--p-dark:#4d04b0;--ring:#efe6fc;--ink:#1c1830;--mut:#78729a;--f-head:'Plus Jakarta Sans',system-ui,sans-serif;--ease:cubic-bezier(.3,1.1,.4,1)}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:#e9e4f5;-webkit-font-smoothing:antialiased;min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+h3,p{margin:0}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.bar{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;justify-content:space-between;padding:10px 20px;background:#1c1830;color:#fff;font-size:12.5px;position:sticky;top:0;z-index:90}
+.bar b{font-family:var(--f-head);font-size:13.5px}
+.bar .grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bar .tog{display:inline-flex;background:rgba(255,255,255,.1);border-radius:999px;padding:3px}
+.bar .tog button{color:#d9d2ee;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600}
+.bar .tog button.on{background:#fff;color:#1c1830}
+.bar .reset{border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:999px;padding:5px 13px;font-size:12px}
+.stage{display:flex;gap:26px;justify-content:center;align-items:flex-start;padding:24px 14px 30px;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:8px}
+.etq{font-family:var(--f-head);font-weight:700;font-size:12.5px;color:#4d3f86;display:flex;gap:8px;align-items:center;padding-left:6px}
+.etq i{font-style:normal;font-size:11px;padding:2px 9px;border-radius:999px;background:#fff;color:var(--mut)}
+.etq i.n{background:var(--p);color:#fff}
+
+.phone{position:relative;width:390px;max-width:100%;height:740px;background:#faf7ff;border-radius:34px;border:1px solid #fff;box-shadow:0 30px 70px -22px rgba(60,20,120,.4);overflow:hidden}
+.scroll{position:absolute;inset:0;overflow-y:auto;padding-bottom:150px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.ph-top{padding:16px 16px 10px;display:flex;justify-content:space-between;align-items:center}
+.ph-top b{font-family:var(--f-head);font-size:17px;font-weight:800;color:var(--p)}
+.ph-top span{font-size:11px;color:var(--mut)}
+.sec{padding:8px 16px;font-family:var(--f-head);font-size:15px;font-weight:800}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 12px}
+.kc{background:#fff;border-radius:26px;padding:8px;display:flex;flex-direction:column;gap:8px;box-shadow:0 0 0 1px var(--ring)}
+.kc .pn{aspect-ratio:1;border-radius:20px;background:var(--t);display:flex;align-items:center;justify-content:center;position:relative}
+.kc .pn svg{width:70%;height:70%;mix-blend-mode:multiply}
+.kc .pr{position:absolute;top:0;right:0;background:#fff;padding:6px 4px 8px 12px;border-bottom-left-radius:18px;font-family:var(--f-head);font-weight:800;font-size:16px;line-height:1}
+.kc .pr small{font-size:10px;color:var(--mut);margin-right:2px}
+.kc .pr:before{content:"";position:absolute;right:100%;top:0;width:16px;height:16px;background:radial-gradient(circle at 0 100%,transparent 15.5px,#fff 16px)}
+.kc h3{font-family:var(--f-head);font-size:14px;font-weight:700;padding:0 4px;min-height:34px;line-height:1.22}
+.kc .add{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 4px 14px;border-radius:99px;background:var(--p);color:#fff;font-size:12.5px;font-weight:700}
+.kc .add u{text-decoration:none;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:12px}
+.kc .qn{display:flex;align-items:center;justify-content:center;border-radius:99px;background:#e8f8f1;color:#047857;font-weight:800;font-size:13px;padding:7px}
+
+/* ===== ACTUAL: pastilla del carrito flotando sobre la barra de pestañas ===== */
+.a-cart{position:absolute;left:14px;right:14px;bottom:92px;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 10px;border-radius:99px;background:linear-gradient(100deg,#8a3df2,#4d04b0);color:#fff;box-shadow:0 14px 30px -10px rgba(97,5,220,.7);z-index:20}
+.a-cart .tx{flex:1;line-height:1.15}.a-cart .tx small{display:block;font-size:10px;font-weight:700;color:#d9c8ff}.a-cart .tx b{font-family:var(--f-head);font-size:15px}
+.a-cart .go{background:#fff;color:var(--p-dark);font-weight:800;font-size:12px;border-radius:99px;padding:10px 14px}
+.a-nav{position:absolute;left:0;right:0;bottom:0;height:78px;background:rgba(255,255,255,.9);border-top:1px solid var(--ring);display:flex;justify-content:space-around;align-items:center;z-index:15}
+.a-nav button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:600;color:#78729a;padding:8px 14px;border-radius:16px}
+.a-nav button .ic{font-size:20px}.a-nav button.on{color:var(--p);background:#f1e8fd}
+
+/* ===== NUEVO: dock que se transforma ===== */
+.dock{position:absolute;left:14px;right:14px;bottom:16px;height:62px;display:flex;gap:8px;z-index:37}
+.glass{background:rgba(255,255,255,.72);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);box-shadow:0 0 0 1px rgba(255,255,255,.8),0 14px 30px -12px rgba(60,20,120,.35),inset 0 1px 0 #fff}
+.dock.cart .tabs{animation:squash .6s var(--ease)}
+@keyframes squash{0%{transform:scaleX(1.5)}45%{transform:scaleX(.88)}100%{transform:none}}
+.tabs{display:flex;align-items:center;justify-content:space-around;flex:1 1 0;min-width:62px;height:62px;border-radius:99px;padding:6px;overflow:hidden;transition:flex-grow .5s var(--ease)}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:50px;min-width:0;max-width:90px;flex:1 1 0;padding:0 10px;border-radius:99px;font-size:10px;font-weight:700;color:#78729a;overflow:hidden;white-space:nowrap;transition:max-width .5s var(--ease),opacity .3s,padding .5s var(--ease),flex-grow .5s var(--ease),background .25s,color .25s}
+.tab .ic{font-size:19px;transition:transform .4s var(--ease)}
+.tab:active .ic{transform:scale(.8)}
+.tab span{transition:opacity .25s,filter .3s}
+.dock.cart .tab span{filter:blur(4px)}
+.tab.on{background:#f1e8fd;color:var(--p)}
+.dock.cart .tabs{flex-grow:0;width:62px;flex-basis:62px;justify-content:center;padding:6px}
+.dock.cart .tab{opacity:0;max-width:0;flex-grow:0;padding:0}
+.dock.cart .tab.on{opacity:1;max-width:50px;flex:0 0 50px;padding:0;background:#f1e8fd}
+.dock.cart .tab.on span{display:none}
+.chip{display:flex;align-items:center;gap:10px;flex:0 1 0;min-width:0;max-width:0;opacity:0;overflow:hidden;height:62px;border-radius:99px;padding:0;background:linear-gradient(100deg,#7a2cf0,#4d04b0);color:#fff;box-shadow:0 14px 30px -10px rgba(97,5,220,.75);transition:flex-grow .5s var(--ease),max-width .5s var(--ease),opacity .3s,padding .5s var(--ease)}
+.dock.cart .chip{flex-grow:1;max-width:400px;opacity:1;padding:0 8px 0 10px}
+.chip>*{filter:blur(8px);opacity:0;transition:filter .45s .12s,opacity .3s .12s}
+.dock.cart .chip>*{filter:none;opacity:1}
+.chip .th{display:flex;flex:none}
+.chip .th span{width:38px;height:38px;border-radius:50%;border:2px solid #5a08cc;margin-left:-12px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--t)}
+.chip .th span:first-child{margin-left:0}.chip .th svg{width:90%;height:90%;mix-blend-mode:multiply}
+.chip .tx{flex:1;min-width:0;line-height:1.12;white-space:nowrap}.chip .tx small{display:block;font-size:10px;font-weight:700;color:#d9c8ff}.chip .tx b{font-family:var(--f-head);font-size:16px}
+.chip .go{background:#fff;color:var(--p-dark);font-weight:800;font-size:12.5px;border-radius:99px;padding:11px 15px;white-space:nowrap}
+.chip .cnt{position:absolute;top:-9px;left:22px;background:#ffc81a;color:var(--ink);font-size:10.5px;font-weight:800;padding:2px 9px;border-radius:99px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.chipwrap{position:relative;display:flex;flex:0 1 0;min-width:0;transition:flex-grow .5s var(--ease)}
+.dock.cart .chipwrap{flex-grow:1}
+.chipwrap .chip{flex:1}
+
+/* menú en abanico del perfil: las burbujas salen del botón como gotas de líquido */
+.goo{position:absolute;inset:0;filter:url(#goo);z-index:36;pointer-events:none}
+.goo .gs{position:absolute;right:38px;bottom:22px;width:50px;height:50px;border-radius:50%;background:#e9dcfb;opacity:0;transition:opacity .2s}
+.goo.on .gs{opacity:1}
+.goo .gb{position:absolute;right:42px;width:42px;height:42px;border-radius:50%;transform:translateY(var(--dy)) scale(.5);transition:transform .6s cubic-bezier(.34,1.45,.5,1)}
+.goo.on .gb{transform:none;transition-delay:calc(var(--k)*70ms)}
+.fan{position:absolute;right:42px;bottom:88px;display:flex;flex-direction:column;align-items:flex-end;gap:10px;z-index:40;pointer-events:none}
+.fan.on{pointer-events:auto}
+.fi{display:flex;align-items:center;gap:10px;opacity:0;filter:blur(6px);transform:translateY(var(--dy)) scale(.5);transition:transform .6s cubic-bezier(.34,1.45,.5,1),opacity .25s,filter .35s}
+.fan.on .fi{opacity:1;filter:none;transform:none;transition-delay:calc(var(--k)*70ms)}
+.fi span{font-size:12.5px;font-weight:700;background:rgba(255,255,255,.92);padding:6px 12px;border-radius:99px;box-shadow:0 6px 16px -8px rgba(60,20,120,.5);opacity:0;transform:translateX(14px);filter:blur(4px);transition:opacity .25s,transform .45s var(--ease),filter .3s}
+.fan.on .fi span{opacity:1;transform:none;filter:none;transition-delay:calc(var(--k)*70ms + 160ms)}
+.fi i{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff}
+.veil{position:absolute;inset:0;background:rgba(20,10,50,.28);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .3s;z-index:35}
+.veil.on{opacity:1;pointer-events:auto}
+.notas{width:min(900px,calc(100% - 28px));margin:0 auto 60px;background:#fff;border-radius:22px;padding:18px 20px;box-shadow:0 0 0 1px var(--ring);font-size:13px;line-height:1.6;color:#4a4468}
+.notas b{color:var(--ink)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><filter id="goo"><feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -10"/></filter></svg>
+<div class="bar">
+  <b>Maqueta · Dock que se transforma</b>
+  <div class="grp"><span>Barra</span>
+    <div class="tog" id="tog"><button data-v="comparar" class="on">Comparar</button><button data-v="nuevo">Nuevo</button><button data-v="actual">Actual</button></div>
+    <button class="reset" id="reset">Reiniciar</button></div>
+</div>
+<div class="stage" id="stage"></div>
+<div class="notas">
+  <b>Qué toma del video:</b> la barra inferior no es fija: <b>se transforma</b>. Las pestañas se encogen a un botón redondo (la pestaña actual) y el espacio libre lo ocupa un chip. Tocar el botón redondo las vuelve a abrir. Además, <b>Perfil</b> abre un menú en abanico hacia arriba, como el selector de estado del video.<br>
+  <b>Cómo lo adapta a Delivery:</b> el chip es la barra del carrito (miniaturas, total y <i>Ver pedido</i>). Hoy son <b>dos piezas apiladas</b> (la pastilla del carrito encima y la barra de pestañas debajo) que tapan buena parte del catálogo; con el dock es <b>una sola fila</b>. Prueba: agrega productos y mira cómo se transforma; toca el botón redondo y luego <i>Perfil</i>.
+</div>
+<script>
+const P=[{n:'Gaseosa 500 ml',pr:2.5,t:'#ece0fd',f:'botella'},{n:'Leche evaporada 400 g',pr:4.9,t:'#dfeafd',f:'lata'},{n:'Yogurt de fresa 1 L',pr:8.9,t:'#fde3ea',f:'yogurt'},{n:'Manzana delicia',pr:6.5,t:'#dcf3e6',f:'manzana'}];
+let cart={}, tab='inicio', fan=false, modo='tabs';
+const IC={home:'<path d="M3 11l9-8 9 8M5 10v10h14V10"/>',doc:'<path d="M7 3h10v18l-3-2-2 2-2-2-3 2zM9.5 8h5M9.5 12h5"/>',store:'<path d="M4 9l1-5h14l1 5M4 9v11h16V9M4 9a3 3 0 0 0 5.3 1.8A3 3 0 0 0 14.7 10.8 3 3 0 0 0 20 9"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',plus:'<path d="M12 5v14M5 12h14"/>',pin:'<path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>',bell:'<path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/>',down:'<path d="M12 4v12M6 11l6 6 6-6M5 20h14"/>',out:'<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>'};
+const ic=k=>`<svg class="ic" viewBox="0 0 24 24">${IC[k]}</svg>`;
+function foto(k){const f={botella:'<rect x="52" y="14" width="16" height="9" rx="2.5" fill="#e11d48"/><path d="M54 23h12v14c0 4 11 8 11 18v44a6 6 0 0 1-6 6H49a6 6 0 0 1-6-6V55c0-10 11-14 11-18z" fill="#f2a516"/><rect x="43" y="62" width="34" height="24" fill="#fff" opacity=".92"/>',lata:'<rect x="38" y="24" width="44" height="82" rx="7" fill="#f3f6fc" stroke="#c9d4ea" stroke-width="1.5"/><rect x="38" y="48" width="44" height="34" fill="#3b6fd8"/><circle cx="60" cy="65" r="11" fill="#fff"/>',yogurt:'<rect x="50" y="14" width="20" height="11" rx="3" fill="#fff" stroke="#e2d7ee"/><path d="M52 25h16v10c0 4 11 6 11 17v50a6 6 0 0 1-6 6H47a6 6 0 0 1-6-6V52c0-11 11-13 11-17z" fill="#f6b3c6"/><rect x="41" y="60" width="38" height="28" fill="#fff"/><circle cx="60" cy="74" r="8" fill="#e5446d"/>',manzana:'<path d="M60 36c-8-6-26-3-28 18-2 24 12 46 28 46s30-22 28-46c-2-21-20-24-28-18z" fill="#d92d3a"/><path d="M63 28c8-8 18-6 20-4-2 8-12 12-20 4z" fill="#3aa05c"/>'}[k];return `<svg viewBox="0 0 120 120"><rect width="120" height="120" fill="#fff"/>${f}</svg>`}
+const money=n=>'S/ '+n.toFixed(2);
+const total=()=>Object.entries(cart).reduce((a,[i,q])=>a+P[i].pr*q,0), count=()=>Object.values(cart).reduce((a,b)=>a+b,0);
+const TABS=[['inicio','Inicio','home'],['pedidos','Pedidos','doc'],['tiendas','Mis tiendas','store'],['perfil','Perfil','user']];
+function grid(){return P.map((p,i)=>`<div class="kc" style="--t:${p.t}"><div class="pn">${foto(p.f)}<div class="pr"><small>S/</small>${p.pr.toFixed(2)}</div></div><h3>${p.n}</h3>${cart[i]?`<div class="qn">${cart[i]} en tu pedido</div>`:`<button class="add" data-add="${i}">Agregar<u>${ic('plus')}</u></button>`}</div>`).join('')}
+function body(){return `<div class="scroll"><div class="ph-top"><b>Bodega Demo</b><span>Abierto ahora</span></div><div class="sec">Todos los productos</div><div class="grid">${grid()}</div></div>`}
+function thumbs(){const ids=Object.keys(cart).slice(-3);return ids.map(i=>`<span style="--t:${P[i].t}">${foto(P[i].f)}</span>`).join('')}
+function actual(){const c=count();return `<div class="phone">${body()}${c?`<div class="a-cart"><div class="tx"><small>MI PEDIDO · ${c}</small><b>${money(total())}</b></div><button class="go">Ver pedido →</button></div>`:''}<div class="a-nav">${TABS.map(t=>`<button class="${tab===t[0]?'on':''}" data-tab="${t[0]}">${ic(t[2])}${t[1]}</button>`).join('')}</div></div>`}
+function nuevo(){
+  const c=count(), cartMode=(modo==='cart'&&c>0);
+  return `<div class="phone">${body()}<div class="veil ${fan?'on':''}" data-veil></div>
+   <div class="goo ${fan?'on':''}"><span class="gs"></span>${[['#e11d48',3],['#0ea5e9',2],['#f59e0b',1],['#6105dc',0]].map(([c,k])=>`<span class="gb" style="background:${c};bottom:${88+52*k}px;--k:${k};--dy:${62+52*k}px"></span>`).join('')}</div>
+   <div class="fan ${fan?'on':''}">${[['Cerrar sesión','out',3],['Instalar app','down',2],['Notificaciones','bell',1],['Mi dirección','pin',0]].map(([t,i,k])=>`<div class="fi" style="--k:${k};--dy:${62+52*k}px"><span>${t}</span><i>${ic(i)}</i></div>`).join('')}</div>
+   <div class="dock ${cartMode?'cart':''}">
+     <div class="tabs glass">${TABS.map(t=>`<button class="tab ${tab===t[0]?'on':''}" data-tab="${t[0]}">${ic(t[2])}<span>${t[1]}</span></button>`).join('')}</div>
+     <div class="chipwrap"><span class="cnt" style="position:absolute;top:-9px;left:22px;background:#ffc81a;color:#1c1830;font-size:10.5px;font-weight:800;padding:2px 9px;border-radius:99px;z-index:2;opacity:${cartMode?1:0};transition:opacity .4s .2s">${c} ${c==1?'producto':'productos'}</span>
+       <div class="chip"><div class="th">${thumbs()}</div><div class="tx"><small>MI PEDIDO</small><b>${money(total())}</b></div><button class="go">Ver pedido →</button></div></div>
+   </div></div>`}
+const col=(l,b,n,h)=>`<div class="col"><div class="etq">${l}<i class="${n?'n':''}">${b}</i></div>${h}</div>`;
+let ver='comparar';
+function render(){const st=document.getElementById('stage');const sc=[...st.querySelectorAll('.scroll')].map(s=>s.scrollTop);
+ st.innerHTML=ver==='nuevo'?col('Dock nuevo','propuesta',1,nuevo()):ver==='actual'?col('Barra actual','hoy',0,actual()):col('Actual','hoy',0,actual())+col('Dock','propuesta',1,nuevo());
+ st.querySelectorAll('.scroll').forEach((s,i)=>s.scrollTop=sc[i]||0)}
+let t1;
+document.getElementById('stage').addEventListener('click',e=>{
+  const a=e.target.closest('[data-add]'),tb=e.target.closest('[data-tab]'),v=e.target.closest('[data-veil]');
+  if(a){cart[a.dataset.add]=1;modo='cart';render();return}
+  if(v){fan=false;render();return}
+  if(tb){const t=tb.dataset.tab; const enNuevo=!!tb.closest('.dock');
+    if(enNuevo&&tb.closest('.dock.cart')){modo='tabs';fan=false;render();return}  // el botón redondo reabre las pestañas
+    tab=t; if(enNuevo){fan=(t==='perfil'&&!fan); render(); clearTimeout(t1); if(count()>0&&!fan){t1=setTimeout(()=>{modo='cart';render()},1600)}} else render();}
+});
+document.getElementById('tog').onclick=e=>{const b=e.target.closest('button');if(!b)return;ver=b.dataset.v;document.querySelectorAll('#tog button').forEach(x=>x.classList.toggle('on',x===b));render()};
+document.getElementById('reset').onclick=()=>{cart={};tab='inicio';fan=false;modo='tabs';render()};
+render();
+</script>
+</body>
+</html>
