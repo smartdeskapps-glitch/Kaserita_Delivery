@@ -67,7 +67,7 @@ body { overflow-x: clip; }
 }
 @media (prefers-reduced-motion: reduce) { .kd-hoja { animation: none; } }
 
-/* Tarjeta de producto de la tienda: panel de color por categoría, precio en
+/* Tarjeta de producto de la tienda: panel blanco con el tono de la categoría en la franja y los chips, precio en
    una muesca arriba a la derecha y franja inferior para avisos (Quedan N,
    Destacado). La foto se muestra tal cual, sin filtros ni mezcla de color. Con 3 columnas la
    tarjeta mide ~115px y, por container query, se queda con lo esencial. */
@@ -89,14 +89,15 @@ body { overflow-x: clip; }
   position: relative;
   aspect-ratio: 1 / 1;
   border-radius: 20px;
-  background: var(--t);
+  background: #fff;
+  border: 1px solid #efe6fc;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   padding-bottom: 22px;
 }
-.kc-en .kc-panel { --t: #d9f2e4; --td: #1f8a5b; }
+.kc-en .kc-panel { --t: #d9f2e4; --td: #1f8a5b; border-color: #86d4ad; }
 .kc-foto {
   width: 100%;
   height: 100%;
