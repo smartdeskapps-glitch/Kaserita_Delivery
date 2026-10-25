@@ -4857,4 +4857,24 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+// Si algo falla al dibujar la app, se muestra un aviso con el detalle y un botón
+// para recargar, en vez de dejar la pantalla en blanco.
+class ErrorDeArranque extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 p-6 text-center bg-[#f9f8fb]">
+        <p className="text-lg font-extrabold text-[#1c1830]">Algo salió mal al abrir Kaserita Delivery</p>
+        <p className="text-sm text-[#78729a] max-w-xs">Vuelve a cargar la página. Si sigue igual, avísanos con este detalle.</p>
+        <button onClick={() => window.location.reload()} className="bg-[#6105dc] text-white font-bold text-sm px-7 py-3 rounded-full">
+          Recargar
+        </button>
+        <p className="text-[10.5px] text-[#a29cbd] max-w-xs break-words">{String(this.state.error && this.state.error.message ? this.state.error.message : this.state.error).slice(0, 300)}</p>
+      </div>
+    );
+  }
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<ErrorDeArranque><App /></ErrorDeArranque>);

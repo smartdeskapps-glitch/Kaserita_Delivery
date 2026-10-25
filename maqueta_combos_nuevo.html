@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Combos nuevo concepto</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--p:#6105dc;--p-dark:#4d04b0;--ring:#efe6fc;--ink:#1c1830;--mut:#78729a;--f-head:'Plus Jakarta Sans',system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:#e9e4f5;-webkit-font-smoothing:antialiased;min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+h3,p{margin:0}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.bar{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;justify-content:space-between;padding:10px 20px;background:#1c1830;color:#fff;font-size:12.5px;position:sticky;top:0;z-index:80}
+.bar b{font-family:var(--f-head);font-size:13.5px}
+.bar .grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bar .tog{display:inline-flex;background:rgba(255,255,255,.1);border-radius:999px;padding:3px}
+.bar .tog button{color:#d9d2ee;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600}
+.bar .tog button.on{background:#fff;color:#1c1830}
+.bar .reset{border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:999px;padding:5px 13px;font-size:12px}
+.stage{display:flex;gap:26px;justify-content:center;align-items:flex-start;padding:24px 14px 30px;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:8px}
+.etq{font-family:var(--f-head);font-weight:700;font-size:12.5px;color:#4d3f86;display:flex;gap:8px;align-items:center;padding-left:6px}
+.etq i{font-style:normal;font-size:11px;padding:2px 9px;border-radius:999px;background:#fff;color:var(--mut)}
+.etq i.n{background:var(--p);color:#fff}
+.phone{width:390px;max-width:100%;background:#faf7ff;border-radius:34px;border:1px solid #fff;box-shadow:0 30px 70px -22px rgba(60,20,120,.4);overflow:hidden;padding-bottom:22px}
+.ph-top{padding:16px 16px 10px;display:flex;justify-content:space-between;align-items:center}
+.ph-top b{font-family:var(--f-head);font-size:17px;font-weight:800;color:var(--p)}
+.ph-top span{font-size:11px;color:var(--mut)}
+.sec{padding:8px 16px 4px;display:flex;justify-content:space-between;align-items:center}
+.sec b{font-size:14px;display:flex;gap:6px;align-items:center}.sec b .ic{color:var(--p)}
+.sec a{font-size:12px;font-weight:600;color:#7c3aed}
+.rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:12px 16px 8px;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rail>*{flex:none;scroll-snap-align:start}
+.dots{display:flex;justify-content:center;gap:6px;padding-top:4px}
+.dots i{width:6px;height:6px;border-radius:99px;background:#d9cdf3}.dots i.on{width:20px;background:var(--p)}
+
+/* ===== ACTUAL ===== */
+.cact{width:240px;background:linear-gradient(135deg,#fff,#f4eefe);border-radius:28px;box-shadow:0 0 0 1px var(--ring);padding:16px;display:flex;flex-direction:column;gap:8px}
+.cact .t{display:flex;justify-content:space-between;align-items:center}
+.cact .off{background:#ece0fd;color:#4d04b0;font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px}
+.cact .st{font-size:10px;font-weight:700;color:#b45309;background:#fef3c7;padding:2px 8px;border-radius:99px}
+.cact .m{display:flex;gap:10px}
+.cact .ph{display:flex;flex:none;padding-top:2px}
+.cact .ph span{width:44px;height:44px;border-radius:14px;background:#f4eefe;overflow:hidden;border:2px solid #fff;box-shadow:0 0 0 1px #e4d6fb;margin-left:-12px}
+.cact .ph span:first-child{margin-left:0}.cact .ph svg{width:100%;height:100%}
+.cact .m b{font-size:15px;font-weight:700;line-height:1.2;display:block}.cact .m p{font-size:11px;color:#78716c;margin-top:4px}
+.cact .f{display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid var(--ring);padding-top:8px}
+.cact .f s{font-size:11px;color:#a8a29e;display:block}.cact .f b{font-size:20px;font-weight:800}
+.cact .f em{font-style:normal;font-size:10px;font-weight:700;color:#047857;background:#ecfdf5;padding:2px 6px;border-radius:99px;display:block;width:fit-content}
+.cact .f button{background:var(--p);color:#fff;font-size:12px;font-weight:700;border-radius:99px;padding:9px 16px}
+
+/* ===== NUEVA ===== */
+.cn{width:246px;position:relative;background:#fff;border-radius:28px;padding:9px;display:flex;flex-direction:column;gap:9px;box-shadow:0 0 0 1px var(--ring),0 14px 28px -18px rgba(97,5,220,.4);cursor:pointer}
+.cn-fw{position:relative}
+.cn-panel{position:relative;aspect-ratio:1.18/1;border-radius:22px;background:var(--t);overflow:hidden;padding-bottom:20px;display:flex;align-items:center;justify-content:center}
+.cn-fotos{position:relative;width:100%;height:100%}
+.cn-fotos span{position:absolute;bottom:2%;mix-blend-mode:multiply}
+.cn-fotos span svg{width:100%;height:100%}
+.cn-fotos .c{left:50%;width:54%;height:98%;transform:translateX(-50%);z-index:3}
+.cn-fotos .l{left:6%;width:40%;height:74%;z-index:2;bottom:6%}
+.cn-fotos .r{right:6%;width:40%;height:74%;z-index:2;bottom:6%}
+.cn-fotos.dos .c{left:30%;transform:none}.cn-fotos.dos .l{display:none}.cn-fotos.dos .r{right:12%}
+.cn-mas{position:absolute;right:10px;bottom:30px;z-index:4;background:#1c1830;color:#fff;font-size:10.5px;font-weight:800;border-radius:99px;padding:3px 8px}
+.cn-precio{position:absolute;top:0;right:0;background:#fff;padding:6px 4px 8px 12px;border-bottom-left-radius:18px;font-family:var(--f-head);font-weight:800;font-size:17px;line-height:1;text-align:right}
+.cn-precio small{font-size:10px;color:var(--mut);margin-right:2px}
+.cn-precio s{display:block;font-size:10.5px;font-weight:600;color:#a8a29e;margin-bottom:2px}
+.cn-precio:before{content:"";position:absolute;right:100%;top:0;width:16px;height:16px;background:radial-gradient(circle at 0 100%,transparent 15.5px,#fff 16px)}
+.cn-off{position:absolute;top:10px;left:10px;z-index:5;background:var(--p);color:#fff;font-family:var(--f-head);font-weight:800;font-size:12px;border-radius:99px;padding:5px 10px;box-shadow:0 6px 12px -6px rgba(97,5,220,.8)}
+.cn-tab{position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:flex;align-items:center;gap:5px;height:22px;padding:0 10px;border-radius:12px 12px 0 0;background:#fff;font-size:10.5px;font-weight:700;color:#047857;white-space:nowrap;z-index:6}
+.cn-tab .ic{font-size:10.5px}.cn-tab.warn{color:#b45309}
+.cn-tab:before,.cn-tab:after{content:"";position:absolute;bottom:0;width:12px;height:12px}
+.cn-tab:before{right:100%;background:radial-gradient(circle at 0 0,transparent 11.5px,#fff 12px)}
+.cn-tab:after{left:100%;background:radial-gradient(circle at 100% 0,transparent 11.5px,#fff 12px)}
+.cn-body{padding:0 4px}
+.cn-body h3{font-family:var(--f-head);font-size:16px;font-weight:800;line-height:1.18;letter-spacing:-.01em}
+.cn-body p{font-size:11.5px;color:var(--mut);margin-top:4px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cn-pie{display:flex;align-items:center;justify-content:space-between;padding:0 2px 2px}
+.cn-pie .tot{font-size:11px;color:var(--mut);line-height:1.2}.cn-pie .tot b{display:block;font-family:var(--f-head);font-size:12px;color:#047857;font-weight:800}
+.pill{display:flex;align-items:center;gap:2px;height:34px;border-radius:999px;background:var(--p);color:#fff;box-shadow:0 8px 16px -8px rgba(97,5,220,.85);padding:3px}
+.pill button{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(255,255,255,.18)}
+.pill span{min-width:26px;text-align:center;font-family:var(--f-head);font-weight:800;font-size:14px}
+.pill.add{padding:3px 3px 3px 14px;gap:8px;font-size:12px;font-weight:700}
+.pill.add u{text-decoration:none;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:11px}
+.notas{width:min(900px,calc(100% - 28px));margin:0 auto 60px;background:#fff;border-radius:22px;padding:18px 20px;box-shadow:0 0 0 1px var(--ring);font-size:13px;line-height:1.6;color:#4a4468}
+.notas b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Maqueta · Combos con el nuevo concepto</b>
+  <div class="grp"><span>Tarjeta</span>
+    <div class="tog"><button data-v="comparar" class="on">Comparar</button><button data-v="nueva">Nueva</button><button data-v="actual">Actual</button></div>
+    <button class="reset" id="reset">Reiniciar</button></div>
+</div>
+<div class="stage" id="stage"></div>
+<div class="notas">
+  <b>Mismo concepto que productos y Destacados:</b> tarjeta blanca, cuadro de color con el filtro, precio en la muesca, aviso en pestaña blanca integrada y control de cantidad en píldora violeta.<br>
+  <b>Lo propio de un combo:</b> el cuadro muestra las fotos de lo que incluye en grupo (la del medio al frente), el <b>precio tachado</b> va dentro de la muesca sobre el precio del combo, el <b>-12 %</b> es un sello violeta arriba a la izquierda, y la pestaña blanca dice <i>Ahorras S/ 2.90</i> (o <i>Stock limitado</i> en naranja). Debajo, el nombre y qué incluye.
+</div>
+<script>
+const TONO={lila:['#ece0fd','#6a3fc4'],mant:['#fff1c7','#a97c10'],menta:['#dcf3e6','#238458']};
+const C=[
+ {id:1,n:'Combo Desayuno',inc:'Leche evaporada (x2), Galletas de soda, Manzana (x1)',pr:21.9,orig:24.8,off:12,t:'mant',fotos:['lata','galleta','manzana'],ahorro:'Ahorras S/ 2.90'},
+ {id:2,n:'Combo Familiar',inc:'Gaseosa 1.5 L, Yogurt de fresa 1 L, Arroz extra 1 kg',pr:19.5,orig:23.1,off:16,t:'lila',fotos:['yogurt','botella','bolsa'],ahorro:'Ahorras S/ 3.60'},
+ {id:3,n:'Combo Snack',inc:'Galletas de soda (x2), Gaseosa 500 ml',pr:7.9,orig:9.7,off:19,t:'menta',fotos:['galleta','botella'],lim:'Stock limitado'}
+];
+let cart={1:1};
+const IC={plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',tag:'<path d="M3 12V4h8l10 10-8 8zM7.5 8.5v.01"/>',alerta:'<path d="M12 4l9 16H3zM12 10v4M12 17.5v.01"/>'};
+const ic=k=>`<svg class="ic" viewBox="0 0 24 24">${IC[k]}</svg>`;
+function foto(k){const f={
+ botella:'<rect x="52" y="14" width="16" height="9" rx="2.5" fill="#e11d48"/><path d="M54 23h12v14c0 4 11 8 11 18v44a6 6 0 0 1-6 6H49a6 6 0 0 1-6-6V55c0-10 11-14 11-18z" fill="#f2a516"/><rect x="43" y="62" width="34" height="24" fill="#fff" opacity=".92"/><rect x="49" y="69" width="22" height="3.5" rx="1.7" fill="#e11d48"/>',
+ lata:'<rect x="38" y="24" width="44" height="82" rx="7" fill="#f3f6fc" stroke="#c9d4ea" stroke-width="1.5"/><rect x="38" y="24" width="44" height="11" rx="5" fill="#b9c7e6"/><rect x="38" y="48" width="44" height="34" fill="#3b6fd8"/><circle cx="60" cy="65" r="11" fill="#fff"/><rect x="38" y="94" width="44" height="12" rx="5" fill="#b9c7e6"/>',
+ yogurt:'<rect x="50" y="14" width="20" height="11" rx="3" fill="#fff" stroke="#e2d7ee" stroke-width="1.3"/><path d="M52 25h16v10c0 4 11 6 11 17v50a6 6 0 0 1-6 6H47a6 6 0 0 1-6-6V52c0-11 11-13 11-17z" fill="#f6b3c6"/><rect x="41" y="60" width="38" height="28" fill="#fff" opacity=".95"/><circle cx="60" cy="74" r="8" fill="#e5446d"/>',
+ manzana:'<path d="M60 36c-8-6-26-3-28 18-2 24 12 46 28 46s30-22 28-46c-2-21-20-24-28-18z" fill="#d92d3a"/><path d="M60 38c0-8 2-14 7-18" stroke="#6b4423" stroke-width="3.2" stroke-linecap="round" fill="none"/><path d="M63 28c8-8 18-6 20-4-2 8-12 12-20 4z" fill="#3aa05c"/>',
+ galleta:'<rect x="30" y="38" width="60" height="66" rx="6" fill="#d8791f"/><rect x="30" y="38" width="60" height="9" rx="4" fill="#b8620f"/><circle cx="60" cy="74" r="19" fill="#f6dba0"/><circle cx="60" cy="74" r="15" fill="#efc77a"/>',
+ bolsa:'<path d="M36 26h48l5 80H31z" fill="#f6e7c6" stroke="#d6bb86" stroke-width="1.5"/><rect x="40" y="46" width="40" height="38" rx="5" fill="#fff"/><g fill="#e8d3a0"><ellipse cx="50" cy="60" rx="4" ry="2"/><ellipse cx="62" cy="56" rx="4" ry="2"/><ellipse cx="68" cy="68" rx="4" ry="2"/></g>'}[k];
+ return `<svg viewBox="0 0 120 120"><rect width="120" height="120" fill="#fff"/><ellipse cx="60" cy="108" rx="30" ry="4.5" fill="#1c1830" opacity=".13"/>${f}</svg>`}
+const money=n=>'S/ '+n.toFixed(2);
+function actual(c){return `<div class="cact"><div class="t"><span class="off">-${c.off}% de descuento</span>${c.lim?'<span class="st">Stock limitado</span>':''}</div><div class="m"><div class="ph">${c.fotos.map(f=>`<span>${foto(f)}</span>`).join('')}</div><div><b>${c.n}</b><p>${c.inc}</p></div></div><div class="f"><div><s>${money(c.orig)}</s><b>${money(c.pr)}</b>${c.ahorro?`<em>${c.ahorro}</em>`:''}</div><button data-add="${c.id}">Agregar</button></div></div>`}
+function nueva(c){
+  const q=cart[c.id]||0,[t,td]=TONO[c.t];
+  const f=c.fotos, cls=f.length<3?'dos':'';
+  const fot=f.length>=3?`<span class="l">${foto(f[0])}</span><span class="c">${foto(f[1])}</span><span class="r">${foto(f[2])}</span>`:`<span class="c">${foto(f[0])}</span><span class="r">${foto(f[1])}</span>`;
+  const tab=c.lim?`<div class="cn-tab warn">${ic('alerta')}${c.lim}</div>`:`<div class="cn-tab">${ic('tag')}${c.ahorro}</div>`;
+  const ctl=q?`<div class="pill"><button data-menos="${c.id}">${ic('minus')}</button><span>${q}</span><button data-add="${c.id}">${ic('plus')}</button></div>`:`<button class="pill add" data-add="${c.id}">Agregar<u>${ic('plus')}</u></button>`;
+  return `<div class="cn" style="--t:${t};--td:${td}"><div class="cn-fw"><div class="cn-panel"><div class="cn-fotos ${cls}">${fot}</div>${tab}</div><span class="cn-off">-${c.off}%</span><div class="cn-precio"><s>${money(c.orig)}</s><small>S/</small>${c.pr.toFixed(2)}</div></div><div class="cn-body"><h3>${c.n}</h3><p>${c.inc}</p></div><div class="cn-pie"><div class="tot">${f.length} productos</div>${ctl}</div></div>`}
+function phone(fn){return `<div class="phone"><div class="ph-top"><b>Bodega Demo</b><span>Abierto ahora</span></div><div class="sec"><b>${ic('tag')} Combos</b><a>Ver todos</a></div><div class="rail">${C.map(fn).join('')}</div><div class="dots">${C.map((_,i)=>`<i class="${i?'':'on'}"></i>`).join('')}</div></div>`}
+const col=(l,b,n,h)=>`<div class="col"><div class="etq">${l}<i class="${n?'n':''}">${b}</i></div>${h}</div>`;
+let ver='comparar';
+function render(){const st=document.getElementById('stage');const sc=[...st.querySelectorAll('.rail')].map(r=>r.scrollLeft);
+ st.innerHTML=ver==='nueva'?col('Combos nuevo','propuesta',1,phone(nueva)):ver==='actual'?col('Combos actual','hoy',0,phone(actual)):col('Actual','hoy',0,phone(actual))+col('Nuevo','propuesta',1,phone(nueva));
+ st.querySelectorAll('.rail').forEach((r,i)=>r.scrollLeft=sc[i]||0)}
+document.querySelector('.tog').onclick=e=>{const b=e.target.closest('button');if(!b)return;ver=b.dataset.v;document.querySelectorAll('.tog button').forEach(x=>x.classList.toggle('on',x===b));render()};
+document.getElementById('reset').onclick=()=>{cart={1:1};render()};
+document.getElementById('stage').onclick=e=>{const a=e.target.closest('[data-add]'),m=e.target.closest('[data-menos]');
+ if(a){const id=+a.dataset.add;cart[id]=(cart[id]||0)+1;render()}else if(m){const id=+m.dataset.menos;cart[id]--;if(!cart[id])delete cart[id];render()}};
+render();
+</script>
+</body>
+</html>
