@@ -4084,7 +4084,7 @@ function App() {
                 <div key={p.id} className="flex items-center gap-3 p-3">
                   <div className="w-11 h-11 rounded-xl bg-stone-100 flex items-center justify-center overflow-hidden shrink-0 grayscale opacity-70">
                     {p.foto_url ? (
-                      <img src={p.foto_url} alt={tituloProducto(p.descripcion)} className="w-full h-full object-cover" />
+                      <img src={p.foto_url} alt={tituloProducto(p.descripcion)} className="w-full h-full object-contain p-0.5 mix-blend-multiply" />
                     ) : (
                       <i className="fa-solid fa-image text-stone-300"></i>
                     )}
@@ -4523,9 +4523,12 @@ function App() {
                     ))}
                     {itemsCarrito.map((it) => (
                       <div key={it.id} className="flex items-center gap-3 px-3.5 py-2.5 border-t border-[#efe6fc] first:border-t-0">
-                        <span className="w-[54px] h-[54px] rounded-2xl bg-[#f4eefe] overflow-hidden shrink-0 flex items-center justify-center">
+                        <span
+                          className="w-[54px] h-[54px] rounded-2xl overflow-hidden shrink-0 flex items-center justify-center"
+                          style={{ background: tonoCategoria(it.categoria).t }}
+                        >
                           {it.foto_url ? (
-                            <img src={it.foto_url} alt={tituloProducto(it.descripcion)} className="w-full h-full object-cover" />
+                            <img src={it.foto_url} alt={tituloProducto(it.descripcion)} className="w-full h-full object-contain p-1 mix-blend-multiply" />
                           ) : (
                             <i className="fa-solid fa-image text-[#cfc4ea]"></i>
                           )}
@@ -4804,7 +4807,7 @@ function App() {
                       className={`w-[30px] h-[30px] rounded-full border-2 border-white bg-[#ece0fd] overflow-hidden flex items-center justify-center text-[#6105dc] ${i > 0 ? "-ml-[9px]" : ""}`}
                     >
                       {it.foto ? (
-                        <img src={it.foto} alt="" className="w-full h-full object-cover" />
+                        <img src={it.foto} alt="" className="w-full h-full object-contain mix-blend-multiply" />
                       ) : (
                         <i className={`fa-solid ${it.combo ? "fa-gift" : "fa-image"} text-[11px]`}></i>
                       )}
