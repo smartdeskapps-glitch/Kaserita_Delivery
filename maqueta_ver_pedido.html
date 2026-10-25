@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Ver pedido</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--p:#6105dc;--p-dark:#4d04b0;--ring:#efe6fc;--ink:#1c1830;--mut:#78729a;--f-head:'Plus Jakarta Sans',system-ui,sans-serif;--ease:cubic-bezier(.3,1.1,.4,1)}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:#e9e4f5;-webkit-font-smoothing:antialiased;min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+h2,h3,p{margin:0}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.bar{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;justify-content:space-between;padding:10px 20px;background:#1c1830;color:#fff;font-size:12.5px;position:sticky;top:0;z-index:90}
+.bar b{font-family:var(--f-head);font-size:13.5px}
+.bar .grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bar .tog{display:inline-flex;background:rgba(255,255,255,.1);border-radius:999px;padding:3px}
+.bar .tog button{color:#d9d2ee;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600}
+.bar .tog button.on{background:#fff;color:#1c1830}
+.bar .reset{border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:999px;padding:5px 13px;font-size:12px}
+.stage{display:flex;gap:26px;justify-content:center;align-items:flex-start;padding:24px 14px 30px;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:8px}
+.etq{font-family:var(--f-head);font-weight:700;font-size:12.5px;color:#4d3f86;display:flex;gap:8px;align-items:center;padding-left:6px}
+.etq i{font-style:normal;font-size:11px;padding:2px 9px;border-radius:999px;background:#fff;color:var(--mut)}
+.etq i.n{background:var(--p);color:#fff}
+.phone{position:relative;width:390px;max-width:100%;height:780px;background:linear-gradient(135deg,#f4effc,#f9f8fb 50%,#f5f4f8);border-radius:34px;border:1px solid #fff;box-shadow:0 30px 70px -22px rgba(60,20,120,.4);overflow:hidden}
+.scroll{position:absolute;inset:0;overflow-y:auto;scrollbar-width:none;padding:0 16px 22px}
+.scroll::-webkit-scrollbar{display:none}
+.stack{display:flex;flex-direction:column;gap:12px}
+.hd{display:flex;align-items:center;gap:12px;padding:16px 0 10px}
+.hd .back{width:40px;height:40px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px var(--ring);color:var(--p-dark);display:flex;align-items:center;justify-content:center;font-size:14px}
+.hd h2{flex:1;font-size:19px;font-weight:800;letter-spacing:-.01em;font-family:var(--f-head)}
+.hd .vac{font-size:12.5px;font-weight:600;color:var(--p)}
+.card{background:#fff;border-radius:22px;box-shadow:0 0 0 1px var(--ring);overflow:hidden}
+.store{display:flex;align-items:center;gap:12px;padding:0 2px}
+.store .lg{width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg,#8a3df2,#4d04b0);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+.store b{display:block;font-size:14.5px}.store span{font-size:12px;color:var(--mut)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:6px;background:#fff;border-radius:22px;box-shadow:0 0 0 1px var(--ring)}
+.seg button{border-radius:17px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--mut);transition:background .25s,color .25s}
+.seg button b{font-size:14px;display:flex;gap:7px;align-items:center}.seg button span{font-size:11.5px}
+.seg button.on{background:var(--p);color:#fff}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;text-align:left;width:100%}
+.row+.row{border-top:1px solid var(--ring)}
+.row .ico{width:44px;height:44px;border-radius:14px;background:#f4eefe;color:var(--p-dark);display:flex;align-items:center;justify-content:center;font-size:17px;flex:none}
+.row .tx{flex:1;min-width:0}.row .tx small{display:block;font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--mut)}
+.row .tx b{display:block;font-size:14px;line-height:1.25}.row .tx span{display:block;font-size:12px;color:var(--mut)}
+.row .go{font-size:12.5px;font-weight:700;color:var(--p)}
+.sec-h{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 4px}
+.sec-h b{font-size:15px;font-family:var(--f-head)}.sec-h a{font-size:12.5px;font-weight:700;color:var(--p)}
+.it{display:flex;align-items:center;gap:12px;padding:10px 14px}
+.it+.it{border-top:1px solid var(--ring)}
+.it .ph{width:54px;height:54px;border-radius:16px;background:var(--t);overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center}
+.it .ph svg{width:88%;height:88%;mix-blend-mode:multiply}
+.it .ph.gift{color:var(--p);font-size:18px}
+.it .tx{flex:1;min-width:0}.it .tx b{font-size:14px;line-height:1.2;display:block}.it .tx span{font-size:12px;color:var(--mut)}
+.it .pr{font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.stp{display:inline-flex;align-items:center;gap:6px;margin-top:5px}
+.stp button{width:26px;height:26px;border-radius:50%;background:#f4eefe;color:var(--p-dark);display:flex;align-items:center;justify-content:center;font-size:10px}
+.stp button.m{background:var(--p);color:#fff}.stp span{min-width:16px;text-align:center;font-size:13px;font-weight:700;color:var(--ink)}
+.sum{padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.sum .l{display:flex;justify-content:space-between;font-size:13px;color:var(--mut)}.sum .l b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.sum .t{display:flex;justify-content:space-between;align-items:baseline;border-top:1px dashed #e2d6f6;padding-top:8px;margin-top:2px}
+.sum .t span{font-weight:700}.sum .t b{font-size:20px;font-family:var(--f-head);font-weight:800}
+.pay{display:flex;flex-wrap:wrap;gap:8px;padding:0 14px 14px}
+.pay button{padding:8px 14px;border-radius:99px;font-size:12px;font-weight:600;background:#fff;box-shadow:0 0 0 1px var(--ring);color:var(--p-dark)}
+.pay button.on{background:var(--p);color:#fff;box-shadow:none}
+.cta-a{position:absolute;left:0;right:0;bottom:0;padding:12px 16px 16px;background:#fff;border-radius:26px 26px 0 0;border-top:1px solid var(--ring);display:flex;align-items:center;gap:14px}
+.cta-a .t small{display:block;font-size:11.5px;color:var(--mut)}.cta-a .t b{font-size:21px;font-weight:800}
+.btn{flex:1;height:54px;border-radius:99px;background:linear-gradient(90deg,#8a3df2,#4d04b0);color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px}
+.gg{width:24px;height:24px;border-radius:50%;background:#fff;color:#4285f4;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+
+/* ===== NUEVO ===== */
+.nv .scroll{padding-bottom:110px}
+.nv .hd{padding-top:18px}
+/* progreso hacia el pedido mínimo */
+.prog{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.prog .tp{display:flex;justify-content:space-between;align-items:center;font-size:12.5px}
+.prog .tp b{font-family:var(--f-head)}.prog .tp span{color:var(--mut)}
+.prog .rail{height:8px;border-radius:99px;background:#efe6fc;overflow:hidden}
+.prog .rail i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#8a3df2,#4d04b0);transition:width .6s var(--ease)}
+.prog.ok .rail i{background:linear-gradient(90deg,#34d399,#059669)}
+.prog.ok .tp b{color:#047857}
+/* lista con fotos y píldora violeta */
+.nv .it{padding:12px 14px;gap:14px}
+.nv .it .ph{width:64px;height:64px;border-radius:20px}
+.nv .it .ph.multi{display:flex;gap:0;padding:0 4px;justify-content:center}
+.nv .it .ph.multi svg{width:38%;height:auto;margin-left:-8px}.nv .it .ph.multi svg:first-child{margin-left:0}
+.nv .it .tx b{font-family:var(--f-head);font-size:14.5px;font-weight:700}
+.nv .it .tag{display:inline-block;margin-top:3px;font-size:10.5px;font-weight:700;color:#047857;background:#e8f8f1;border-radius:99px;padding:2px 8px}
+.pill{display:inline-flex;align-items:center;gap:2px;height:32px;border-radius:99px;background:var(--p);color:#fff;padding:3px;margin-top:6px;box-shadow:0 8px 14px -8px rgba(97,5,220,.8)}
+.pill button{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:10px}
+.pill span{min-width:24px;text-align:center;font-family:var(--f-head);font-weight:800;font-size:13px}
+.nv .it .pr{align-self:flex-start;margin-top:4px;font-family:var(--f-head);font-weight:800;font-size:15px}
+.nv .it .pr s{display:block;font-size:11px;font-weight:600;color:#a8a29e;text-align:right}
+/* entrega: una sola tarjeta con selector, dirección y hora */
+.ent{padding:6px}
+.ent .seg{box-shadow:none;background:#f7f3fe;padding:5px;border-radius:18px}
+.ent .seg button{padding:9px 6px}.ent .seg button.on{box-shadow:0 8px 14px -8px rgba(97,5,220,.8)}
+.ent .row{padding:12px 10px}
+/* dock del botón de pagar */
+.dockp{position:absolute;left:14px;right:14px;bottom:16px;height:66px;border-radius:99px;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 8px;background:rgba(255,255,255,.8);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 0 0 1px rgba(255,255,255,.8),0 14px 30px -12px rgba(60,20,120,.4),inset 0 1px 0 #fff;z-index:20}
+.dockp .tt{padding-left:12px;line-height:1.1;min-width:84px}.dockp .tt small{display:block;font-size:11px;color:var(--mut)}.dockp .tt b{font-family:var(--f-head);font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}
+.dockp .btn{height:54px}
+.dockp .alerta{position:absolute;left:18px;right:18px;bottom:76px;font-size:12px;background:#fff4e0;color:#b45309;border-radius:14px;padding:8px 12px;box-shadow:0 8px 20px -10px rgba(180,83,9,.5)}
+.notas{width:min(900px,calc(100% - 28px));margin:0 auto 60px;background:#fff;border-radius:22px;padding:18px 20px;box-shadow:0 0 0 1px var(--ring);font-size:13px;line-height:1.6;color:#4a4468}
+.notas b{color:var(--ink)}.notas li{margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Maqueta · Ver pedido</b>
+  <div class="grp"><span>Pantalla</span>
+    <div class="tog" data-k="ver"><button data-v="comparar" class="on">Comparar</button><button data-v="nuevo">Nuevo</button><button data-v="actual">Actual</button></div>
+    <span>Sesión</span>
+    <div class="tog" data-k="ses"><button data-v="no" class="on">Sin iniciar</button><button data-v="si">Iniciada</button></div>
+    <button class="reset" id="reset">Reiniciar</button></div>
+</div>
+<div class="stage" id="stage"></div>
+<div class="notas">
+  <b>Qué cambia en “Ver pedido”</b>
+  <ul>
+    <li><b>Lo que compras va primero.</b> Hoy hay que pasar el tipo de entrega, la dirección, la hora y el pago antes de ver tu lista. Ahora la lista abre la pantalla y la entrega queda debajo, en una sola tarjeta.</li>
+    <li><b>Barra de pedido mínimo.</b> Si la tienda pide un mínimo, una barra muestra cuánto falta (<i>Te faltan S/ 12.60</i>) y se pone verde al llegar. Hoy ese dato solo sale como texto chico al final y el botón se bloquea sin explicar.</li>
+    <li><b>Mismas fotos y controles que el resto de la tienda:</b> foto con filtro sobre el color de su categoría, el combo con las fotos de lo que incluye (hoy es un regalo gris) y la píldora violeta <i>− 2 +</i> en vez de botones chicos.</li>
+    <li><b>Un solo botón de pagar flotante</b> (el mismo vidrio del dock), con el total al lado. Hoy son dos totales y una barra blanca que ocupa toda la parte baja.</li>
+    <li><b>Ahorro a la vista:</b> el combo muestra lo que ahorras con su precio tachado.</li>
+  </ul>
+  Prueba: cambia entre <i>Delivery</i> y <i>Retiro</i>, baja las cantidades hasta quedar bajo el mínimo (S/ 30) y alterna <i>Sesión</i>.
+</div>
+<script>
+const TONO={lila:'#ece0fd',cielo:'#dfeafd',mant:'#fff1c7',menta:'#dcf3e6',rosa:'#fde3ea'};
+const PR={botella:{n:'Gaseosa 500 ml',pr:2.5,t:'lila'},lata:{n:'Leche evaporada 400 g',pr:4.9,t:'cielo'},yogurt:{n:'Yogurt de fresa 1 L',pr:8.9,t:'rosa'},galleta:{n:'Galletas de soda',pr:3.6,t:'mant'},manzana:{n:'Manzana delicia',pr:6.5,t:'menta'}};
+const S0=()=>({combo:1,botella:2,yogurt:1});
+let q=S0(), entrega='domicilio', pago='efectivo', ses='no', ver='comparar';
+const MIN=30, ENVIO=4, COMBO={n:'Combo Desayuno',inc:['lata','galleta','manzana'],pr:21.9,orig:24.8};
+const money=n=>'S/ '+n.toFixed(2);
+const IC={back:'<path d="M19 12H5M11 6l-6 6 6 6"/>',plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',pin:'<path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',cash:'<rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="12" cy="12" r="2.5"/>',bike:'<circle cx="6" cy="16" r="3"/><circle cx="18" cy="16" r="3"/><path d="M6 16l4-8h4l4 8M10 8H8"/>',store:'<path d="M4 9l1-5h14l1 5M4 9v11h16V9M4 9a3 3 0 0 0 5.3 1.8A3 3 0 0 0 14.7 10.8 3 3 0 0 0 20 9"/>',gift:'<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M8 8a2.5 2.5 0 1 1 0-5c2 0 4 3 4 5M16 8a2.5 2.5 0 1 0 0-5c-2 0-4 3-4 5"/>',bag:'<path d="M6 8h12l1 12H5zM9 8a3 3 0 0 1 6 0"/>',card:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/>',phone:'<rect x="7" y="3" width="10" height="18" rx="2"/>',chev:'<path d="M6 9l6 6 6-6"/>'};
+const ic=k=>`<svg class="ic" viewBox="0 0 24 24">${IC[k]}</svg>`;
+function foto(k){const f={botella:'<rect x="52" y="14" width="16" height="9" rx="2.5" fill="#e11d48"/><path d="M54 23h12v14c0 4 11 8 11 18v44a6 6 0 0 1-6 6H49a6 6 0 0 1-6-6V55c0-10 11-14 11-18z" fill="#f2a516"/><rect x="43" y="62" width="34" height="24" fill="#fff" opacity=".92"/>',lata:'<rect x="38" y="24" width="44" height="82" rx="7" fill="#f3f6fc" stroke="#c9d4ea" stroke-width="1.5"/><rect x="38" y="48" width="44" height="34" fill="#3b6fd8"/><circle cx="60" cy="65" r="11" fill="#fff"/>',yogurt:'<rect x="50" y="14" width="20" height="11" rx="3" fill="#fff" stroke="#e2d7ee"/><path d="M52 25h16v10c0 4 11 6 11 17v50a6 6 0 0 1-6 6H47a6 6 0 0 1-6-6V52c0-11 11-13 11-17z" fill="#f6b3c6"/><rect x="41" y="60" width="38" height="28" fill="#fff"/><circle cx="60" cy="74" r="8" fill="#e5446d"/>',galleta:'<rect x="30" y="38" width="60" height="66" rx="6" fill="#d8791f"/><circle cx="60" cy="74" r="19" fill="#f6dba0"/><circle cx="60" cy="74" r="15" fill="#efc77a"/>',manzana:'<path d="M60 36c-8-6-26-3-28 18-2 24 12 46 28 46s30-22 28-46c-2-21-20-24-28-18z" fill="#d92d3a"/><path d="M63 28c8-8 18-6 20-4-2 8-12 12-20 4z" fill="#3aa05c"/>'}[k];return `<svg viewBox="0 0 120 120"><rect width="120" height="120" fill="#fff"/><ellipse cx="60" cy="108" rx="30" ry="4.5" fill="#1c1830" opacity=".13"/>${f}</svg>`}
+const subtotal=()=>Object.entries(q).reduce((a,[k,n])=>a+(k==='combo'?COMBO.pr:PR[k].pr)*n,0);
+const unidades=()=>Object.values(q).reduce((a,b)=>a+b,0);
+const envio=()=>entrega==='domicilio'?ENVIO:0;
+const total=()=>subtotal()+envio();
+const faltaMin=()=>Math.max(0,MIN-subtotal());
+
+function stepA(k){return `<div class="stp"><button data-m="${k}">${ic('minus')}</button><span>${q[k]}</span><button class="m" data-p="${k}">${ic('plus')}</button></div>`}
+function stepN(k){return `<div class="pill"><button data-m="${k}">${ic('minus')}</button><span>${q[k]}</span><button data-p="${k}">${ic('plus')}</button></div>`}
+function itemsA(){return Object.keys(q).map(k=>k==='combo'
+ ?`<div class="it"><span class="ph gift">${ic('gift')}</span><div class="tx"><b>Combo: ${COMBO.n}</b>${stepA(k)}</div><span class="pr">${money(COMBO.pr*q.combo)}</span></div>`
+ :`<div class="it"><span class="ph" style="--t:${TONO[PR[k].t]}">${foto(k)}</span><div class="tx"><b>${PR[k].n}</b><span>${money(PR[k].pr)} c/u</span>${stepA(k)}</div><span class="pr">${money(PR[k].pr*q[k])}</span></div>`).join('')}
+function itemsN(){return Object.keys(q).map(k=>k==='combo'
+ ?`<div class="it"><span class="ph multi" style="--t:#ece0fd">${COMBO.inc.map(foto).join('')}</span><div class="tx"><b>${COMBO.n}</b><span class="tag">Ahorras ${money((COMBO.orig-COMBO.pr)*q.combo)}</span><br>${stepN(k)}</div><span class="pr"><s>${money(COMBO.orig*q.combo)}</s>${money(COMBO.pr*q.combo)}</span></div>`
+ :`<div class="it"><span class="ph" style="--t:${TONO[PR[k].t]}">${foto(k)}</span><div class="tx"><b>${PR[k].n}</b><span>${money(PR[k].pr)} c/u</span><br>${stepN(k)}</div><span class="pr">${money(PR[k].pr*q[k])}</span></div>`).join('')}
+function header(){return `<div class="hd"><button class="back">${ic('back')}</button><h2>Tu pedido</h2><button class="vac" data-vac>Vaciar</button></div>`}
+const store=`<div class="store"><span class="lg">B</span><div><b>Bodega Demo</b><span>Abierto ahora</span></div></div>`;
+function dirRow(){return entrega==='domicilio'
+ ?`<button class="row"><span class="ico">${ic('pin')}</span><span class="tx"><small>Entregar en</small><b>Av. Los Álamos 245, San Miguel</b><span>999 888 777</span></span><span class="go">Cambiar</span></button>`
+ :`<div class="row"><span class="ico">${ic('store')}</span><span class="tx"><small>Retiras en</small><b>Bodega Demo</b><span>Av. Los Álamos 245, San Miguel</span></span><span class="go">Ver mapa</span></div>`}
+const horaRow=()=>`<div class="row"><span class="ico">${ic('clock')}</span><span class="tx"><b>Lo antes posible</b><span>${entrega==='domicilio'?'El local te confirma el tiempo por WhatsApp':'Te avisamos cuando esté listo'}</span></span></div>`;
+const pagoRow=()=>entrega==='domicilio'?`<div class="row"><span class="ico">${ic('cash')}</span><span class="tx"><b>Efectivo</b><span>Pagas al recibir</span></span><span class="go">${ic('chev')}</span></div><div class="pay">${[['efectivo','Efectivo'],['yape','Yape'],['tarjeta','Tarjeta']].map(([i,t])=>`<button class="${pago===i?'on':''}" data-pago="${i}">${t}</button>`).join('')}</div>`:`<div class="row"><span class="ico">${ic('cash')}</span><span class="tx"><b>Pagas en caja</b><span>Efectivo, Yape o tarjeta</span></span></div>`;
+const seg=(cls='')=>`<div class="seg ${cls}">${[['domicilio','Delivery','bike',money(ENVIO)],['retiro','Retiro','store','Gratis']].map(([i,t,ico,d])=>`<button class="${entrega===i?'on':''}" data-ent="${i}"><b>${ic(ico)} ${t}</b><span>${d}</span></button>`).join('')}</div>`;
+function resumen(){return `<div class="card sum"><div class="l"><span>Productos (${unidades()})</span><b>${money(subtotal())}</b></div>${entrega==='domicilio'?`<div class="l"><span>Envío a domicilio</span><b>${money(ENVIO)}</b></div>`:''}<div class="t"><span>${entrega==='domicilio'?'Total a pagar':'Total'}</span><b>${money(total())}</b></div></div>`}
+function btnPagar(){return ses==='si'?`<button class="btn">${ic('bag')} Realizar pedido</button>`:`<button class="btn"><span class="gg">G</span> Continuar con Google</button>`}
+
+function actual(){return `<div class="phone"><div class="scroll" style="padding-bottom:110px"><div class="stack">${header()}${store}${seg()}
+ <div class="card">${dirRow()}${horaRow()}${pagoRow()}</div>
+ <div class="card"><div class="sec-h"><b>Tu pedido</b><a>Agregar más</a></div>${itemsA()}</div>
+ ${resumen()}
+ <p style="font-size:11px;color:var(--mut);padding:0 4px">${entrega==='domicilio'?'Zona de reparto: San Miguel. ':''}Pedido mínimo: ${money(MIN)}.</p></div></div>
+ <div class="cta-a"><div class="t"><small>Total</small><b>${money(total())}</b></div>${btnPagar()}</div></div>`}
+function nuevo(){const f=faltaMin(), ok=f===0, pct=Math.min(100,subtotal()/MIN*100);
+ return `<div class="phone nv"><div class="scroll"><div class="stack">${header()}
+ <div class="card prog ${ok?'ok':''}"><div class="tp"><b>${ok?'¡Llegaste al pedido mínimo!':'Te faltan '+money(f)}</b><span>${money(subtotal())} de ${money(MIN)}</span></div><div class="rail"><i style="width:${pct}%"></i></div></div>
+ <div class="card"><div class="sec-h"><b>Tu pedido · ${unidades()}</b><a>Agregar más</a></div>${itemsN()}</div>
+ <div class="card ent">${seg()}${dirRow()}${horaRow()}${pagoRow()}</div>
+ ${resumen()}</div></div>
+ ${!ok?`<div class="alerta" style="position:absolute;left:18px;right:18px;bottom:90px;z-index:21;font-size:12px;background:#fff4e0;color:#b45309;border-radius:14px;padding:8px 12px;box-shadow:0 8px 20px -10px rgba(180,83,9,.5)">Agrega ${money(f)} más para poder hacer tu pedido</div>`:''}
+ <div class="dockp"><div class="tt"><small>Total</small><b>${money(total())}</b></div>${ok?btnPagar():btnPagar().replace('class="btn"','class="btn" style="opacity:.45"')}</div></div>`}
+const col=(l,b,n,h)=>`<div class="col"><div class="etq">${l}<i class="${n?'n':''}">${b}</i></div>${h}</div>`;
+function render(){const st=document.getElementById('stage');const sc=[...st.querySelectorAll('.scroll')].map(s=>s.scrollTop);
+ st.innerHTML=ver==='nuevo'?col('Ver pedido nuevo','propuesta',1,nuevo()):ver==='actual'?col('Ver pedido actual','hoy',0,actual()):col('Actual','hoy',0,actual())+col('Nuevo','propuesta',1,nuevo());
+ st.querySelectorAll('.scroll').forEach((s,i)=>s.scrollTop=sc[i]||0)}
+document.getElementById('stage').addEventListener('click',e=>{
+ const p=e.target.closest('[data-p]'),m=e.target.closest('[data-m]'),en=e.target.closest('[data-ent]'),pg=e.target.closest('[data-pago]'),v=e.target.closest('[data-vac]');
+ if(p){q[p.dataset.p]++;render()}else if(m){const k=m.dataset.m;q[k]--;if(q[k]<=0)delete q[k];render()}
+ else if(en){entrega=en.dataset.ent;render()}else if(pg){pago=pg.dataset.pago;render()}else if(v){q={};render()}});
+document.querySelectorAll('.tog').forEach(g=>g.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;g.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));if(g.dataset.k==='ver')ver=b.dataset.v;else ses=b.dataset.v;render()}));
+document.getElementById('reset').onclick=()=>{q=S0();entrega='domicilio';pago='efectivo';render()};
+render();
+</script>
+</body>
+</html>

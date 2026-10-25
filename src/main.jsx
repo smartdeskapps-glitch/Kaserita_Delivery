@@ -4234,7 +4234,7 @@ function App() {
 
       {carritoAbierto && (
         <div className="fixed inset-0 z-30 flex flex-col bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">
-          <div className="max-w-md w-full mx-auto flex flex-col h-full min-h-0">
+          <div className="relative max-w-md w-full mx-auto flex flex-col h-full min-h-0">
             <div className="flex items-center gap-3 px-4 pt-4 pb-2.5">
               <button
                 onClick={() => setCarritoAbierto(false)}
@@ -4251,7 +4251,7 @@ function App() {
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-3 [&>*]:shrink-0">
+            <div className="flex-1 overflow-y-auto px-4 pb-36 flex flex-col gap-3 [&>*]:shrink-0">
               {itemsCarrito.length === 0 && itemsCarritoCombos.length === 0 ? (
                 <div className="text-center py-16 space-y-3">
                   <i className="fa-solid fa-bag-shopping text-3xl text-[#cfc4ea] block"></i>
@@ -4279,6 +4279,76 @@ function App() {
                         <p className="text-xs text-[#78729a]">{estadoHorario.abierto ? "Abierto ahora" : "Cerrado ahora"}</p>
                       )}
                     </div>
+                  </div>
+
+                  {esDomicilio && pedidoMinimo > 0 && (
+                    <div className={`kped-prog ${totalCarrito >= pedidoMinimo ? "kped-prog-ok" : ""}`}>
+                      <div className="kped-prog-tx">
+                        <b>{totalCarrito >= pedidoMinimo ? "¡Llegaste al pedido mínimo!" : `Te faltan ${formatoMoneda(pedidoMinimo - totalCarrito)}`}</b>
+                        <span>{formatoMoneda(totalCarrito)} de {formatoMoneda(pedidoMinimo)}</span>
+                      </div>
+                      <div className="kped-prog-riel"><i style={{ width: `${Math.min(100, (totalCarrito / pedidoMinimo) * 100)}%` }}></i></div>
+                    </div>
+                  )}
+
+                  <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
+                    <div className="flex items-center justify-between px-3.5 pt-3.5 pb-1">
+                      <p className="text-[15px] font-bold text-[#1c1830]">Tu pedido · {totalUnidades}</p>
+                      <button onClick={() => setCarritoAbierto(false)} className="text-[12.5px] font-bold text-[#6105dc]">
+                        Agregar más
+                      </button>
+                    </div>
+                    {itemsCarritoCombos.map((it) => {
+                      // Fotos de lo que incluye el combo y lo que se ahorra frente a comprarlo suelto.
+                      const fotosCombo = (it.items || []).map((x) => productosPorId[x.producto_id]?.foto_url).filter(Boolean).slice(0, 3);
+                      const original = (it.items || []).reduce((acc, x) => acc + x.cantidad * (productosPorId[x.producto_id]?.precio_venta || 0), 0);
+                      const ahorroCombo = original - it.precio_venta;
+                      return (
+                        <div key={`combo-${it.id}`} className="kped-it">
+                          <span className="kped-ph kped-ph-combo">
+                            {fotosCombo.length > 0 ? (
+                              fotosCombo.map((u, i) => <img key={i} src={u} alt="" />)
+                            ) : (
+                              <i className="fa-solid fa-gift"></i>
+                            )}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="kped-nombre">Combo: {it.nombre}</p>
+                            {ahorroCombo > 0 && <span className="kped-ahorro">Ahorras {formatoMoneda(ahorroCombo * it.cantidad)}</span>}
+                            <div className="kped-pil">
+                              <button onClick={() => quitarComboDelCarrito(it)} aria-label="Quitar uno"><i className="fa-solid fa-minus"></i></button>
+                              <span>{it.cantidad}</span>
+                              <button onClick={() => agregarComboAlCarrito(it)} aria-label="Agregar uno"><i className="fa-solid fa-plus"></i></button>
+                            </div>
+                          </div>
+                          <span className="kped-pr">
+                            {ahorroCombo > 0 && <s>{formatoMoneda(original * it.cantidad)}</s>}
+                            {formatoMoneda(it.precio_venta * it.cantidad)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {itemsCarrito.map((it) => (
+                      <div key={it.id} className="kped-it">
+                        <span className="kped-ph" style={{ background: tonoCategoria(it.categoria).t }}>
+                          {it.foto_url ? (
+                            <img src={it.foto_url} alt={tituloProducto(it.descripcion)} className="kped-foto" />
+                          ) : (
+                            <i className="fa-solid fa-image text-[#cfc4ea]"></i>
+                          )}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="kped-nombre">{tituloProducto(it.descripcion)}</p>
+                          <p className="text-xs text-[#78729a]">{formatoMoneda(it.precio_venta)} c/u</p>
+                          <div className="kped-pil">
+                            <button onClick={() => quitarDelCarrito(it)} aria-label="Quitar uno"><i className="fa-solid fa-minus"></i></button>
+                            <span>{it.cantidad}</span>
+                            <button onClick={() => agregarAlCarrito(it)} aria-label="Agregar uno"><i className="fa-solid fa-plus"></i></button>
+                          </div>
+                        </div>
+                        <span className="kped-pr">{formatoMoneda(it.precio_venta * it.cantidad)}</span>
+                      </div>
+                    ))}
                   </div>
 
                   {!esBarberia && (
@@ -4547,63 +4617,6 @@ function App() {
                     )}
                   </div>
 
-                  <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
-                    <div className="flex items-center justify-between px-3.5 pt-3.5 pb-1">
-                      <p className="text-[15px] font-bold text-[#1c1830]">Tu pedido</p>
-                      <button onClick={() => setCarritoAbierto(false)} className="text-[12.5px] font-bold text-[#6105dc]">
-                        Agregar más
-                      </button>
-                    </div>
-                    {itemsCarritoCombos.map((it) => (
-                      <div key={`combo-${it.id}`} className="flex items-center gap-3 px-3.5 py-2.5 border-t border-[#efe6fc] first:border-t-0">
-                        <span className="w-[54px] h-[54px] rounded-2xl bg-[#f4eefe] text-[#6105dc] shrink-0 flex items-center justify-center">
-                          <i className="fa-solid fa-gift text-lg"></i>
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-[#1c1830] leading-tight line-clamp-2">Combo: {it.nombre}</p>
-                          <div className="flex items-center gap-1.5 mt-1.5">
-                            <button onClick={() => quitarComboDelCarrito(it)} className="w-[26px] h-[26px] rounded-full bg-[#f4eefe] text-[#4d04b0] flex items-center justify-center">
-                              <i className="fa-solid fa-minus text-[10px]"></i>
-                            </button>
-                            <span className="min-w-[16px] text-center text-[13px] font-bold">{it.cantidad}</span>
-                            <button onClick={() => agregarComboAlCarrito(it)} className="w-[26px] h-[26px] rounded-full bg-[#6105dc] text-white flex items-center justify-center">
-                              <i className="fa-solid fa-plus text-[10px]"></i>
-                            </button>
-                          </div>
-                        </div>
-                        <span className="text-sm font-bold tabular-nums shrink-0">{formatoMoneda(it.precio_venta * it.cantidad)}</span>
-                      </div>
-                    ))}
-                    {itemsCarrito.map((it) => (
-                      <div key={it.id} className="flex items-center gap-3 px-3.5 py-2.5 border-t border-[#efe6fc] first:border-t-0">
-                        <span
-                          className="w-[54px] h-[54px] rounded-2xl overflow-hidden shrink-0 flex items-center justify-center"
-                          style={{ background: tonoCategoria(it.categoria).t }}
-                        >
-                          {it.foto_url ? (
-                            <img src={it.foto_url} alt={tituloProducto(it.descripcion)} className="w-full h-full object-contain p-1 mix-blend-multiply" />
-                          ) : (
-                            <i className="fa-solid fa-image text-[#cfc4ea]"></i>
-                          )}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-[#1c1830] leading-tight line-clamp-2">{tituloProducto(it.descripcion)}</p>
-                          <p className="text-xs text-[#78729a]">{formatoMoneda(it.precio_venta)} c/u</p>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            <button onClick={() => quitarDelCarrito(it)} className="w-[26px] h-[26px] rounded-full bg-[#f4eefe] text-[#4d04b0] flex items-center justify-center">
-                              <i className="fa-solid fa-minus text-[10px]"></i>
-                            </button>
-                            <span className="min-w-[16px] text-center text-[13px] font-bold">{it.cantidad}</span>
-                            <button onClick={() => agregarAlCarrito(it)} className="w-[26px] h-[26px] rounded-full bg-[#6105dc] text-white flex items-center justify-center">
-                              <i className="fa-solid fa-plus text-[10px]"></i>
-                            </button>
-                          </div>
-                        </div>
-                        <span className="text-sm font-bold tabular-nums shrink-0">{formatoMoneda(it.precio_venta * it.cantidad)}</span>
-                      </div>
-                    ))}
-                  </div>
-
                   <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] px-3.5 py-3 flex flex-col gap-1.5">
                     <div className="flex items-center justify-between text-[13px] text-[#78729a]">
                       <span>Productos ({totalUnidades})</span>
@@ -4637,44 +4650,46 @@ function App() {
               )}
             </div>
 
-            <div className="px-4 pt-3 pb-4 bg-white rounded-t-[26px] border-t border-[#efe6fc]">
-              {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
-              {problemaEntrega && (itemsCarrito.length > 0 || itemsCarritoCombos.length > 0) && (
-                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-2xl px-3 py-2 mb-2.5">{problemaEntrega}</p>
-              )}
-              <div className="flex items-center gap-3.5">
-                <div className="flex flex-col min-w-[78px]">
-                  <span className="text-[11.5px] text-[#78729a]">Total</span>
-                  <span className="text-[21px] font-extrabold tracking-tight tabular-nums text-[#1c1830] leading-tight">{formatoMoneda(totalConEnvio)}</span>
-                </div>
-                {clienteSesion ? (
-                  <button
-                    onClick={confirmarPedido}
-                    disabled={(itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) || enviando || !!problemaEntrega}
-                    className="flex-1 h-[54px] rounded-full bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white font-bold text-[15px] disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {enviando ? (requiereCita ? "Enviando reserva..." : "Enviando pedido...") : requiereCita ? (
-                      <>
-                        <i className="fa-regular fa-calendar-check text-lg"></i> Reservar cita
-                      </>
-                    ) : (
-                      <>
-                        <i className="fa-solid fa-bag-shopping text-lg"></i> Realizar pedido
-                      </>
-                    )}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={iniciarConGoogle}
-                    disabled={itemsCarrito.length === 0 && itemsCarritoCombos.length === 0}
-                    className="flex-1 h-[54px] rounded-full bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2 px-3"
-                  >
-                    <span className="bg-white rounded-full w-6 h-6 flex items-center justify-center shrink-0"><IconGoogle /></span>
-                    Continuar con Google
-                  </button>
+            {(error || (problemaEntrega && (itemsCarrito.length > 0 || itemsCarritoCombos.length > 0))) && (
+              <div className="kped-avisos">
+                {error && <p className="kped-aviso kped-aviso-error">{error}</p>}
+                {problemaEntrega && (itemsCarrito.length > 0 || itemsCarritoCombos.length > 0) && (
+                  <p className="kped-aviso">{problemaEntrega}</p>
                 )}
               </div>
+            )}
+            <div className="kped-dock">
+              <div className="kped-total">
+                <small>Total</small>
+                <b>{formatoMoneda(totalConEnvio)}</b>
+              </div>
+              {clienteSesion ? (
+                <button
+                  onClick={confirmarPedido}
+                  disabled={(itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) || enviando || !!problemaEntrega}
+                  className="kped-btn"
+                >
+                  {enviando ? (requiereCita ? "Enviando reserva..." : "Enviando pedido...") : requiereCita ? (
+                    <>
+                      <i className="fa-regular fa-calendar-check text-lg"></i> Reservar cita
+                    </>
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-bag-shopping text-lg"></i> Realizar pedido
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={iniciarConGoogle}
+                  disabled={itemsCarrito.length === 0 && itemsCarritoCombos.length === 0}
+                  className="kped-btn"
+                >
+                  <span className="bg-white rounded-full w-6 h-6 flex items-center justify-center shrink-0"><IconGoogle /></span>
+                  Continuar con Google
+                </button>
+              )}
             </div>
           </div>
         </div>
