@@ -269,67 +269,89 @@ function armarMensajeReserva({ bodegaNombre, items, total, codigo, barbero, fech
   ].join("\n");
 }
 
+// Tono del panel de la tarjeta según la categoría: las categorías las pone cada
+// negocio, así que el tono sale de un hash estable del nombre (la misma
+// categoría siempre queda del mismo color). Sin categoría: lila de marca.
+const TONOS_TARJETA = [
+  { t: "#ece0fd", td: "#6a3fc4" },
+  { t: "#dfeafd", td: "#3b66b8" },
+  { t: "#fde8d6", td: "#c0662a" },
+  { t: "#fff1c7", td: "#a97c10" },
+  { t: "#dcf3e6", td: "#238458" },
+  { t: "#fde3ea", td: "#c0405f" },
+];
+function tonoCategoria(categoria) {
+  if (!categoria) return TONOS_TARJETA[0];
+  let h = 0;
+  for (const ch of String(categoria).toLowerCase()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return TONOS_TARJETA[h % TONOS_TARJETA.length];
+}
+
 function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onVerFoto, esFavorito, onToggleFavorito }) {
   const stockPoco = producto.stock_disponible != null && producto.stock_disponible <= 3;
+  const tono = tonoCategoria(producto.categoria);
+  // Franja inferior del panel: un solo lugar para el aviso que importa.
+  const aviso = stockPoco
+    ? { texto: `Quedan ${producto.stock_disponible}`, clase: "kc-banda-warn", icono: "fa-triangle-exclamation" }
+    : producto.es_destacado
+      ? { texto: "Destacado", clase: "", icono: "fa-star" }
+      : null;
   return (
-    <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] p-1.5 flex flex-col gap-1.5">
-      <div
-        onClick={producto.foto_url ? () => onVerFoto(producto) : undefined}
-        className={`relative aspect-square rounded-[16px] bg-[#f4eefe] flex items-center justify-center overflow-hidden ${producto.foto_url ? "cursor-zoom-in" : ""}`}
-      >
-        {stockPoco && (
-          <span className="absolute bottom-1 left-1 z-10 bg-amber-100 text-amber-700 text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-            Pocas unidades
-          </span>
-        )}
+    <article
+      className={`kc ${cantidadEnCarrito > 0 ? "kc-en" : ""}`}
+      style={{ "--t": tono.t, "--td": tono.td }}
+    >
+      <div className="kc-fw">
+        <div
+          onClick={producto.foto_url ? () => onVerFoto(producto) : undefined}
+          className={`kc-panel ${producto.foto_url ? "cursor-zoom-in" : ""}`}
+        >
+          {producto.foto_url ? (
+            <div className="kc-foto">
+              <img src={producto.foto_url} alt={tituloProducto(producto.descripcion)} loading="lazy" />
+            </div>
+          ) : (
+            <i className="fa-solid fa-image kc-sinfoto"></i>
+          )}
+          {aviso && (
+            <div className={`kc-banda ${aviso.clase}`}>
+              <i className={`fa-solid ${aviso.icono}`}></i>
+              {aviso.texto}
+            </div>
+          )}
+        </div>
+        <div className="kc-precio"><small>S/</small>{Number(producto.precio_venta).toFixed(2)}</div>
         {onToggleFavorito && (
           <button
             onClick={(e) => { e.stopPropagation(); onToggleFavorito(producto.id); }}
             aria-label={esFavorito ? "Quitar de favoritos" : "Agregar a favoritos"}
-            className="absolute top-1 right-1 z-10 w-6 h-6 rounded-full bg-white/90 backdrop-blur flex items-center justify-center active:scale-90 transition"
+            className={`kc-circ ${esFavorito ? "kc-circ-on" : ""}`}
           >
-            <i className={`${esFavorito ? "fa-solid text-[#6105dc]" : "fa-regular text-[#a29cbd]"} fa-heart text-[11px]`}></i>
+            <i className={`${esFavorito ? "fa-solid" : "fa-regular"} fa-heart`}></i>
           </button>
         )}
-        {producto.foto_url ? (
-          <img src={producto.foto_url} alt={tituloProducto(producto.descripcion)} className="w-full h-full object-cover" />
+      </div>
+      <div className="kc-body">
+        <h3>{tituloProducto(producto.descripcion)}</h3>
+        {producto.categoria && (
+          <div className="kc-chips"><span className="kc-chip">{producto.categoria}</span></div>
+        )}
+      </div>
+      <div className="kc-act">
+        {cantidadEnCarrito === 0 ? (
+          <button onClick={() => onAgregar(producto)} className="kc-add">
+            Agregar
+            <u><i className="fa-solid fa-plus"></i></u>
+          </button>
         ) : (
-          <i className="fa-solid fa-image text-[#cfc4ea] text-2xl"></i>
+          <div className="kc-st">
+            <button onClick={() => onQuitar(producto)} aria-label="Quitar uno"><i className="fa-solid fa-minus"></i></button>
+            <span>{cantidadEnCarrito}</span>
+            <button onClick={() => onAgregar(producto)} className="kc-mas" aria-label="Agregar uno"><i className="fa-solid fa-plus"></i></button>
+          </div>
         )}
       </div>
-      <p className="px-1 text-[11.5px] font-semibold text-[#1c1830] leading-tight line-clamp-2 min-h-[28px]">
-        {tituloProducto(producto.descripcion)}
-      </p>
-      <div className="px-1 pb-0.5 flex items-center justify-between gap-1">
-        <span className="text-[13px] font-bold text-[#1c1830] tabular-nums">{formatoMoneda(producto.precio_venta)}</span>
-        {cantidadEnCarrito === 0 && (
-          <button
-            onClick={() => onAgregar(producto)}
-            aria-label="Agregar"
-            className="w-7 h-7 rounded-full bg-[#6105dc] text-white flex items-center justify-center active:scale-90 shrink-0"
-          >
-            <i className="fa-solid fa-plus text-[10px]"></i>
-          </button>
-        )}
-      </div>
-      {cantidadEnCarrito > 0 && (
-        <div className="flex items-center justify-between bg-emerald-50 rounded-full p-0.5">
-          <button
-            onClick={() => onQuitar(producto)}
-            className="w-6 h-6 rounded-full bg-white text-emerald-700 flex items-center justify-center active:scale-90"
-          >
-            <i className="fa-solid fa-minus text-[9px]"></i>
-          </button>
-          <span className="text-xs font-bold text-emerald-700">{cantidadEnCarrito}</span>
-          <button
-            onClick={() => onAgregar(producto)}
-            className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center active:scale-90"
-          >
-            <i className="fa-solid fa-plus text-[9px]"></i>
-          </button>
-        </div>
-      )}
-    </div>
+    </article>
   );
 }
 

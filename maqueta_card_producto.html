@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Card de producto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --p:#6105dc; --p-dark:#4d04b0; --p-soft:#f4eefe; --p-line:#e4d6fb; --p-ring:#efe6fc;
+  --ink:#1c1830; --mut:#78729a; --line:#ece7f5;
+  --ok:#059669; --ok-soft:#e8f8f1; --warn:#b45309; --warn-soft:#fff4e0; --bad:#e11d48; --bad-soft:#fff0f3;
+  --f-head:'Plus Jakarta Sans',system-ui,sans-serif; --f-body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{font-family:var(--f-body);color:var(--ink);background:#e9e4f5;-webkit-font-smoothing:antialiased;min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+h3,p{margin:0}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* ---- barra de la maqueta (no es parte del producto) ---- */
+.bar{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;justify-content:space-between;padding:10px 20px;background:#1c1830;color:#fff;font-size:12.5px;position:sticky;top:0;z-index:50}
+.bar b{font-family:var(--f-head);font-size:13.5px}
+.bar .grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bar .tog{display:inline-flex;background:rgba(255,255,255,.1);border-radius:999px;padding:3px}
+.bar .tog button{color:#d9d2ee;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600}
+.bar .tog button.on{background:#fff;color:#1c1830}
+.bar .reset{border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:999px;padding:5px 13px;font-size:12px}
+
+.stage{display:flex;flex-wrap:wrap;gap:26px;justify-content:center;align-items:flex-start;padding:26px 14px 24px}
+.col{display:flex;flex-direction:column;gap:8px;min-width:0}
+.etq{font-family:var(--f-head);font-weight:700;font-size:12.5px;color:#4d3f86;display:flex;align-items:center;gap:8px;padding-left:6px}
+.etq i{font-style:normal;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:#fff;color:var(--mut)}
+.etq i.nuevo{background:var(--p);color:#fff}
+
+/* ---- marcos ---- */
+.phone{width:390px;max-width:100%;background:#faf7ff;border-radius:34px;border:1px solid #fff;box-shadow:0 30px 70px -22px rgba(60,20,120,.4);overflow:hidden}
+.ph-top{padding:16px 16px 10px;display:flex;flex-direction:column;gap:10px}
+.ph-brand{display:flex;align-items:center;justify-content:space-between}
+.ph-brand b{font-family:var(--f-head);font-size:17px;font-weight:800;color:var(--p)}
+.ph-brand span{font-size:11px;color:var(--mut);display:flex;align-items:center;gap:5px}
+.ph-brand span:before{content:"";width:7px;height:7px;border-radius:50%;background:#16a34a}
+.ph-busca{display:flex;align-items:center;gap:8px;background:#fff;border-radius:999px;padding:9px 14px;font-size:13px;color:#a29cbd;box-shadow:0 0 0 1px var(--p-ring)}
+.ph-cats{display:flex;gap:6px;overflow:hidden}
+.ph-cats span{font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:999px;background:#fff;color:#5b5478;white-space:nowrap;box-shadow:0 0 0 1px var(--p-ring)}
+.ph-cats span.on{background:var(--p);color:#fff;box-shadow:none}
+.ph-sec{padding:6px 16px 8px;font-family:var(--f-head);font-weight:800;font-size:15px}
+.ph-grid{display:grid;gap:10px;padding:0 12px 18px}
+
+.pos{width:min(900px,100%);background:linear-gradient(180deg,#dcd7f4 0%,#e9e4f8 55%,#efe9fb 100%);border-radius:30px;padding:14px;box-shadow:0 30px 70px -22px rgba(60,20,120,.4)}
+.pos-head{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 12px}
+.pos-head b{font-family:var(--f-head);font-size:16px;font-weight:800}
+.pos-head span{font-size:11px;font-weight:700;color:var(--ok);background:#fff;border-radius:999px;padding:5px 12px}
+.pos-panel{background:#fff;border-radius:24px;padding:14px}
+.pos-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.pos-tabs span{font-size:12px;font-weight:600;padding:6px 13px;border-radius:999px;background:var(--p-soft);color:#5b5478}
+.pos-tabs span.on{background:var(--p);color:#fff}
+.pos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(188px,1fr));gap:12px}
+
+/* =====================  TARJETA ACTUAL (delivery)  ===================== */
+.da{background:#fff;border-radius:22px;box-shadow:0 0 0 1px var(--p-ring);padding:6px;display:flex;flex-direction:column;gap:6px}
+.da-f{position:relative;aspect-ratio:1;border-radius:16px;background:#f4eefe;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.da-f>svg:not(.ic){width:100%;height:100%}
+.da-poco{position:absolute;left:4px;bottom:4px;background:#fef3c7;color:#b45309;font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px}
+.da-fav{position:absolute;right:4px;top:4px;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:11px;color:#a29cbd}
+.da p{padding:0 4px;font-size:11.5px;font-weight:600;line-height:1.2;min-height:28px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.da-pie{padding:0 4px 2px;display:flex;align-items:center;justify-content:space-between;gap:4px}
+.da-pie b{font-size:13px;font-weight:700}
+.da-mas{width:28px;height:28px;border-radius:50%;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px}
+.da-st{display:flex;align-items:center;justify-content:space-between;background:#ecfdf5;border-radius:999px;padding:2px}
+.da-st span{font-size:12px;font-weight:700;color:#047857}
+.da-st button{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;background:#fff;color:#047857}
+.da-st button.mas{background:#059669;color:#fff}
+
+/* =====================  TARJETA ACTUAL (POS)  ===================== */
+.pa{position:relative;border-radius:28px;padding:10px;display:flex;flex-direction:column;border:1px solid rgba(255,255,255,.8);background:linear-gradient(135deg,#f1eafd,#fbfaff);cursor:pointer}
+.pa.en{background:linear-gradient(135deg,#d9f5e5,#f6fffa)}
+.pa-f{position:relative;aspect-ratio:4/3;border-radius:20px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.05);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.pa-f svg:not(.ic){height:100%;width:auto;padding:8px}
+.pa-f .sin{opacity:.4;filter:grayscale(1)}
+.pa-tag{position:absolute;top:8px;right:8px;font-size:11px;font-weight:700;color:#fff;background:#059669;padding:3px 9px;border-radius:999px;display:flex;gap:4px;align-items:center}
+.pa-combo{position:absolute;top:8px;left:8px;width:28px;height:28px;border-radius:50%;background:var(--p);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center}
+.pa-txt{padding:10px 4px 0}
+.pa-txt small{display:block;font-size:11px;font-weight:600;color:rgba(0,0,0,.45)}
+.pa-txt h3{font-size:14px;font-weight:600;line-height:1.25}
+.pa-pie{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 8px;padding:8px 4px 6px;margin-top:auto}
+.pa-pie b{font-size:22px;font-weight:700;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.pa-pie b small{font-size:12px;font-weight:600;color:#78716c;margin-right:2px}
+.pa-st{font-size:12px;display:flex;align-items:center;gap:6px;color:#57534e}
+.pa-st i{width:6px;height:6px;border-radius:50%;background:#10b981}
+.pa-st.bajo{color:#b45309}.pa-st.bajo i{background:#f59e0b}
+.pa-st.sin{color:#e11d48}.pa-st.sin i{background:#f43f5e}
+
+/* =====================  TARJETA NUEVA  ===================== */
+.kc{container-type:inline-size;container-name:kc;position:relative;background:#fff;border-radius:26px;padding:8px;display:flex;flex-direction:column;gap:8px;box-shadow:0 0 0 1px var(--p-ring),0 10px 24px -16px rgba(97,5,220,.28);transition:transform .25s ease}
+.kc.pos-card{cursor:pointer}
+.kc.pos-card:hover{transform:translateY(-2px)}
+.kc-fw{position:relative}
+.kc-panel{position:relative;aspect-ratio:1/1;border-radius:20px;background:var(--t);overflow:hidden;display:flex;align-items:center;justify-content:center;padding-bottom:22px}
+.pos-card .kc-panel{aspect-ratio:4/3.5}
+.kc-panel .foto{width:78%;height:78%;display:flex;align-items:center;justify-content:center}
+.kc-panel .foto svg{width:100%;height:100%}
+.fundir .foto{mix-blend-mode:multiply}
+.kc-panel.sin .foto{opacity:.45;filter:grayscale(1)}
+.kc-panel .sinfoto{color:var(--td);opacity:.55;font-size:34px;display:flex;padding-bottom:6px}
+.kc-banda{position:absolute;left:0;right:0;bottom:0;height:24px;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--td);color:#fff;font-size:10.5px;font-weight:600;letter-spacing:.01em;white-space:nowrap}
+.kc-banda.warn{background:#b45309}.kc-banda.bad{background:#be123c}
+.kc-banda .ic{font-size:11px}
+.kc-precio{position:absolute;top:0;right:0;background:#fff;padding:6px 4px 8px 12px;border-bottom-left-radius:18px;font-family:var(--f-head);font-weight:800;font-size:17px;line-height:1;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kc-precio small{font-size:10.5px;font-weight:700;color:var(--mut);margin-right:2px}
+.kc-precio:before{content:"";position:absolute;right:100%;top:0;width:16px;height:16px;background:radial-gradient(circle at 0 100%,transparent 15.5px,#fff 16px)}
+.kc-top{position:absolute;top:8px;left:8px;display:flex;gap:6px}
+.kc-circ{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:12px;color:#8d86ab;box-shadow:0 1px 3px rgba(40,20,80,.15)}
+.kc-circ.on{color:var(--p)}
+.kc-circ.combo{background:var(--p);color:#fff}
+.kc-enc{position:absolute;top:8px;left:8px;background:#059669;color:#fff;font-size:11px;font-weight:700;padding:4px 10px 4px 8px;border-radius:999px;display:flex;align-items:center;gap:4px}
+.kc-body{padding:0 4px;display:flex;flex-direction:column;gap:7px}
+.kc-body h3{font-family:var(--f-head);font-size:14.5px;font-weight:700;line-height:1.22;letter-spacing:-.005em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:35px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--t);color:var(--td);display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.chip i{width:6px;height:6px;border-radius:50%;background:#10b981}
+.chip.bajo i{background:#f59e0b}.chip.sin i{background:#f43f5e}
+.kc-act{padding:0 2px 2px}
+.kc-add{width:100%;display:flex;align-items:center;justify-content:space-between;padding:4px 4px 4px 14px;border-radius:999px;background:var(--p);color:#fff;font-size:12.5px;font-weight:700;transition:background .15s}
+.kc-add:hover{background:var(--p-dark)}
+.kc-add:active{transform:scale(.98)}
+.kc-add u{text-decoration:none;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.2);font-size:12px}
+.kc-add[disabled]{background:#ece7f5;color:#a29cbd;cursor:not-allowed}
+.kc-add[disabled] u{background:rgba(0,0,0,.05)}
+.kc-st{display:flex;align-items:center;justify-content:space-between;background:var(--ok-soft);border-radius:999px;padding:3px}
+.kc-st span{font-size:13px;font-weight:800;color:#047857;font-family:var(--f-head)}
+.kc-st button{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;background:#fff;color:#047857}
+.kc-st button.mas{background:#059669;color:#fff}
+/* en el carrito: el panel pasa a verde menta y la tarjeta lo dice sin gritar */
+.kc.en .kc-panel{--t:#d9f2e4;--td:#1f8a5b}
+.kc.en{box-shadow:0 0 0 1.5px #86d4ad,0 10px 24px -16px rgba(5,150,105,.35)}
+
+/* tarjeta angosta (3 columnas): se queda con lo esencial */
+@container kc (max-width:150px){
+  .kc-chips-wrap{display:none}
+  .kc-precio{font-size:14px;padding:5px 3px 7px 9px;border-bottom-left-radius:14px}
+  .kc-precio small{display:none}
+  .kc-body h3{font-size:12.5px;min-height:30px}
+  .kc-banda{height:20px;font-size:9.5px}
+  .kc-panel{padding-bottom:18px;border-radius:16px}
+  .kc{padding:6px;border-radius:22px}
+  .kc-add{font-size:11px;padding-left:10px}
+  .kc-add u{width:22px;height:22px}
+  .kc-circ{width:24px;height:24px;font-size:10px}
+  .kc-st button{width:24px;height:24px}
+}
+
+/* ---- notas ---- */
+.notas{width:min(1120px,calc(100% - 28px));margin:6px auto 60px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.nota{background:#fff;border-radius:22px;padding:18px 20px;box-shadow:0 0 0 1px var(--p-ring)}
+.nota h4{margin:0 0 10px;font-family:var(--f-head);font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:8px}
+.nota h4 s{width:9px;height:9px;border-radius:50%;background:var(--ok);display:inline-block}
+.nota.ojo h4 s{background:#f59e0b}.nota.plan h4 s{background:var(--p)}
+.nota ul{margin:0;padding-left:18px;font-size:13px;line-height:1.55;color:#4a4468;display:flex;flex-direction:column;gap:5px}
+.nota b{color:var(--ink)}
+.veredicto{width:min(1120px,calc(100% - 28px));margin:0 auto 14px;background:linear-gradient(120deg,#1c1830,#3a1f8f);color:#fff;border-radius:22px;padding:18px 22px;font-size:14px;line-height:1.55}
+.veredicto b{font-family:var(--f-head)}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <b>Maqueta · Card de producto</b>
+  <div class="grp">
+    <span>Dónde</span>
+    <div class="tog" data-k="vista"><button data-v="delivery" class="on">Delivery</button><button data-v="pos">POS</button></div>
+    <span>Tarjeta</span>
+    <div class="tog" data-k="ver"><button data-v="nueva" class="on">Nueva</button><button data-v="actual">Actual</button><button data-v="comparar">Comparar</button></div>
+    <span>Foto</span>
+    <div class="tog" data-k="foto"><button data-v="fundir" class="on">Se funde</button><button data-v="tal">Tal cual</button></div>
+    <span id="colsGrp">Columnas</span>
+    <div class="tog" data-k="cols" id="colsTog"><button data-v="2" class="on">2</button><button data-v="3">3</button></div>
+    <button class="reset" id="reset">Reiniciar carrito</button>
+  </div>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<div class="veredicto">
+  <b>Mi opinión: sí, la tarjeta sirve — sobre todo en Delivery.</b>
+  Allí el cliente mira y decide, y la tarjeta grande con el precio en la muesca, el color por categoría y la franja de avisos le da más presencia a cada producto.
+  En el POS aplicaría una versión más compacta, porque el cajero necesita ver precio y stock de un vistazo y muchos productos a la vez.
+</div>
+
+<div class="notas">
+  <div class="nota">
+    <h4><s></s>Lo que ganamos</h4>
+    <ul>
+      <li><b>Precio en la muesca:</b> siempre visible y con jerarquía, sin competir con el nombre.</li>
+      <li><b>Color por categoría:</b> el panel toma un tono suave según la categoría (bebidas lila, lácteos celeste, frutas menta…) y se escanea más rápido.</li>
+      <li><b>Franja inferior:</b> un solo lugar para los avisos (<i>Quedan 3</i>, <i>En combo</i>, <i>Destacado</i>, <i>Sin stock</i>), en vez de etiquetas sueltas sobre la foto.</li>
+      <li><b>Chips:</b> categoría, presentación (<i>x6</i>, <i>KG</i>) y stock en el POS, ordenados en una fila.</li>
+    </ul>
+  </div>
+  <div class="nota ojo">
+    <h4><s></s>Con qué tener cuidado</h4>
+    <ul>
+      <li><b>Fotos con fondo blanco:</b> en la maqueta pruébalo con “Foto: Tal cual”. Se ve la caja blanca sobre el color. Con “Se funde” (<code>mix-blend-mode: multiply</code>) el blanco desaparece y el producto queda sobre el tono.</li>
+      <li><b>2 columnas muestran menos productos</b> por pantalla que las 3 de hoy. Por eso la versión de 3 columnas se queda con lo esencial (precio, nombre, botón).</li>
+      <li><b>“Order Now ↗” no se copia:</b> en Kaserita se agrega al carrito, así que va un botón <i>Agregar</i> que pasa a contador − 1 +.</li>
+      <li><b>Sin foto:</b> el panel muestra un ícono sobre el tono de la categoría (ya no un hueco gris).</li>
+    </ul>
+  </div>
+  <div class="nota plan">
+    <h4><s></s>Cómo lo aplicaría</h4>
+    <ul>
+      <li><b>Delivery:</b> reemplaza <code>TarjetaProducto</code> (<code>src/main.jsx</code>) en la grilla y en “Todos los destacados”. Solo estilos y un mapa categoría → tono; no cambia datos ni lógica.</li>
+      <li><b>POS:</b> misma idea en <code>ProductoCard</code>, sin botón (se toca toda la tarjeta, como hoy) y con el stock como chip.</li>
+      <li><b>Bodega, minimarket y barbería:</b> los servicios de barbería no usan esta tarjeta, así que no cambian.</li>
+      <li>Es CSS puro: no agrega peso ni consultas a la base de datos.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+/* ---------- datos de ejemplo ---------- */
+const TONOS={
+  lila:{t:'#ece0fd',td:'#6a3fc4'},   cielo:{t:'#dfeafd',td:'#3b66b8'},
+  durazno:{t:'#fde8d6',td:'#c0662a'},mantequilla:{t:'#fff1c7',td:'#a97c10'},
+  menta:{t:'#dcf3e6',td:'#238458'},  rosa:{t:'#fde3ea',td:'#c0405f'}
+};
+const P=[
+ {id:1,n:'Gaseosa 500 ml',c:'Bebidas',pr:2.5,t:'lila',foto:'botella',stock:48,dest:true},
+ {id:2,n:'Leche evaporada 400 g',c:'Lácteos',pr:4.9,t:'cielo',foto:'lata',stock:3},
+ {id:3,n:'Arroz extra 1 kg',c:'Abarrotes',pr:4.2,t:'durazno',foto:'bolsa',stock:60},
+ {id:4,n:'Galletas de soda',c:'Galletas',pr:3.6,t:'mantequilla',foto:'galleta',stock:25,pack:6,combo:true},
+ {id:5,n:'Aceite vegetal 1 L',c:'Abarrotes',pr:11.9,t:'mantequilla',foto:'aceite',stock:0},
+ {id:6,n:'Manzana delicia',c:'Frutas',pr:6.5,unidad:'KG',t:'menta',foto:'manzana',stock:12},
+ {id:7,n:'Yogurt de fresa 1 L',c:'Lácteos',pr:8.9,t:'rosa',foto:'yogurt',stock:14,dest:true},
+ {id:8,n:'Pan de molde familiar',c:'Panadería',pr:7.8,t:'durazno',foto:null,stock:9}
+];
+const S={vista:'delivery',ver:'nueva',foto:'fundir',cols:'2'};
+let carrito={1:2,7:1};
+const money=n=>'S/ '+Number(n).toFixed(2);
+
+/* ---------- iconos ---------- */
+const IC={
+ plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>', check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+ heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+ gift:'<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M8 8a2.5 2.5 0 1 1 0-5c2 0 4 3 4 5M16 8a2.5 2.5 0 1 0 0-5c-2 0-4 3-4 5"/>',
+ star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+ alerta:'<path d="M12 4l9 16H3zM12 10v4M12 17.5v.01"/>', box:'<path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/>',
+ img:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>'
+};
+const ic=k=>`<svg class="ic" viewBox="0 0 24 24">${IC[k]}</svg>`;
+
+/* ---------- "fotos" de catalogo (SVG, con fondo blanco como las reales) ---------- */
+function foto(k,blanco){
+  const bg=blanco?'<rect width="120" height="120" fill="#fff"/>':'';
+  const sh='<ellipse cx="60" cy="108" rx="30" ry="4.5" fill="#1c1830" opacity=".13"/>';
+  const f={
+   botella:'<rect x="52" y="14" width="16" height="9" rx="2.5" fill="#e11d48"/><path d="M54 23h12v14c0 4 11 8 11 18v44a6 6 0 0 1-6 6H49a6 6 0 0 1-6-6V55c0-10 11-14 11-18z" fill="#f2a516"/><rect x="43" y="62" width="34" height="24" fill="#fff" opacity=".92"/><rect x="49" y="69" width="22" height="3.5" rx="1.7" fill="#e11d48"/><rect x="49" y="76" width="14" height="3" rx="1.5" fill="#cbb98a"/><path d="M50 40c-2 6-2 12-2 18" stroke="#fff" stroke-width="2.4" opacity=".4" stroke-linecap="round" fill="none"/>',
+   lata:'<rect x="38" y="24" width="44" height="82" rx="7" fill="#f3f6fc" stroke="#c9d4ea" stroke-width="1.5"/><rect x="38" y="24" width="44" height="11" rx="5" fill="#b9c7e6"/><rect x="38" y="48" width="44" height="34" fill="#3b6fd8"/><circle cx="60" cy="65" r="11" fill="#fff"/><path d="M55 66c3-7 7-7 10 0" stroke="#3b6fd8" stroke-width="2.6" fill="none" stroke-linecap="round"/><rect x="38" y="94" width="44" height="12" rx="5" fill="#b9c7e6"/>',
+   bolsa:'<path d="M36 26h48l5 80H31z" fill="#f6e7c6" stroke="#d6bb86" stroke-width="1.5"/><path d="M36 26h48" stroke="#d6bb86" stroke-width="5" stroke-dasharray="3 2.4"/><rect x="40" y="46" width="40" height="38" rx="5" fill="#fff"/><g fill="#e8d3a0"><ellipse cx="50" cy="60" rx="4" ry="2" transform="rotate(-30 50 60)"/><ellipse cx="60" cy="56" rx="4" ry="2" transform="rotate(20 60 56)"/><ellipse cx="68" cy="66" rx="4" ry="2" transform="rotate(-10 68 66)"/><ellipse cx="55" cy="72" rx="4" ry="2" transform="rotate(35 55 72)"/><ellipse cx="66" cy="77" rx="4" ry="2" transform="rotate(-25 66 77)"/></g>',
+   galleta:'<rect x="30" y="38" width="60" height="66" rx="6" fill="#d8791f"/><rect x="30" y="38" width="60" height="9" rx="4" fill="#b8620f"/><circle cx="60" cy="74" r="19" fill="#f6dba0"/><circle cx="60" cy="74" r="15" fill="#efc77a"/><g fill="#a86a1c"><circle cx="54" cy="69" r="1.6"/><circle cx="64" cy="68" r="1.6"/><circle cx="59" cy="76" r="1.6"/><circle cx="67" cy="78" r="1.6"/><circle cx="52" cy="79" r="1.6"/></g><rect x="40" y="94" width="40" height="3" rx="1.5" fill="#fff" opacity=".6"/>',
+   aceite:'<rect x="53" y="16" width="14" height="9" rx="2.5" fill="#2f9e5b"/><path d="M55 25h10v11c0 4 13 8 13 20v44a6 6 0 0 1-6 6H48a6 6 0 0 1-6-6V56c0-12 13-16 13-20z" fill="#f7d34a"/><rect x="42" y="64" width="36" height="26" fill="#fff" opacity=".92"/><path d="M60 69c5 5 5 11 0 15-5-4-5-10 0-15z" fill="#2f9e5b"/><path d="M49 40c-2 6-4 10-4 18" stroke="#fff" stroke-width="2.4" opacity=".5" stroke-linecap="round" fill="none"/>',
+   manzana:'<path d="M60 36c-8-6-26-3-28 18-2 24 12 46 28 46s30-22 28-46c-2-21-20-24-28-18z" fill="#d92d3a"/><path d="M60 38c0-8 2-14 7-18" stroke="#6b4423" stroke-width="3.2" stroke-linecap="round" fill="none"/><path d="M63 28c8-8 18-6 20-4-2 8-12 12-20 4z" fill="#3aa05c"/><path d="M42 58c-2 8 0 16 4 22" stroke="#fff" stroke-width="3.2" opacity=".35" stroke-linecap="round" fill="none"/>',
+   yogurt:'<rect x="50" y="14" width="20" height="11" rx="3" fill="#fff" stroke="#e2d7ee" stroke-width="1.3"/><path d="M52 25h16v10c0 4 11 6 11 17v50a6 6 0 0 1-6 6H47a6 6 0 0 1-6-6V52c0-11 11-13 11-17z" fill="#f6b3c6"/><rect x="41" y="60" width="38" height="28" fill="#fff" opacity=".95"/><circle cx="60" cy="74" r="8" fill="#e5446d"/><path d="M60 66c-2-3-5-3-6-2M60 66c2-3 5-3 6-2" stroke="#2f9e5b" stroke-width="2" fill="none" stroke-linecap="round"/>'
+  }[k];
+  return `<svg viewBox="0 0 120 120" aria-hidden="true">${bg}${sh}${f}</svg>`;
+}
+
+/* ---------- helpers de datos ---------- */
+const estado=p=>p.stock<=0?'sin':p.stock<=3?'bajo':'ok';
+function banda(p){
+  if(estado(p)==='sin') return {txt:'Sin stock',cls:'bad',ic:'alerta'};
+  if(estado(p)==='bajo') return {txt:`Quedan ${p.stock}`,cls:'warn',ic:'alerta'};
+  if(p.combo) return {txt:'En combo',cls:'',ic:'gift'};
+  if(p.dest) return {txt:'Destacado',cls:'',ic:'star'};
+  return null;
+}
+
+/* ---------- tarjetas ---------- */
+function cardNueva(p,modo){           // modo: 'delivery' | 'pos'
+  const tono=TONOS[p.t], q=carrito[p.id]||0, e=estado(p), b=banda(p);
+  const chips=[`<span class="chip">${p.c}</span>`];
+  if(p.unidad==='KG') chips.push('<span class="chip">Por KG</span>');
+  if(p.pack>1) chips.push(`<span class="chip">Pack x${p.pack}</span>`);
+  if(modo==='pos'){
+    const t=e==='sin'?'Sin stock':e==='bajo'?`Quedan ${p.stock}`:`${p.stock} disp.`;
+    chips.push(`<span class="chip ${e==='ok'?'':e}"><i></i>${t}</span>`);
+  }
+  const act = modo==='pos' ? '' : (
+    e==='sin' ? `<button class="kc-add" disabled>Sin stock<u>${ic('plus')}</u></button>` :
+    q===0 ? `<button class="kc-add" data-add="${p.id}">Agregar<u>${ic('plus')}</u></button>` :
+    `<div class="kc-st"><button data-menos="${p.id}">${ic('minus')}</button><span>${q}</span><button class="mas" data-add="${p.id}">${ic('plus')}</button></div>`);
+  const sup = (modo==='pos' && q>0) ? `<span class="kc-enc">${ic('check')} ${q}</span>`
+    : modo==='delivery' ? `<div class="kc-top"><span class="kc-circ ${p.id===7?'on':''}">${ic('heart')}</span></div>` : '';
+  const interior = p.foto
+    ? `<div class="foto">${foto(p.foto,true)}</div>`
+    : `<span class="sinfoto">${ic('img')}</span>`;
+  const [bb,bt]=[b,b];
+  return `<article class="kc ${modo==='pos'?'pos-card':''} ${S.foto==='fundir'?'fundir':''} ${q>0?'en':''}" style="--t:${tono.t};--td:${tono.td}" ${modo==='pos'?`data-card="${p.id}"`:''}>
+    <div class="kc-fw">
+      <div class="kc-panel ${e==='sin'?'sin':''}">${interior}${bb?`<div class="kc-banda ${bb.cls}">${ic(bb.ic)}${bb.txt}</div>`:''}</div>
+      <div class="kc-precio"><small>S/</small>${Number(p.pr).toFixed(2)}</div>
+      ${sup}
+    </div>
+    <div class="kc-body"><h3>${p.n}</h3><div class="chips kc-chips-wrap">${chips.join('')}</div></div>
+    ${act?`<div class="kc-act">${act}</div>`:''}
+  </article>`;
+}
+function cardActualDelivery(p){
+  const q=carrito[p.id]||0, poco=p.stock<=3&&p.stock>0;
+  return `<div class="da">
+    <div class="da-f">${poco?'<span class="da-poco">Pocas unidades</span>':''}<span class="da-fav"><svg class="ic" viewBox="0 0 24 24">${IC.heart}</svg></span>
+      ${p.foto?foto(p.foto,true):`<svg class="ic" viewBox="0 0 24 24" style="width:26px;height:26px;color:#cfc4ea">${IC.img}</svg>`}</div>
+    <p>${p.n}</p>
+    <div class="da-pie"><b>${money(p.pr)}</b>${q===0?`<button class="da-mas" data-add="${p.id}">${ic('plus')}</button>`:''}</div>
+    ${q>0?`<div class="da-st"><button data-menos="${p.id}">${ic('minus')}</button><span>${q}</span><button class="mas" data-add="${p.id}">${ic('plus')}</button></div>`:''}
+  </div>`;
+}
+function cardActualPos(p){
+  const q=carrito[p.id]||0, e=estado(p);
+  const t=e==='sin'?'Sin stock':e==='bajo'?`Quedan ${p.stock}`:`${p.stock} disp.`;
+  return `<div class="pa ${q>0?'en':''}" data-card="${p.id}">
+    <div class="pa-f">
+      ${p.combo?`<span class="pa-combo">${ic('gift')}</span>`:''}${q>0?`<span class="pa-tag">${ic('check')} ${q}</span>`:''}
+      <span class="${e==='sin'?'sin':''}" style="display:contents">${p.foto?foto(p.foto,true):`<svg class="ic" viewBox="0 0 24 24" style="width:34px;height:34px;color:#cfc4ea">${IC.img}</svg>`}</span>
+    </div>
+    <div class="pa-txt"><small>${p.c}</small><h3>${p.n}</h3></div>
+    <div class="pa-pie"><b><small>S/</small>${Number(p.pr).toFixed(2)}</b><span class="pa-st ${e==='ok'?'':e}"><i></i>${t}</span></div>
+  </div>`;
+}
+
+/* ---------- marcos ---------- */
+function frameDelivery(version){
+  const nueva=version==='nueva';
+  const cols=nueva?S.cols:'3';
+  const card=nueva?(p=>cardNueva(p,'delivery')):cardActualDelivery;
+  return `<div class="phone">
+    <div class="ph-top">
+      <div class="ph-brand"><b>Bodega Demo</b><span>Abierto ahora</span></div>
+      <div class="ph-busca">${ic('img').replace(IC.img,'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>')} Buscar productos</div>
+      <div class="ph-cats"><span class="on">Todo</span><span>Bebidas</span><span>Lácteos</span><span>Abarrotes</span><span>Frutas</span></div>
+    </div>
+    <div class="ph-sec">Productos destacados</div>
+    <div class="ph-grid" style="grid-template-columns:repeat(${cols},1fr)">${P.map(card).join('')}</div>
+  </div>`;
+}
+function framePos(version){
+  const card=version==='nueva'?(p=>cardNueva(p,'pos')):cardActualPos;
+  return `<div class="pos">
+    <div class="pos-head"><b>Bodega Demo</b><span>Turno abierto</span></div>
+    <div class="pos-panel">
+      <div class="pos-tabs"><span class="on">Todos</span><span>Bebidas</span><span>Lácteos</span><span>Abarrotes</span><span>Frutas</span></div>
+      <div class="pos-grid">${P.map(card).join('')}</div>
+    </div>
+  </div>`;
+}
+function col(label,badge,html,nuevo){
+  return `<div class="col"><div class="etq">${label}<i class="${nuevo?'nuevo':''}">${badge}</i></div>${html}</div>`;
+}
+function render(){
+  const f=S.vista==='delivery'?frameDelivery:framePos;
+  let out='';
+  if(S.ver==='nueva') out=col('Tarjeta nueva','propuesta',f('nueva'),true);
+  else if(S.ver==='actual') out=col('Tarjeta actual','en producción',f('actual'),false);
+  else out=col('Actual','hoy',f('actual'),false)+col('Nueva','propuesta',f('nueva'),true);
+  document.getElementById('stage').innerHTML=out;
+  const verCols=S.vista==='delivery'&&S.ver!=='actual';
+  document.getElementById('colsGrp').hidden=!verCols; document.getElementById('colsTog').hidden=!verCols;
+}
+
+/* ---------- eventos ---------- */
+document.querySelectorAll('.tog').forEach(g=>g.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  S[g.dataset.k]=b.dataset.v;
+  g.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  render();
+}));
+document.getElementById('reset').onclick=()=>{carrito={1:2,7:1};render();};
+document.getElementById('stage').addEventListener('click',e=>{
+  const a=e.target.closest('[data-add]'), m=e.target.closest('[data-menos]'), c=e.target.closest('[data-card]');
+  if(a){const id=+a.dataset.add; if(estado(P.find(p=>p.id===id))!=='sin') carrito[id]=(carrito[id]||0)+1; render(); return;}
+  if(m){const id=+m.dataset.menos; carrito[id]=Math.max(0,(carrito[id]||0)-1); if(!carrito[id]) delete carrito[id]; render(); return;}
+  if(c){const id=+c.dataset.card; if(estado(P.find(p=>p.id===id))!=='sin'){carrito[id]=(carrito[id]||0)+1; render();}}
+});
+render();
+</script>
+</body>
+</html>

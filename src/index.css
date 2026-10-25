@@ -66,3 +66,181 @@ body { overflow-x: clip; }
   to { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { .kd-hoja { animation: none; } }
+
+/* Tarjeta de producto de la tienda: panel de color por categoría, precio en
+   una muesca arriba a la derecha y franja inferior para avisos (Quedan N,
+   Destacado). La foto se funde con el panel (multiply) para que las fotos de
+   catálogo con fondo blanco no dejen una caja blanca. Con 3 columnas la
+   tarjeta mide ~115px y, por container query, se queda con lo esencial. */
+.kc {
+  container-type: inline-size;
+  container-name: kc;
+  position: relative;
+  background: #fff;
+  border-radius: 26px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 0 0 1px #efe6fc, 0 10px 24px -16px rgba(97, 5, 220, 0.28);
+}
+.kc-en { box-shadow: 0 0 0 1.5px #86d4ad, 0 10px 24px -16px rgba(5, 150, 105, 0.35); }
+.kc-fw { position: relative; }
+.kc-panel {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 20px;
+  background: var(--t);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 22px;
+}
+.kc-en .kc-panel { --t: #d9f2e4; --td: #1f8a5b; }
+.kc-foto {
+  width: 78%;
+  height: 78%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  mix-blend-mode: multiply;
+}
+.kc-foto img { width: 100%; height: 100%; object-fit: contain; }
+.kc-sinfoto { color: var(--td); opacity: 0.55; font-size: 30px; padding-bottom: 6px; }
+.kc-banda {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--td);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.kc-banda-warn { background: #b45309; }
+.kc-banda i { font-size: 10px; }
+.kc-precio {
+  position: absolute;
+  top: 0; right: 0;
+  background: #fff;
+  padding: 6px 4px 8px 12px;
+  border-bottom-left-radius: 18px;
+  font-weight: 800;
+  font-size: 17px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: #1c1830;
+}
+.kc-precio small { font-size: 10.5px; font-weight: 700; color: #78729a; margin-right: 2px; }
+/* La muesca: el panel dobla hacia adentro donde el precio lo corta. */
+.kc-precio::before {
+  content: "";
+  position: absolute;
+  right: 100%; top: 0;
+  width: 16px; height: 16px;
+  background: radial-gradient(circle at 0 100%, transparent 15.5px, #fff 16px);
+}
+.kc-circ {
+  position: absolute;
+  top: 8px; left: 8px;
+  width: 28px; height: 28px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #8d86ab;
+  box-shadow: 0 1px 3px rgba(40, 20, 80, 0.15);
+}
+.kc-circ-on { color: #6105dc; }
+.kc-body { padding: 0 4px; display: flex; flex-direction: column; gap: 7px; }
+.kc-body h3 {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.22;
+  color: #1c1830;
+  min-height: 35px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.kc-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.kc-chip {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  background: var(--t);
+  color: var(--td);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kc-act { padding: 0 2px 2px; }
+.kc-add {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 4px 4px 14px;
+  border-radius: 9999px;
+  background: #6105dc;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.kc-add:active { transform: scale(0.98); }
+.kc-add u {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 11px;
+}
+.kc-st {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #e8f8f1;
+  border-radius: 9999px;
+  padding: 3px;
+}
+.kc-st span { font-size: 13px; font-weight: 800; color: #047857; }
+.kc-st button {
+  width: 28px; height: 28px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  background: #fff;
+  color: #047857;
+}
+.kc-st .kc-mas { background: #059669; color: #fff; }
+@container kc (max-width: 150px) {
+  .kc-chips { display: none; }
+  .kc { padding: 6px; border-radius: 22px; }
+  .kc-panel { padding-bottom: 18px; border-radius: 16px; }
+  .kc-precio { font-size: 14px; padding: 5px 3px 7px 9px; border-bottom-left-radius: 14px; }
+  .kc-precio small { display: none; }
+  .kc-body h3 { font-size: 12.5px; min-height: 30px; }
+  .kc-banda { height: 20px; font-size: 9.5px; }
+  .kc-circ { width: 24px; height: 24px; font-size: 10px; top: 6px; left: 6px; }
+  .kc-add { font-size: 11px; padding-left: 10px; }
+  .kc-add u { width: 22px; height: 22px; }
+  .kc-st button { width: 24px; height: 24px; }
+}
