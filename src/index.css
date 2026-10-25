@@ -856,3 +856,7 @@ body { overflow-x: clip; }
 .kc { contain-intrinsic-size: auto 290px; }
 .kcb { contain-intrinsic-size: auto 330px; }
 .kh { contain-intrinsic-size: auto 150px; }
+
+/* El filtro (multiply) de las fotos se mezcla solo con el color de su propio cuadro,
+   no con toda la página detrás: el navegador trabaja mucho menos al desplazarse. */
+.kc-panel, .kh-foto, .kcb-panel, .kc-hoja-foto { isolation: isolate; }

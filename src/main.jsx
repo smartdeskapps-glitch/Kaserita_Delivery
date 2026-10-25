@@ -3058,6 +3058,25 @@ function App() {
     sbClient.from("pedidos_delivery").delete().eq("usado", false).lt("creado_en", dosHorasAtras).then(() => {});
   }, []);
 
+  // Productos, combos y barbería se piden al mismo tiempo que la bodega (antes
+  // esperaban a que la bodega respondiera: dos viajes seguidos al servidor, que en
+  // datos móviles se nota). Se usan una sola vez; si la bodega no existe o está
+  // cerrada, el resultado simplemente se descarta.
+  const precargaRef = useRef(null);
+  if (slug && !precargaRef.current) {
+    precargaRef.current = {
+      productos: sbClient.rpc("obtener_productos_delivery", { p_slug: slug }).then((r) => r),
+      combos: sbClient.rpc("obtener_combos_delivery", { p_slug: slug }).then((r) => r),
+      barberia: sbClient.rpc("obtener_barberia_delivery", { p_slug: slug }).then((r) => r),
+    };
+  }
+  const tomarPrecarga = (clave, pedir) => {
+    const lista = precargaRef.current;
+    const promesa = lista && lista[clave];
+    if (lista) lista[clave] = null;
+    return promesa || pedir();
+  };
+
   useEffect(() => {
     if (!slug) {
       setEstadoBodega("sin-slug");
@@ -3248,8 +3267,7 @@ function App() {
   useEffect(() => {
     if (estadoBodega !== "ok" || !bodega) return;
     setCargandoProductos(true);
-    sbClient
-      .rpc("obtener_productos_delivery", { p_slug: slug })
+    tomarPrecarga("productos", () => sbClient.rpc("obtener_productos_delivery", { p_slug: slug }).then((r) => r))
       .then(({ data, error: err }) => {
         if (!err) {
           const ordenados = (data || []).slice().sort((a, b) =>
@@ -3259,8 +3277,7 @@ function App() {
         }
         setCargandoProductos(false);
       });
-    sbClient
-      .rpc("obtener_combos_delivery", { p_slug: slug })
+    tomarPrecarga("combos", () => sbClient.rpc("obtener_combos_delivery", { p_slug: slug }).then((r) => r))
       .then(({ data, error: err }) => {
         if (!err) setCombos(data || []);
       });
@@ -3269,8 +3286,7 @@ function App() {
   // ¿Es una barbería? Si la función no existe o falla, la tienda se ve como siempre.
   useEffect(() => {
     if (estadoBodega !== "ok" || !bodega) return;
-    sbClient
-      .rpc("obtener_barberia_delivery", { p_slug: slug })
+    tomarPrecarga("barberia", () => sbClient.rpc("obtener_barberia_delivery", { p_slug: slug }).then((r) => r))
       .then(({ data, error: err }) => {
         if (!err && data?.es_barberia) setBarberia({ barberos: data.barberos || [], agenda: data.agenda === true });
       });
