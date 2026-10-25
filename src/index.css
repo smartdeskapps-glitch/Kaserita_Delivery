@@ -864,7 +864,7 @@ body { overflow-x: clip; }
 /* Un combo en el chip del dock lleva un regalito para distinguirlo de un producto. */
 .kc-mini { position: relative; }
 .kc-mini-combo::after {
-  content: "06b";
+  content: "\f06b";
   font-family: "Font Awesome 6 Free";
   font-weight: 900;
   position: absolute;
