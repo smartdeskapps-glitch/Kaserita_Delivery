@@ -488,3 +488,126 @@ body { overflow-x: clip; }
   font-size: 11px;
 }
 .kh:active { transform: scale(0.99); }
+
+/* Tarjeta de combo: mismo concepto que la de producto (cuadro de color, precio
+   en la muesca, aviso en pestaña blanca, píldora violeta) con las fotos de lo
+   que incluye en grupo, el precio original tachado y el sello de descuento. */
+.kcb {
+  container-type: inline-size;
+  container-name: kcb;
+  position: relative;
+  background: #fff;
+  border-radius: 28px;
+  padding: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  box-shadow: 0 0 0 1px #efe6fc, 0 14px 28px -18px rgba(97, 5, 220, 0.4);
+}
+.kcb-fw { position: relative; }
+.kcb-panel {
+  position: relative;
+  aspect-ratio: 1.18 / 1;
+  border-radius: 22px;
+  background: var(--t);
+  overflow: hidden;
+  padding-bottom: 20px;
+}
+@container kcb (min-width: 300px) { .kcb-panel { aspect-ratio: 1.9 / 1; } }
+/* Carrusel (tarjeta ancha): las fotos se achican para que se distingan las tres. */
+@container kcb (min-width: 300px) {
+  .kcb-fotos .c { width: 38%; height: 94%; }
+  .kcb-fotos .l { left: 7%; width: 34%; height: 80%; }
+  .kcb-fotos .r { right: 7%; width: 34%; height: 80%; }
+  .kcb-fotos.dos .c { left: 20%; }
+  .kcb-fotos.dos .r { right: 14%; }
+}
+.kcb-fotos { position: relative; width: 100%; height: 100%; }
+.kcb-fotos span { position: absolute; bottom: 2%; mix-blend-mode: multiply; display: block; }
+.kcb-fotos img { width: 100%; height: 100%; object-fit: contain; }
+.kcb-fotos .c { left: 50%; width: 54%; height: 98%; transform: translateX(-50%); z-index: 3; }
+.kcb-fotos .l { left: 6%; width: 40%; height: 74%; bottom: 6%; z-index: 2; }
+.kcb-fotos .r { right: 6%; width: 40%; height: 74%; bottom: 6%; z-index: 2; }
+.kcb-fotos.dos .c { left: 30%; transform: none; }
+.kcb-fotos.dos .r { right: 12%; }
+.kcb-mas {
+  position: absolute;
+  right: 10px; bottom: 30px;
+  z-index: 4;
+  background: #1c1830;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 800;
+  border-radius: 9999px;
+  padding: 3px 8px;
+}
+.kcb-precio {
+  position: absolute;
+  top: 0; right: 0;
+  background: #fff;
+  padding: 6px 4px 8px 12px;
+  border-bottom-left-radius: 18px;
+  font-weight: 800;
+  font-size: 17px;
+  line-height: 1;
+  text-align: right;
+  color: #1c1830;
+  font-variant-numeric: tabular-nums;
+}
+.kcb-precio small { font-size: 10px; color: #78729a; margin-right: 2px; }
+.kcb-precio s { display: block; font-size: 10.5px; font-weight: 600; color: #a8a29e; margin-bottom: 2px; }
+.kcb-precio::before {
+  content: "";
+  position: absolute;
+  right: 100%; top: 0;
+  width: 16px; height: 16px;
+  background: radial-gradient(circle at 0 100%, transparent 15.5px, #fff 16px);
+}
+.kcb-off {
+  position: absolute;
+  top: 10px; left: 10px;
+  z-index: 5;
+  background: #6105dc;
+  color: #fff;
+  font-weight: 800;
+  font-size: 12px;
+  border-radius: 9999px;
+  padding: 5px 10px;
+  box-shadow: 0 6px 12px -6px rgba(97, 5, 220, 0.8);
+}
+.kcb-tab {
+  position: absolute;
+  left: 50%; bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 12px 12px 0 0;
+  background: #fff;
+  color: #047857;
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  z-index: 6;
+}
+.kcb-tab i { font-size: 10.5px; }
+.kcb-tab-warn { color: #b45309; }
+.kcb-tab::before, .kcb-tab::after { content: ""; position: absolute; bottom: 0; width: 12px; height: 12px; }
+.kcb-tab::before { right: 100%; background: radial-gradient(circle at 0 0, transparent 11.5px, #fff 12px); }
+.kcb-tab::after { left: 100%; background: radial-gradient(circle at 100% 0, transparent 11.5px, #fff 12px); }
+.kcb-cuerpo { padding: 0 4px; }
+.kcb-cuerpo h3 { margin: 0; font-size: 16px; font-weight: 800; line-height: 1.18; letter-spacing: -0.01em; color: #1c1830; }
+.kcb-cuerpo p {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: #78729a;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.kcb-pie { display: flex; align-items: center; justify-content: space-between; padding: 0 2px 2px; }
+.kcb-cant { font-size: 11px; color: #78729a; }

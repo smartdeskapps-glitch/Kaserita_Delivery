@@ -604,66 +604,71 @@ function TarjetaCombo({ combo, cantidadCombo, productosPorId, onAgregar, onQuita
   const maxCombosPosibles = stocksLimitantes.length > 0 ? Math.min(...stocksLimitantes) : null;
   const stockLimitado = maxCombosPosibles != null && maxCombosPosibles > 0 && maxCombosPosibles <= 3;
 
+  // Fotos de lo que incluye, en grupo (la del medio al frente): se ve de un
+  // vistazo qué trae el combo. Los productos sin foto se saltan.
+  const items = combo.items || [];
+  const fotos = items.map((it) => productosPorId[it.producto_id]?.foto_url).filter(Boolean).slice(0, 3);
+  const tono = tonoCategoria(null);
+  const textoItems = items.map((it) => `${tituloProducto(it.descripcion)} (x${it.cantidad})`).join(", ");
+  const aviso = stockLimitado
+    ? { texto: "Stock limitado", clase: "kcb-tab-warn", icono: "fa-triangle-exclamation" }
+    : ahorro > 0
+      ? { texto: `Ahorras ${formatoMoneda(ahorro)}`, clase: "", icono: "fa-tag" }
+      : null;
+  const foto = (u, clase) => (
+    <span className={clase}><img src={u} alt="" loading="lazy" /></span>
+  );
+
   return (
-    <div className={`${ancho || "w-60"} shrink-0 bg-gradient-to-br from-white to-[#f4eefe] rounded-[28px] ring-1 ring-[#efe6fc] p-4 flex flex-col gap-2`}>
-      <div className="flex items-center justify-between gap-2 min-h-[18px]">
-        {porcentajeOff > 0 ? (
-          <span className="bg-[#ece0fd] text-[#4d04b0] text-[11px] font-bold px-2.5 py-1 rounded-full">-{porcentajeOff}% de descuento</span>
-        ) : <span></span>}
-        {stockLimitado && <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Stock limitado</span>}
-      </div>
-      <div className="flex items-start gap-3 flex-1">
-        {/* Fotos de lo que incluye, encimadas: se ve de un vistazo qué trae el combo. */}
-        <div className="flex shrink-0 pt-0.5">
-          {(combo.items || []).slice(0, 3).map((it, i) => {
-            const foto = productosPorId[it.producto_id]?.foto_url;
-            return (
-              <span key={it.producto_id} className={`${i > 0 ? "-ml-3" : ""} block w-11 h-11 rounded-[14px] bg-[#f4eefe] overflow-hidden border-2 border-white ring-1 ring-[#e4d6fb]`}>
-                {foto ? (
-                  <img src={foto} alt="" loading="lazy" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="w-full h-full flex items-center justify-center text-[#6105dc]/40"><i className="fa-solid fa-box text-sm"></i></span>
-                )}
-              </span>
-            );
-          })}
-          {(combo.items || []).length > 3 && (
-            <span className="-ml-3 w-11 h-11 rounded-[14px] border-2 border-white ring-1 ring-[#e4d6fb] bg-[#6105dc] text-white text-xs font-extrabold flex items-center justify-center">+{combo.items.length - 3}</span>
+    <div className={`${ancho || "w-60"} shrink-0 kcb`} style={{ "--t": tono.t, "--td": tono.td }}>
+      <div className="kcb-fw">
+        <div className="kcb-panel">
+          {fotos.length === 0 ? (
+            <i className="fa-solid fa-gift kc-sinfoto"></i>
+          ) : fotos.length >= 3 ? (
+            <div className="kcb-fotos">
+              {foto(fotos[0], "l")}
+              {foto(fotos[1], "c")}
+              {foto(fotos[2], "r")}
+            </div>
+          ) : fotos.length === 2 ? (
+            <div className="kcb-fotos dos">
+              {foto(fotos[0], "c")}
+              {foto(fotos[1], "r")}
+            </div>
+          ) : (
+            <div className="kcb-fotos uno">{foto(fotos[0], "c")}</div>
+          )}
+          {items.length > 3 && <span className="kcb-mas">+{items.length - 3}</span>}
+          {aviso && (
+            <div className={`kcb-tab ${aviso.clase}`}>
+              <i className={`fa-solid ${aviso.icono}`}></i>
+              {aviso.texto}
+            </div>
           )}
         </div>
-        <div className="min-w-0 flex-1 flex flex-col gap-1">
-          <p className="text-base font-bold text-[#1c1830] leading-snug line-clamp-2">{combo.nombre}</p>
-          <p className="text-[11px] text-stone-500 line-clamp-2">
-            {(combo.items || []).map((it) => `${tituloProducto(it.descripcion)} (x${it.cantidad})`).join(", ")}
-          </p>
+        {porcentajeOff > 0 && <span className="kcb-off">-{porcentajeOff}%</span>}
+        <div className="kcb-precio">
+          {porcentajeOff > 0 && <s>{formatoMoneda(precioOriginal)}</s>}
+          <small>S/</small>{Number(combo.precio_venta).toFixed(2)}
         </div>
       </div>
-      <div className="flex items-end justify-between gap-2 pt-2 border-t border-[#efe6fc]">
-        <div className="flex flex-col leading-tight gap-0.5">
-          {porcentajeOff > 0 && <span className="text-[11px] text-stone-400 line-through">{formatoMoneda(precioOriginal)}</span>}
-          <span className="text-xl font-extrabold text-[#1c1830] tabular-nums">{formatoMoneda(combo.precio_venta)}</span>
-          {ahorro > 0 && (
-            <span className="w-fit text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">
-              Ahorras {formatoMoneda(ahorro)}
-            </span>
-          )}
-        </div>
+      <div className="kcb-cuerpo">
+        <h3>{combo.nombre}</h3>
+        <p>{textoItems}</p>
+      </div>
+      <div className="kcb-pie">
+        <span className="kcb-cant">{items.length} {items.length === 1 ? "producto" : "productos"}</span>
         {cantidadCombo === 0 ? (
-          <button
-            onClick={() => onAgregar(combo)}
-            className="shrink-0 bg-[#6105dc] hover:bg-[#4d04b0] text-white text-sm font-bold px-5 py-2.5 rounded-full active:scale-95"
-          >
-            Agregar +
+          <button className="kh-pildora kh-agregar" onClick={() => onAgregar(combo)}>
+            Agregar
+            <u><i className="fa-solid fa-plus"></i></u>
           </button>
         ) : (
-          <div className="shrink-0 flex items-center gap-2 bg-[#6105dc] rounded-full px-1 py-1">
-            <button onClick={() => onQuitar(combo)} className="w-6 h-6 flex items-center justify-center text-white active:scale-90">
-              <i className="fa-solid fa-minus text-[10px]"></i>
-            </button>
-            <span className="text-xs font-bold text-white w-4 text-center">{cantidadCombo}</span>
-            <button onClick={() => onAgregar(combo)} className="w-6 h-6 flex items-center justify-center text-white active:scale-90">
-              <i className="fa-solid fa-plus text-[10px]"></i>
-            </button>
+          <div className="kh-pildora">
+            <button onClick={() => onQuitar(combo)} aria-label="Quitar uno"><i className="fa-solid fa-minus"></i></button>
+            <span>{cantidadCombo}</span>
+            <button onClick={() => onAgregar(combo)} aria-label="Agregar uno"><i className="fa-solid fa-plus"></i></button>
           </div>
         )}
       </div>
