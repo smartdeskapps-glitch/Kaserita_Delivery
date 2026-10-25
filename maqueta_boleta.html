@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Boleta</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--p:#6105dc;--p-dark:#4d04b0;--ring:#efe6fc;--ink:#1c1830;--mut:#78729a;--f-head:'Plus Jakarta Sans',system-ui,sans-serif;--ease:cubic-bezier(.3,1.2,.4,1)}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:#e9e4f5;-webkit-font-smoothing:antialiased;min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+h3,p{margin:0}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.bar{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;justify-content:space-between;padding:10px 20px;background:#1c1830;color:#fff;font-size:12.5px;position:sticky;top:0;z-index:90}
+.bar b{font-family:var(--f-head);font-size:13.5px}
+.bar .grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bar .tog{display:inline-flex;background:rgba(255,255,255,.1);border-radius:999px;padding:3px}
+.bar .tog button{color:#d9d2ee;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600}
+.bar .tog button.on{background:#fff;color:#1c1830}
+.stage{display:flex;gap:26px;justify-content:center;align-items:flex-start;padding:24px 14px 30px;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:8px}
+.etq{font-family:var(--f-head);font-weight:700;font-size:12.5px;color:#4d3f86;display:flex;gap:8px;align-items:center;padding-left:6px}
+.etq i{font-style:normal;font-size:11px;padding:2px 9px;border-radius:999px;background:#fff;color:var(--mut)}
+.etq i.n{background:var(--p);color:#fff}
+/* fondo del modal (como en el POS: velo con desenfoque sobre la pantalla) */
+.fondo{position:relative;width:390px;max-width:100%;min-height:760px;border-radius:30px;overflow:hidden;background:linear-gradient(160deg,#dcd7f4,#efe9fb);display:flex;align-items:center;justify-content:center;padding:18px 0;box-shadow:0 30px 70px -22px rgba(60,20,120,.4)}
+.fondo:before{content:"";position:absolute;inset:0;background:rgba(28,24,48,.28)}
+
+/* ===== ACTUAL ===== */
+.act{position:relative;width:340px;background:linear-gradient(135deg,#f4effc,#f9f8fb 50%,#f5f4f8);border-radius:28px;padding:24px 20px 20px;text-align:center;box-shadow:0 30px 60px -20px rgba(0,0,0,.4)}
+.act .ck{width:60px;height:60px;border-radius:50%;background:var(--p);color:#fff;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 0 0 8px rgba(97,5,220,.1)}
+.act h3{font-size:22px;font-weight:700;margin-top:16px}
+.act .bol{display:inline-block;margin-top:6px;font-size:12px;font-weight:600;color:var(--p);background:#ece0fd;padding:4px 12px;border-radius:99px}
+.act .box{background:#fff;border-radius:20px;padding:6px 14px;text-align:left;margin-top:16px;font-size:13.5px}
+.act .box .r{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #f5f5f4}
+.act .box .r span{color:#a8a29e}.act .box .r b{font-weight:600}
+.act .box .t{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0 8px}
+.act .box .t span{font-weight:600;color:#a8a29e}.act .box .t b{font-size:30px;letter-spacing:-.01em}.act .box .t small{font-size:14px;color:#78716c;margin-right:3px;font-weight:600}
+.act .nv{width:100%;margin-top:14px;padding:14px;border-radius:99px;background:var(--p);color:#fff;font-weight:600;font-size:15px}
+.act .sec{display:flex;gap:8px;margin-top:10px}
+.act .sec button{flex:1;padding:10px;border-radius:99px;background:#fff;box-shadow:0 0 0 1px rgba(97,5,220,.1);font-size:12.5px;font-weight:600;display:flex;gap:6px;align-items:center;justify-content:center}
+.act .sec .ic{color:var(--p);font-size:15px}
+
+/* ===== NUEVA: ticket con muescas y borde en festón ===== */
+.tk{position:relative;width:326px;filter:drop-shadow(0 30px 40px rgba(20,10,60,.35));animation:sube .7s var(--ease) both}
+@keyframes sube{from{transform:translateY(60px) scale(.96);opacity:0}}
+.tk .a,.tk .b{background:#fff;position:relative}
+.tk .a{border-radius:26px 26px 0 0;padding:26px 22px 20px;text-align:center;
+  --m:radial-gradient(circle 12px at 0 100%,#0000 11.5px,#000 12px) 0 0/51% 100% no-repeat,radial-gradient(circle 12px at 100% 100%,#0000 11.5px,#000 12px) 100% 0/51% 100% no-repeat;
+  -webkit-mask:var(--m);mask:var(--m)}
+.tk .a:after{content:"";position:absolute;left:24px;right:24px;bottom:0;border-top:2px dashed #e6defa}
+.tk .b{border-radius:0 0 4px 4px;padding:20px 22px 34px;
+  --mb:radial-gradient(circle 12px at 0 0,#0000 11.5px,#000 12px),radial-gradient(circle 12px at 100% 0,#0000 11.5px,#000 12px),radial-gradient(circle 9px at 50% 100%,#0000 8.5px,#000 9px) 0 0/24px 100% repeat-x;
+  -webkit-mask:var(--mb);-webkit-mask-composite:source-in;mask:var(--mb);mask-composite:intersect}
+.tk .ok{position:relative;width:64px;height:64px;margin:0 auto}
+.tk .ok .c{position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,#8a3df2,#4d04b0);color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 12px 24px -10px rgba(97,5,220,.8);animation:pop .55s .25s var(--ease) both}
+@keyframes pop{from{transform:scale(0)}}
+.tk .ok i{position:absolute;border-radius:50%;animation:conf 1s .45s ease-out both}
+@keyframes conf{from{transform:translate(0,0) scale(0);opacity:1}60%{opacity:1}to{opacity:.0;transform:translate(var(--x),var(--y)) scale(1)}}
+.tk h3{font-family:var(--f-head);font-size:22px;font-weight:800;margin-top:14px;letter-spacing:-.01em}
+.tk .sub{font-size:13px;color:var(--mut);margin-top:4px}
+.tk .off{margin-top:10px;font-size:12px;background:#fff4e0;color:#b45309;border-radius:14px;padding:8px 10px;text-align:left;display:flex;gap:8px;line-height:1.35}
+.tk .g{display:grid;grid-template-columns:1fr auto;gap:14px 12px;text-align:left}
+.tk .g small{display:block;font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin-bottom:3px}
+.tk .g b{font-size:15px;font-variant-numeric:tabular-nums}
+.tk .g .der{text-align:right}
+.tk .monto{font-family:var(--f-head);font-size:26px!important;font-weight:800;letter-spacing:-.01em}
+.tk .monto s{font-size:13px;color:var(--mut);margin-right:3px;text-decoration:none;font-weight:700}
+.tk .desc{display:flex;justify-content:space-between;font-size:12.5px;color:var(--mut);margin-top:-4px}
+.tk .desc b{color:var(--ink);font-weight:600}.tk .desc .neg{color:#e11d48}
+.tk .cli{display:flex;align-items:center;gap:12px;margin-top:16px;background:#f7f3fe;border-radius:18px;padding:12px 14px;text-align:left}
+.tk .cli .mp{width:42px;height:42px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px var(--ring);display:flex;align-items:center;justify-content:center;font-size:19px;color:var(--p);flex:none}
+.tk .cli b{display:block;font-size:14px}.tk .cli span{font-size:12px;color:var(--mut)}
+.tk .nv{width:100%;margin-top:18px;height:52px;border-radius:99px;background:linear-gradient(90deg,#8a3df2,#4d04b0);color:#fff;font-weight:700;font-size:15px;box-shadow:0 12px 22px -12px rgba(97,5,220,.9)}
+.tk .sec{display:flex;gap:8px;margin-top:10px}
+.tk .sec button{flex:1;height:42px;border-radius:99px;background:#f7f3fe;font-size:12.5px;font-weight:700;color:var(--p-dark);display:flex;gap:6px;align-items:center;justify-content:center}
+.tk .sec .ic{font-size:15px}
+.notas{width:min(900px,calc(100% - 28px));margin:0 auto 60px;background:#fff;border-radius:22px;padding:18px 20px;box-shadow:0 0 0 1px var(--ring);font-size:13px;line-height:1.6;color:#4a4468}
+.notas b{color:var(--ink)}.notas li{margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Maqueta · Boleta (venta exitosa)</b>
+  <div class="grp"><span>Pantalla</span>
+    <div class="tog" data-k="ver"><button data-v="comparar" class="on">Comparar</button><button data-v="nueva">Nueva</button><button data-v="actual">Actual</button></div>
+    <span>Pago</span>
+    <div class="tog" data-k="pago"><button data-v="Efectivo" class="on">Efectivo</button><button data-v="Yape">Yape</button><button data-v="Tarjeta">Tarjeta</button></div>
+    <span>Extras</span>
+    <div class="tog" data-k="desc"><button data-v="no" class="on">Sin descuento</button><button data-v="si">Con descuento</button></div>
+    <div class="tog" data-k="off"><button data-v="no" class="on">En línea</button><button data-v="si">Sin conexión</button></div>
+    <button class="tog" id="rep" style="color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:5px 13px;font-size:12px">Repetir animación</button></div>
+</div>
+<div class="stage" id="stage"></div>
+<div class="notas">
+  <b>Cómo se adapta tu referencia a la boleta de Kaserita</b>
+  <ul>
+    <li><b>Forma de ticket:</b> el papel se parte en dos por una línea punteada con muescas redondas a los lados, y abajo termina en festón (los semicírculos de la referencia). Aquí el lugar del código de barras lo ocupan los botones, así el ticket sirve para algo.</li>
+    <li><b>Mismos datos, mejor ordenados:</b> N.° de boleta, monto en grande, fecha y hora (hoy no se muestra), y una tarjeta con el medio de pago y el cliente.</li>
+    <li><b>Entra con un pequeño movimiento:</b> el ticket sube, el visto aparece con rebote y salta confeti. Se puede quitar.</li>
+    <li><b>Si hay descuento</b> aparece el subtotal y el descuento arriba del monto; <b>sin conexión</b> sale el aviso naranja de siempre.</li>
+    <li><b>No cambia</b> lo que se imprime en la ticketera ni lo que va por WhatsApp: esto es solo la pantalla de “Venta exitosa”.</li>
+  </ul>
+</div>
+<script>
+const S={ver:'comparar',pago:'Efectivo',desc:'no',off:'no'};
+const IC={check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',print:'<path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7z"/>',chat:'<path d="M4 5h16v11H9l-5 4z"/>',bt:'<path d="M7 7l10 10-5 4V3l5 4L7 17"/>',cloud:'<path d="M7 18a4 4 0 0 1-.5-7.9A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z"/>',cash:'<rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="12" cy="12" r="2.5"/>',phone:'<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>',card:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/>'};
+const ic=k=>`<svg class="ic" viewBox="0 0 24 24">${IC[k]}</svg>`;
+const money=n=>n.toFixed(2);
+function datos(){const sub=48.5,d=S.desc==='si'?5:0;return{sub,d,total:sub-d,bol:'B001-000248',cli:'Cliente general',pago:S.pago,off:S.off==='si',fecha:'25 oct 2026 · 11:22'}}
+const icoPago=p=>p==='Efectivo'?'cash':p==='Yape'?'phone':'card';
+function actual(){const v=datos();return `<div class="fondo"><div class="act"><div class="ck">${ic('check')}</div><h3>¡Venta exitosa!</h3><span class="bol">Boleta ${v.bol}</span>
+ ${v.off?`<div style="margin-top:10px;font-size:12px;background:#fffbeb;color:#b45309;border-radius:16px;padding:8px 12px;text-align:left">Guardada sin conexión. Se sincronizará sola cuando vuelva el internet.</div>`:''}
+ <div class="box"><div class="r"><span>Pago</span><b>${v.pago}</b></div><div class="r"><span>Cliente</span><b>${v.cli}</b></div>
+ ${v.d?`<div class="r"><span>Subtotal</span><b>S/ ${money(v.sub)}</b></div><div class="r"><span>Descuento</span><b style="color:#e11d48">− S/ ${money(v.d)}</b></div>`:''}
+ <div class="t"><span>Total</span><b><small>S/</small>${money(v.total)}</b></div></div>
+ <button class="nv">Nueva venta</button><div class="sec"><button>${ic('print')} Imprimir</button><button>${ic('chat')} WhatsApp</button></div>
+ <button class="sec" style="width:100%;margin-top:8px;padding:10px;border-radius:99px;background:#fff;box-shadow:0 0 0 1px rgba(97,5,220,.1);font-size:12.5px;font-weight:600;display:flex;gap:6px;justify-content:center;align-items:center">${ic('bt')} Ticketera Bluetooth</button></div></div>`}
+function nueva(){const v=datos();
+ const conf=[['#ffc81a',-46,-30,8],['#8a3df2',46,-34,7],['#ff7aa2',-58,6,6],['#34d399',56,10,7],['#6105dc',-30,-52,6],['#f59e0b',30,-54,6]].map(([c,x,y,s],i)=>`<i style="background:${c};width:${s}px;height:${s}px;left:calc(50% - ${s/2}px);top:calc(50% - ${s/2}px);--x:${x}px;--y:${y}px;animation-delay:${.45+i*.04}s"></i>`).join('');
+ return `<div class="fondo"><div class="tk"><div class="a"><div class="ok"><span class="c">${ic('check')}</span>${conf}</div><h3>¡Venta exitosa!</h3><p class="sub">Tu boleta se emitió correctamente</p>
+ ${v.off?`<div class="off">${ic('cloud')}<span>Guardada sin conexión. Se sincronizará sola cuando vuelva el internet.</span></div>`:''}</div>
+ <div class="b"><div class="g"><div><small>Boleta</small><b>${v.bol}</b></div><div class="der"><small>Monto</small><b class="monto"><s>S/</s>${money(v.total)}</b></div>
+ ${v.d?`<div style="grid-column:1/-1" class="desc"><span>Subtotal <b>S/ ${money(v.sub)}</b></span><span class="neg">Descuento − S/ ${money(v.d)}</span></div>`:''}
+ <div style="grid-column:1/-1"><small>Fecha y hora</small><b>${v.fecha}</b></div></div>
+ <div class="cli"><span class="mp">${ic(icoPago(v.pago))}</span><div><b>${v.cli}</b><span>${v.pago}</span></div></div>
+ <button class="nv">Nueva venta</button><div class="sec"><button>${ic('print')} Imprimir</button><button>${ic('chat')} WhatsApp</button><button>${ic('bt')} Ticketera</button></div></div></div></div>`}
+const col=(l,b,n,h)=>`<div class="col"><div class="etq">${l}<i class="${n?'n':''}">${b}</i></div>${h}</div>`;
+function render(){const st=document.getElementById('stage');st.innerHTML=S.ver==='nueva'?col('Boleta nueva','propuesta',1,nueva()):S.ver==='actual'?col('Boleta actual','hoy',0,actual()):col('Actual','hoy',0,actual())+col('Nueva','propuesta',1,nueva())}
+document.querySelectorAll('.tog[data-k]').forEach(g=>g.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;g.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));S[g.dataset.k]=b.dataset.v;render()}));
+document.getElementById('rep').onclick=render;
+render();
+</script>
+</body>
+</html>

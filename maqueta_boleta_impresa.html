@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Boleta impresa</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--p:#6105dc;--ink:#1c1830;--mut:#78729a;--ring:#efe6fc;--f-head:'Plus Jakarta Sans',system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:#e9e4f5;min-height:100vh;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+.bar{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;justify-content:space-between;padding:10px 20px;background:#1c1830;color:#fff;font-size:12.5px;position:sticky;top:0;z-index:90}
+.bar b{font-family:var(--f-head);font-size:13.5px}
+.bar .grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bar .tog{display:inline-flex;background:rgba(255,255,255,.1);border-radius:999px;padding:3px}
+.bar .tog button{color:#d9d2ee;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600}
+.bar .tog button.on{background:#fff;color:#1c1830}
+.stage{display:flex;gap:34px;justify-content:center;align-items:flex-start;padding:26px 14px 30px;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:8px;align-items:center}
+.etq{font-family:var(--f-head);font-weight:700;font-size:12.5px;color:#4d3f86;display:flex;gap:8px;align-items:center}
+.etq i{font-style:normal;font-size:11px;padding:2px 9px;border-radius:999px;background:#fff;color:var(--mut)}
+.etq i.n{background:var(--p);color:#fff}
+/* papel térmico */
+.papel{background:#fff;color:#000;font-family:'Courier New',Courier,monospace;font-weight:700;padding:14px 12px 18px;box-shadow:0 18px 40px -18px rgba(40,20,90,.5),0 0 0 1px rgba(0,0,0,.06);text-align:center;line-height:1.25}
+.w80{width:302px}.w58{width:216px}
+.papel .caja{border:2px solid #000;border-radius:4px;padding:5px 8px;display:inline-block;margin-bottom:6px}
+.papel .caja div{font-weight:900;font-size:18px;letter-spacing:.3px}
+.papel small{font-size:9px;letter-spacing:1px;text-transform:uppercase;display:block}
+.corte{position:relative;margin:10px 0;border-top:2px dashed #000}
+.corte:before,.corte:after{content:"";position:absolute;top:-7px;width:7px;height:14px;border:2px solid #000;background:#fff}
+.corte:before{left:-14px;border-left:none;border-radius:0 14px 14px 0}.corte:after{right:-14px;border-right:none;border-radius:14px 0 0 14px}
+.fila{display:flex;justify-content:space-between;gap:8px;text-align:left}
+.sep{border-top:2px dashed #000;margin:6px 0}
+/* actual */
+.a-it{text-align:left;margin-bottom:5px}.a-it .d{font-size:13px}.a-it .l{display:flex;justify-content:space-between;font-size:12px}.a-it .c{font-size:11px;padding-left:8px}
+/* mejorada */
+.logo{width:46px;height:46px;border-radius:50%;border:2px solid #000;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;font-family:'Plus Jakarta Sans',sans-serif}
+.info{font-size:11px;font-weight:700;line-height:1.3}
+.gracias{font-size:14px;font-weight:900;margin-top:6px}
+.tabla{text-align:left;font-size:12px}
+.tabla .cab{display:grid;grid-template-columns:28px 1fr 56px;gap:4px;font-size:9px;letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:3px;margin-bottom:4px}
+.tabla .cab span:last-child,.tabla .r>span:last-child{text-align:right}
+.tabla .r{display:grid;grid-template-columns:28px 1fr 56px;gap:4px;margin-bottom:5px}
+.tabla .r .pu{display:block;font-size:10px;font-weight:700}
+.tabla .r .cmb{display:block;font-size:10px;padding-left:2px}
+.w58 .tabla .cab,.w58 .tabla .r{grid-template-columns:22px 1fr 50px}
+.tot{display:flex;justify-content:space-between;align-items:baseline;margin-top:4px}
+.tot b{font-size:24px;font-weight:900}
+.w58 .tot b{font-size:20px}
+.pagobox{border:2px solid #000;border-radius:8px;padding:5px 8px;margin-top:6px;text-align:left}
+.pagobox .fila{font-size:12px}
+.arts{font-size:10px;letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.notas{width:min(920px,calc(100% - 28px));margin:0 auto 60px;background:#fff;border-radius:22px;padding:18px 20px;box-shadow:0 0 0 1px var(--ring);font-size:13px;line-height:1.6;color:#4a4468}
+.notas b{color:var(--ink)}.notas li{margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Maqueta · Boleta impresa</b>
+  <div class="grp"><span>Papel</span>
+    <div class="tog" data-k="papel"><button data-v="w80" class="on">80 mm</button><button data-v="w58">58 mm</button></div>
+    <span>Ver</span>
+    <div class="tog" data-k="ver"><button data-v="comparar" class="on">Comparar</button><button data-v="nueva">Mejorada</button><button data-v="actual">Actual</button></div>
+    <span>Pago</span>
+    <div class="tog" data-k="pago"><button data-v="EFECTIVO" class="on">Efectivo</button><button data-v="YAPE">Yape</button></div>
+    <div class="tog" data-k="desc"><button data-v="no" class="on">Sin descuento</button><button data-v="si">Con descuento</button></div>
+    <div class="tog" data-k="logo"><button data-v="si" class="on">Con logo</button><button data-v="no">Sin logo</button></div></div>
+</div>
+<div class="stage" id="stage"></div>
+<div class="notas">
+  <b>Qué mejora la boleta impresa</b>
+  <ul>
+    <li><b>Datos del negocio:</b> logo (opcional, en blanco y negro), dirección y teléfono bajo el nombre. Hoy solo sale el nombre.</li>
+    <li><b>Tabla de productos en columnas</b> (<i>Cant · Producto · Importe</i>) con el precio unitario debajo del nombre. Ocupa menos papel y se lee de corrido; el combo conserva su detalle.</li>
+    <li><b>Quién atendió y cuántos artículos</b> (“Atendido por Dueño Demo · 7 artículos”), útil para reclamos.</li>
+    <li><b>Pago completo:</b> en efectivo, <i>Recibido</i> y <i>Vuelto</i>; en Yape/Plin, solo el medio. Hoy no aparece el vuelto.</li>
+    <li><b>Monto</b> siempre en grande y alineado; “¡Gracias por su compra!” arriba, como pediste.</li>
+    <li><b>Se adapta a 58 mm y a 80 mm</b> (prueba el selector “Papel”).</li>
+  </ul>
+  <b>Para decidir:</b> los datos del negocio (dirección, teléfono, logo) y el vuelto salen de lo que ya guarda el POS; si algo no está cargado, esa línea simplemente no se imprime. Los datos de la maqueta son de ejemplo.
+</div>
+<script>
+const S={papel:'w80',ver:'comparar',pago:'EFECTIVO',desc:'no',logo:'si'};
+const m=n=>n.toFixed(2);
+const items=[{c:1,d:'Aceite Primor 1L',pu:11.5},{c:1,d:'Combo Desayuno',pu:21.9,cmb:['Leche evaporada x2','Galletas de soda x1','Manzana x1']},{c:5,d:'Agua San Luis 625ml',pu:2}];
+function datos(){const sub=items.reduce((a,i)=>a+i.c*i.pu,0),d=S.desc==='si'?5:0,total=sub-d;return{sub,d,total,recibido:S.pago==='EFECTIVO'?50:0,vuelto:S.pago==='EFECTIVO'?50-total:0,arts:items.reduce((a,i)=>a+i.c,0)}}
+const corte='<div class="corte"></div>';
+function actual(){const v=datos();return `<div class="papel ${S.papel}"><div class="caja"><div>Bodega Demo</div></div>
+ <div style="font-size:14px;font-weight:900">¡Gracias por su compra!</div><div style="font-size:12px">Tu boleta se emitió correctamente</div>${corte}
+ <div class="fila"><div><small>Boleta</small><span style="font-size:14px">B001-000248</span></div><div style="text-align:right"><small>Fecha y hora</small><span style="font-size:12px">25 oct 2026 · 11:22</span></div></div>
+ <div class="pagobox fila" style="justify-content:space-between"><span>Cliente general</span><span>${S.pago}</span></div>${corte}
+ ${items.map(i=>`<div class="a-it"><div class="d">${i.d}</div><div class="l"><span>${i.c} UND x S/ ${m(i.pu)}</span><span>S/ ${m(i.c*i.pu)}</span></div>${(i.cmb||[]).map(c=>`<div class="c">- ${c}</div>`).join('')}</div>`).join('')}
+ <div class="sep"></div>${v.d?`<div class="fila" style="font-size:12px"><span>Subtotal:</span><span>S/ ${m(v.sub)}</span></div><div class="fila" style="font-size:12px"><span>Descuento:</span><span>- S/ ${m(v.d)}</span></div>`:''}
+ <div class="tot"><small>Monto</small><b style="font-size:22px">S/ ${m(v.total)}</b></div>${corte}
+ <div style="font-size:10px;line-height:1.3">Documento sin valor tributario.<br>No válido como comprobante de pago ante SUNAT. Solo informativo.</div></div>`}
+function nueva(){const v=datos();return `<div class="papel ${S.papel}">
+ ${S.logo==='si'?`<div class="logo">B</div>`:''}<div class="caja"><div>Bodega Demo</div></div>
+ <div class="info">Av. Los Álamos 245, San Miguel<br>Tel. 999 888 777</div>
+ <div class="gracias">¡Gracias por su compra!</div><div style="font-size:11px">Tu boleta se emitió correctamente</div>${corte}
+ <div class="fila"><div><small>Boleta</small><span style="font-size:15px">B001-000248</span></div><div style="text-align:right"><small>Fecha y hora</small><span style="font-size:12px">25 oct 2026 · 11:22</span></div></div>
+ <div class="fila" style="margin-top:6px;font-size:11px"><span>Cliente: Cliente general</span></div>
+ <div class="fila" style="font-size:11px"><span>Atendido por: Dueño Demo</span></div>${corte}
+ <div class="tabla"><div class="cab"><span>Cant</span><span>Producto</span><span>Importe</span></div>
+ ${items.map(i=>`<div class="r"><span>${i.c}</span><span>${i.d}<span class="pu">${m(i.pu)} c/u</span>${(i.cmb||[]).map(c=>`<span class="cmb">· ${c}</span>`).join('')}</span><span>${m(i.c*i.pu)}</span></div>`).join('')}</div>
+ <div class="sep"></div><div class="arts">${v.arts} artículos</div>
+ ${v.d?`<div class="fila" style="font-size:12px"><span>Subtotal</span><span>S/ ${m(v.sub)}</span></div><div class="fila" style="font-size:12px"><span>Descuento</span><span>- S/ ${m(v.d)}</span></div>`:''}
+ <div class="tot"><small>Monto</small><b>S/ ${m(v.total)}</b></div>
+ <div class="pagobox"><div class="fila"><span>Pago</span><span>${S.pago==='EFECTIVO'?'Efectivo':'Yape'}</span></div>${S.pago==='EFECTIVO'?`<div class="fila"><span>Recibido</span><span>S/ ${m(v.recibido)}</span></div><div class="fila"><span>Vuelto</span><span>S/ ${m(v.vuelto)}</span></div>`:''}</div>${corte}
+ <div style="font-size:10px;line-height:1.3">Documento sin valor tributario.<br>No válido como comprobante de pago ante SUNAT. Solo informativo.</div></div>`}
+const col=(l,b,n,h)=>`<div class="col"><div class="etq">${l}<i class="${n?'n':''}">${b}</i></div>${h}</div>`;
+function render(){document.getElementById('stage').innerHTML=S.ver==='nueva'?col('Mejorada','propuesta',1,nueva()):S.ver==='actual'?col('Actual','hoy',0,actual()):col('Actual','hoy',0,actual())+col('Mejorada','propuesta',1,nueva())}
+document.querySelectorAll('.tog').forEach(g=>g.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;g.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));S[g.dataset.k]=b.dataset.v;render()}));
+render();
+</script>
+</body>
+</html>
