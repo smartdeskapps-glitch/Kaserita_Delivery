@@ -286,7 +286,7 @@ function TarjetaProducto({ producto, cantidadEnCarrito, onAgregar, onQuitar, onV
         >
           {producto.foto_url ? (
             <div className="kc-foto">
-              <img src={producto.foto_url} alt={tituloProducto(producto.descripcion)} loading="lazy" />
+              <img src={producto.foto_url} alt={tituloProducto(producto.descripcion)} loading="lazy" decoding="async" />
             </div>
           ) : (
             <i className="fa-solid fa-image kc-sinfoto"></i>
@@ -523,7 +523,7 @@ function TarjetaDestacado({ producto, cantidadEnCarrito, onAgregar, onQuitar, on
       <div className="kh-foto">
         {producto.foto_url ? (
           <div className="kh-img">
-            <img src={producto.foto_url} alt={tituloProducto(producto.descripcion)} loading="lazy" />
+            <img src={producto.foto_url} alt={tituloProducto(producto.descripcion)} loading="lazy" decoding="async" />
           </div>
         ) : (
           <i className="fa-solid fa-image kc-sinfoto"></i>
@@ -600,7 +600,7 @@ function TarjetaCombo({ combo, cantidadCombo, productosPorId, onAgregar, onQuita
       ? { texto: `Ahorras ${formatoMoneda(ahorro)}`, clase: "", icono: "fa-tag" }
       : null;
   const foto = (u, clase) => (
-    <span className={clase}><img src={u} alt="" loading="lazy" /></span>
+    <span className={clase}><img src={u} alt="" loading="lazy" decoding="async" /></span>
   );
 
   return (
@@ -659,6 +659,12 @@ function TarjetaCombo({ combo, cantidadCombo, productosPorId, onAgregar, onQuita
     </div>
   );
 }
+
+// Las tarjetas se dibujan una vez y solo se repiten si cambian sus propios datos:
+// antes, agregar un producto volvía a dibujar TODAS (30+ tarjetas) en cada toque.
+const TarjetaProductoMemo = React.memo(TarjetaProducto);
+const TarjetaDestacadoMemo = React.memo(TarjetaDestacado);
+const TarjetaComboMemo = React.memo(TarjetaCombo);
 
 function VisorFoto({ producto, onCerrar }) {
   const fotos = [producto.foto_url, ...(producto.fotos_extra || [])].filter(Boolean);
@@ -3420,6 +3426,11 @@ function App() {
     [itemsCarrito, itemsCarritoCombos]
   );
 
+  const abrirDetalle = useCallback((prod) => setProductoDetalleId(prod.id), []);
+  const abrirDetalleDesdeDestacados = useCallback((prod) => {
+    setModalTodosDestacados(false);
+    setProductoDetalleId(prod.id);
+  }, []);
   const agregarAlCarrito = useCallback((producto) => {
     setCarrito((c) => ({ ...c, [producto.id]: (c[producto.id] || 0) + 1 }));
   }, []);
@@ -4033,7 +4044,7 @@ function App() {
           >
             {combos.map((combo) => (
               <div key={combo.id} className="w-[88%] shrink-0 snap-start pr-3 last:pr-0">
-                <TarjetaCombo
+                <TarjetaComboMemo
                   combo={combo}
                   cantidadCombo={carritoCombos[combo.id] || 0}
                   productosPorId={productosPorId}
@@ -4076,12 +4087,12 @@ function App() {
           >
             {productosDestacados.map((p) => (
               <div key={p.id} className="w-[88%] shrink-0 snap-start pr-3 last:pr-0">
-                <TarjetaDestacado
+                <TarjetaDestacadoMemo
                   producto={p}
                   cantidadEnCarrito={carrito[p.id] || 0}
                   onAgregar={agregarAlCarrito}
                   onQuitar={quitarDelCarrito}
-                  onAbrir={(prod) => setProductoDetalleId(prod.id)}
+                  onAbrir={abrirDetalle}
                 />
               </div>
             ))}
@@ -4123,14 +4134,14 @@ function App() {
         ) : (
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
             {productosFiltrados.map((p) => (
-              <TarjetaProducto
+              <TarjetaProductoMemo
                 key={p.id}
                 producto={p}
                 cantidadEnCarrito={carrito[p.id] || 0}
                 onAgregar={agregarAlCarrito}
                 onQuitar={quitarDelCarrito}
                 onVerFoto={setFotoAmpliada}
-                onAbrir={(prod) => setProductoDetalleId(prod.id)}
+                onAbrir={abrirDetalle}
                 esFavorito={favoritos.has(p.id)}
                 onToggleFavorito={toggleFavorito}
               />
@@ -4742,7 +4753,7 @@ function App() {
         <HojaInferior titulo="Todos los combos" onCerrar={() => setModalTodosCombos(false)} ancho="sm:max-w-md" alto="max-h-[85vh]">
             <div className="overflow-y-auto flex-1 px-4 pb-6 pt-1 flex flex-col gap-3">
               {combos.map((combo) => (
-                <TarjetaCombo
+                <TarjetaComboMemo
                   key={combo.id}
                   combo={combo}
                   cantidadCombo={carritoCombos[combo.id] || 0}
@@ -4760,14 +4771,14 @@ function App() {
         <HojaInferior titulo="Todos los destacados" onCerrar={() => setModalTodosDestacados(false)} ancho="sm:max-w-lg" alto="max-h-[85vh]">
             <div className="overflow-y-auto flex-1 px-4 pb-6 pt-1 grid grid-cols-2 gap-3">
               {productosDestacados.map((p) => (
-                <TarjetaProducto
+                <TarjetaProductoMemo
                   key={p.id}
                   producto={p}
                   cantidadEnCarrito={carrito[p.id] || 0}
                   onAgregar={agregarAlCarrito}
                   onQuitar={quitarDelCarrito}
                   onVerFoto={setFotoAmpliada}
-                  onAbrir={(prod) => { setModalTodosDestacados(false); setProductoDetalleId(prod.id); }}
+                  onAbrir={abrirDetalleDesdeDestacados}
                   esFavorito={favoritos.has(p.id)}
                   onToggleFavorito={toggleFavorito}
                 />

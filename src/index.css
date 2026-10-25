@@ -634,13 +634,19 @@ body { overflow-x: clip; }
   inset: 0;
   z-index: 25;
   background: rgba(20, 10, 50, 0.28);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+}
+.kdock-velo.on {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
-  opacity: 0;
-  pointer-events: none;
   transition: opacity 0.3s ease;
 }
-.kdock-velo.on { opacity: 1; pointer-events: auto; }
 .kdock-nav {
   position: fixed;
   left: 0; right: 0;
@@ -668,9 +674,9 @@ body { overflow-x: clip; }
   border-radius: 9999px;
   padding: 6px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.72);
-  -webkit-backdrop-filter: blur(18px) saturate(1.6);
-  backdrop-filter: blur(18px) saturate(1.6);
+  background: rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8), 0 14px 30px -12px rgba(60, 20, 120, 0.35), inset 0 1px 0 #fff;
   transition: flex-grow 0.5s cubic-bezier(0.3, 1.1, 0.4, 1);
 }
@@ -790,7 +796,8 @@ body { overflow-x: clip; }
 }
 .kdock-carrito .kdock-cnt { opacity: 1; }
 /* Menú en abanico de Perfil: las burbujas salen del botón como gotas de líquido. */
-.kdock-goo { position: absolute; inset: 0; filter: url(#kdock-goo); z-index: -1; pointer-events: none; }
+.kdock-goo { position: absolute; inset: 0; z-index: -1; pointer-events: none; visibility: hidden; transition: visibility 0s linear 0.9s; }
+.kdock-goo.on { filter: url(#kdock-goo); visibility: visible; transition: none; }
 .kdock-gs { position: absolute; right: 8px; bottom: 6px; width: 50px; height: 50px; border-radius: 50%; background: #e9dcfb; opacity: 0; transition: opacity 0.2s; }
 .kdock-goo.on .kdock-gs { opacity: 1; }
 .kdock-gb {
@@ -842,3 +849,10 @@ body { overflow-x: clip; }
   .kdock-carrito .kdock-tabs, .kdock-carrito .kdock-chip { animation: none; }
   .kdock-tabs, .kdock-tab, .kdock-chipwrap, .kdock-chip, .kdock-gb, .kdock-fi, .kdock-fi span { transition: none; }
 }
+
+/* Las tarjetas que están fuera de la pantalla no se dibujan hasta que se acercan:
+   con decenas de fotos con filtro, el celular se desplaza mucho más fluido. */
+.kc, .kcb, .kh { content-visibility: auto; }
+.kc { contain-intrinsic-size: auto 290px; }
+.kcb { contain-intrinsic-size: auto 330px; }
+.kh { contain-intrinsic-size: auto 150px; }
