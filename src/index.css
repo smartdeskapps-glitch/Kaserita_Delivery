@@ -995,3 +995,28 @@ body { overflow-x: clip; }
 .kpf-sw.on::after{left:21px}
 .kpf-salir{height:48px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1.5px #fecdd3;color:#e11d48;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px}
 .kpf-elim{align-self:center;font-size:12.5px;font-weight:600;color:#78729a;text-decoration:underline;padding:4px}
+/* Dirección de entrega: tarjeta blanca con campos, mapa en tarjeta y botón grande */
+.kub-fondo{background:linear-gradient(180deg,#f1eafc,#f7f5fb)}
+.kub-hoja{background:#fff;border-radius:28px;padding:18px 16px 16px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 0 #efe6fc}
+.kub-cab{display:grid;grid-template-columns:40px 1fr 40px;align-items:center}
+.kub-cab h1{text-align:center;font-size:18px;font-weight:800;letter-spacing:-.2px;color:#1c1830;margin:0}
+.kub-atras{width:40px;height:40px;border-radius:50%;background:#f7f5fb;color:#4d04b0;display:flex;align-items:center;justify-content:center;font-size:14px}
+.kub-campo label{display:block;font-size:12px;color:#78729a;margin:0 0 6px 4px}
+.kub-caja{display:flex;align-items:center;gap:10px;background:#f7f5fb;border-radius:16px;padding:0 8px 0 14px;height:50px}
+.kub-caja input{flex:1;min-width:0;border:0;background:none;outline:0;font-size:14px;font-weight:500;color:#1c1830}
+.kub-caja input::placeholder{color:#a29cbd;font-weight:400}
+.kub-caja:focus-within{box-shadow:0 0 0 2px rgba(97,5,220,.35)}
+.kub-bt{width:34px;height:34px;border-radius:50%;background:#1c1830;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.kub-tit{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:2px}
+.kub-tit b{font-size:16px;font-weight:800;color:#1c1830}
+.kub-tit span{font-size:12px;font-weight:600;color:#6105dc;text-align:right}
+.kub-mapa{border:1px solid #efe6fc;border-radius:20px;overflow:hidden}
+.kub-gps{position:absolute;right:10px;bottom:10px;z-index:600;height:38px;padding:0 13px;border-radius:999px;background:#fff;color:#4d04b0;font-weight:700;font-size:12.5px;display:flex;align-items:center;gap:7px;box-shadow:0 4px 12px rgba(60,20,120,.2)}
+.kub-gps:disabled{opacity:.6}
+.kub-info{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#fff}
+.kub-ia{flex:1;min-width:0}
+.kub-ia b{display:block;font-size:13.5px;color:#1c1830}
+.kub-ia small{font-size:11.5px;color:#78729a}
+.kub-chip{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#4d04b0;background:#f4eefe;border-radius:999px;padding:6px 10px;white-space:nowrap}
+.kub-cta{height:56px;border-radius:999px;background:linear-gradient(110deg,#8a3df2,#4d04b0);color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 14px 24px -12px rgba(97,5,220,.7)}
+.kub-cta:disabled{opacity:.5;box-shadow:none}

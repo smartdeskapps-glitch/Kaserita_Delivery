@@ -4644,75 +4644,83 @@ function App() {
       )}
 
       {ubicacionAbierta && (
-        <div className="fixed inset-0 z-40 flex flex-col bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">
-          <div className="max-w-md w-full mx-auto flex flex-col h-full min-h-0">
-            <div className="relative">
-              <MapaEntrega punto={ubicacionEntrega} onCambiar={setUbicacionEntrega} alto="h-[46vh]" redondeo="rounded-none" />
-              <button
-                onClick={() => setUbicacionAbierta(false)}
-                aria-label="Volver"
-                className="absolute left-3.5 top-4 z-[600] w-10 h-10 rounded-full bg-white text-[#4d04b0] flex items-center justify-center shadow-md"
-              >
-                <i className="fa-solid fa-arrow-left text-sm"></i>
-              </button>
-              <button
-                type="button"
-                onClick={usarMiUbicacion}
-                disabled={obteniendoGps}
-                className="absolute right-3.5 bottom-9 z-[600] h-11 px-4 rounded-full bg-white text-[#4d04b0] text-[13px] font-bold flex items-center gap-2 shadow-md disabled:opacity-60"
-              >
-                <i className="fa-solid fa-location-crosshairs"></i>
-                {obteniendoGps ? "Buscando..." : "Usar mi ubicación"}
-              </button>
-            </div>
+        <div className="fixed inset-0 z-40 overflow-y-auto kub-fondo">
+          <div className="max-w-md w-full mx-auto px-3.5 py-4 min-h-full flex flex-col">
+            <div className="kub-hoja">
+              <div className="kub-cab">
+                <button onClick={() => setUbicacionAbierta(false)} aria-label="Volver" className="kub-atras">
+                  <i className="fa-solid fa-arrow-left"></i>
+                </button>
+                <h1>Dirección de entrega</h1>
+                <span></span>
+              </div>
 
-            <div className="-mt-6 relative z-[600] flex-1 min-h-0 overflow-y-auto rounded-t-[28px] bg-gradient-to-br from-[#f4effc] to-[#f9f8fb] px-4 pt-4 pb-4 flex flex-col gap-3">
-              <div>
-                <p className="text-[11px] font-bold tracking-[0.07em] uppercase text-[#78729a]">Entregar en</p>
-                <p className="text-[17px] font-bold text-[#1c1830] leading-snug">
-                  {ubicacionEntrega ? "Ubicación marcada en el mapa" : "Marca dónde te lo llevamos"}
-                </p>
-                <p className="text-xs text-[#78729a] mt-0.5">Toca el mapa o arrastra el pin para ajustar el punto exacto.</p>
+              <div className="kub-campo">
+                <label htmlFor="kub-ref">Referencia</label>
+                <div className="kub-caja">
+                  <input
+                    id="kub-ref"
+                    type="text"
+                    value={referenciaEntrega}
+                    onChange={(e) => setReferenciaEntrega(e.target.value)}
+                    maxLength={200}
+                    placeholder="Ej. Portón verde, 2.º piso, tocar timbre"
+                  />
+                  <span className="kub-bt"><i className="fa-solid fa-pen"></i></span>
+                </div>
+              </div>
+              <div className="kub-campo">
+                <label htmlFor="kub-tel">Teléfono de contacto</label>
+                <div className="kub-caja">
+                  <input
+                    id="kub-tel"
+                    type="tel"
+                    inputMode="tel"
+                    value={telefonoEntrega}
+                    onChange={(e) => setTelefonoEntrega(e.target.value)}
+                    maxLength={20}
+                    placeholder="Ej. 987654321"
+                  />
+                  <span className="kub-bt"><i className="fa-solid fa-phone"></i></span>
+                </div>
+              </div>
+
+              <div className="kub-tit">
+                <b>Punto de entrega</b>
+                <span>Toca el mapa o arrastra el pin</span>
+              </div>
+              <div className="kub-mapa">
+                <div className="relative">
+                  <MapaEntrega punto={ubicacionEntrega} onCambiar={setUbicacionEntrega} alto="h-[230px]" redondeo="rounded-none" />
+                  <button
+                    type="button"
+                    onClick={usarMiUbicacion}
+                    disabled={obteniendoGps}
+                    className="kub-gps"
+                  >
+                    <i className="fa-solid fa-location-crosshairs"></i>
+                    {obteniendoGps ? "Buscando..." : "Usar mi ubicación"}
+                  </button>
+                </div>
+                <div className="kub-info">
+                  <div className="kub-ia">
+                    <b>{ubicacionEntrega ? "Ubicación marcada en el mapa" : "Marca dónde te lo llevamos"}</b>
+                    {bodega.zona_reparto && <small>Zona de reparto: {bodega.zona_reparto}</small>}
+                  </div>
+                  {pedidoMinimo > 0 && (
+                    <span className="kub-chip"><i className="fa-solid fa-bag-shopping"></i>Mín. {formatoMoneda(pedidoMinimo)}</span>
+                  )}
+                </div>
               </div>
               {errorGps && <p className="text-xs text-rose-600">{errorGps}</p>}
 
-              <div className="bg-white rounded-[18px] px-3.5 py-2.5 ring-1 ring-[#e6dcf7]">
-                <label className="block text-[10.5px] font-semibold text-[#78729a]">Referencia</label>
-                <input
-                  type="text"
-                  value={referenciaEntrega}
-                  onChange={(e) => setReferenciaEntrega(e.target.value)}
-                  maxLength={200}
-                  placeholder="Ej. Portón verde, 2.º piso, tocar timbre"
-                  className="w-full text-sm text-stone-800 placeholder:text-[#a29cbd] focus:outline-none bg-transparent"
-                />
-              </div>
-              <div className="bg-white rounded-[18px] px-3.5 py-2.5 ring-1 ring-[#e6dcf7]">
-                <label className="block text-[10.5px] font-semibold text-[#78729a]">Teléfono de contacto</label>
-                <input
-                  type="tel"
-                  inputMode="tel"
-                  value={telefonoEntrega}
-                  onChange={(e) => setTelefonoEntrega(e.target.value)}
-                  maxLength={20}
-                  placeholder="Ej. 987654321"
-                  className="w-full text-sm text-stone-800 placeholder:text-[#a29cbd] focus:outline-none bg-transparent"
-                />
-              </div>
-              {(bodega.zona_reparto || pedidoMinimo > 0) && (
-                <p className="text-[11px] text-[#78729a] leading-snug">
-                  {bodega.zona_reparto ? `Zona de reparto: ${bodega.zona_reparto}.` : ""}
-                  {pedidoMinimo > 0 ? ` Pedido mínimo: ${formatoMoneda(pedidoMinimo)}.` : ""}
-                </p>
-              )}
-              <div className="flex-1"></div>
               <button
                 type="button"
                 onClick={() => setUbicacionAbierta(false)}
                 disabled={!ubicacionEntrega || referenciaEntrega.trim().length < 3 || telefonoEntregaLimpio.length < 7 || telefonoEntregaLimpio.length > 15}
-                className="h-[54px] rounded-full bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white font-bold text-[15px] disabled:opacity-50"
+                className="kub-cta"
               >
-                Confirmar dirección
+                <i className="fa-solid fa-check"></i> Confirmar dirección
               </button>
             </div>
           </div>

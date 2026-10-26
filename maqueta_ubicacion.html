@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Dirección de entrega</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--p:#6105dc;--pd:#4d04b0;--ring:#e6dcf7;--ink:#1c1830;--mut:#78729a;--f:'Plus Jakarta Sans',system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:#e9e4f5;-webkit-font-smoothing:antialiased;display:flex;justify-content:center;padding:24px 12px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+p,h1{margin:0}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.tel{width:100%;max-width:390px;border-radius:34px;background:linear-gradient(180deg,#f1eafc,#f7f5fb);padding:16px 14px 18px;box-shadow:0 30px 60px -30px rgba(60,20,120,.45)}
+.hoja{background:#fff;border-radius:28px;padding:18px 16px 16px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 0 #efe6fc}
+.cab{display:grid;grid-template-columns:40px 1fr 40px;align-items:center}
+.cab h1{text-align:center;font:800 18px var(--f);letter-spacing:-.2px}
+.atras{width:40px;height:40px;border-radius:50%;background:#f7f5fb;color:var(--pd);display:flex;align-items:center;justify-content:center;font-size:16px}
+.campo label{display:block;font-size:12px;color:var(--mut);margin:0 0 6px 4px}
+.caja{display:flex;align-items:center;gap:10px;background:#f7f5fb;border-radius:16px;padding:0 8px 0 14px;height:50px}
+.caja input{flex:1;min-width:0;border:0;background:none;outline:0;font-size:14px;font-weight:500}
+.caja input::placeholder{color:#a29cbd;font-weight:400}
+.bt{width:34px;height:34px;border-radius:50%;background:#1c1830;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.bt.v{background:var(--p)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:#f7f5fb;border-radius:18px;padding:6px}
+.seg button{height:58px;border-radius:14px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--mut)}
+.seg button .ic{font-size:18px}
+.seg button.on{background:linear-gradient(135deg,#8a3df2,var(--pd));color:#fff;box-shadow:0 8px 16px -8px rgba(97,5,220,.7)}
+.tit{display:flex;justify-content:space-between;align-items:center;margin-top:2px}
+.tit b{font:800 16px var(--f)}
+.tit span{font-size:12.5px;font-weight:600;color:var(--p)}
+.mapa{border:1px solid #efe6fc;border-radius:20px;overflow:hidden}
+.mp{position:relative;height:200px;background:#f4f1ea}
+.mp>svg{position:absolute;inset:0;width:100%;height:100%}
+.pin{position:absolute;left:50%;top:44%;transform:translate(-50%,-100%);color:var(--p);font-size:34px;filter:drop-shadow(0 6px 5px rgba(97,5,220,.35))}
+.pin svg{position:static;width:1em;height:1em}
+.halo{position:absolute;left:50%;top:44%;width:54px;height:54px;border-radius:50%;background:rgba(97,5,220,.14);transform:translate(-50%,-50%)}
+.gps{position:absolute;right:10px;bottom:10px;height:38px;padding:0 13px;border-radius:999px;background:#fff;color:var(--pd);font-weight:700;font-size:12.5px;display:flex;align-items:center;gap:7px;box-shadow:0 4px 12px rgba(60,20,120,.2)}
+.zoom{position:absolute;left:10px;top:10px;display:flex;flex-direction:column;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(60,20,120,.2);overflow:hidden}
+.zoom button{width:32px;height:32px;font-size:16px;font-weight:700;color:var(--pd)}
+.zoom button+button{border-top:1px solid #efe6fc}
+.info{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#fff}
+.info .a{flex:1;min-width:0}
+.info b{display:block;font-size:13.5px}
+.info small{font-size:11.5px;color:var(--mut)}
+.chip{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--pd);background:#f4eefe;border-radius:999px;padding:6px 10px}
+.cta{height:56px;border-radius:999px;background:linear-gradient(110deg,#8a3df2,var(--pd));color:#fff;font:700 15px var(--f);display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 14px 24px -12px rgba(97,5,220,.7)}
+.cta .ic{font-size:18px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="back" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+  <symbol id="pin" viewBox="0 0 24 24"><path d="M12 22s7-6.200 7-12a7 7 0 0 0-14 0c0 5.800 7 12 7 12Z" fill="currentColor"/><circle cx="12" cy="10" r="2.600" fill="#fff" stroke="none"/></symbol>
+  <symbol id="phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.500 1.500a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></symbol>
+  <symbol id="home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8M5 10v10h14V10M10 20v-6h4v6"/></symbol>
+  <symbol id="work" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2.500"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></symbol>
+  <symbol id="more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.600"/><circle cx="12" cy="12" r="1.600"/><circle cx="19" cy="12" r="1.600"/></symbol>
+  <symbol id="gps" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.500"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></symbol>
+  <symbol id="bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="m5 12.500 4.500 4.500L19 7.500"/></symbol>
+  <symbol id="edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16Z"/></symbol>
+</svg>
+
+<div class="tel">
+  <div class="hoja">
+    <div class="cab">
+      <button class="atras" aria-label="Volver"><svg class="ic"><use href="#back"/></svg></button>
+      <h1>Dirección de entrega</h1><span></span>
+    </div>
+
+    <div class="campo">
+      <label>Referencia</label>
+      <div class="caja"><input value="Portón verde, 2.º piso, tocar timbre"><span class="bt"><svg class="ic"><use href="#edit"/></svg></span></div>
+    </div>
+    <div class="campo">
+      <label>Teléfono de contacto</label>
+      <div class="caja"><input value="987654321" inputmode="tel"><span class="bt"><svg class="ic"><use href="#phone"/></svg></span></div>
+    </div>
+
+    <div class="campo">
+      <label>Tipo de lugar</label>
+      <div class="seg" id="seg">
+        <button class="on"><svg class="ic"><use href="#home"/></svg>Casa</button>
+        <button><svg class="ic"><use href="#work"/></svg>Trabajo</button>
+        <button><svg class="ic"><use href="#more"/></svg>Otro</button>
+      </div>
+    </div>
+
+    <div class="tit"><b>Punto de entrega</b><span>Toca el mapa para mover el pin</span></div>
+    <div class="mapa">
+      <div class="mp">
+        <svg viewBox="0 0 340 200" preserveAspectRatio="xMidYMid slice">
+          <rect width="340" height="200" fill="#f4f1ea"/>
+          <rect x="228" y="20" width="90" height="70" rx="8" fill="#d8ecd0"/>
+          <g stroke="#fff" stroke-width="9" fill="none" stroke-linecap="round">
+            <path d="M-10 60 L350 40"/><path d="M-10 140 L350 150"/><path d="M90 -10 L110 210"/><path d="M220 -10 L200 210"/>
+          </g>
+          <g stroke="#fbd9a8" stroke-width="12" fill="none" stroke-linecap="round"><path d="M-10 100 Q170 80 350 110"/></g>
+          <g stroke="#fff" stroke-width="5" fill="none"><path d="M150 -10 L160 210"/><path d="M-10 20 L350 8"/><path d="M-10 180 L350 190"/><path d="M290 -10 L300 210"/></g>
+        </svg>
+        <div class="halo"></div>
+        <div class="pin"><svg><use href="#pin"/></svg></div>
+        <div class="zoom"><button>+</button><button>−</button></div>
+        <button class="gps"><svg class="ic"><use href="#gps"/></svg>Usar mi ubicación</button>
+      </div>
+      <div class="info">
+        <div class="a"><b>Ubicación marcada en el mapa</b><small>Zona de reparto: Surco y alrededores</small></div>
+        <span class="chip"><svg class="ic"><use href="#bag"/></svg>Mín. S/ 20</span>
+      </div>
+    </div>
+
+    <button class="cta"><svg class="ic"><use href="#check"/></svg>Confirmar dirección</button>
+  </div>
+</div>
+<script>
+document.querySelectorAll('#seg button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}));
+</script>
+</body>
+</html>
