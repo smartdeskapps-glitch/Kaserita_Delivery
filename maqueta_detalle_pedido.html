@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Detalle del pedido</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--p:#6105dc;--pd:#4d04b0;--ring:#efe6fc;--ink:#1c1830;--mut:#6b6590;--f:'Plus Jakarta Sans',system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:#e9e4f5;-webkit-font-smoothing:antialiased;padding:22px 12px 40px}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+p,h1,h2,h3{margin:0}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.top{text-align:center;margin-bottom:18px}
+.top h1{font:800 20px var(--f)}
+.top p{font-size:13px;color:#78729a;margin-top:4px}
+.fila{display:flex;flex-wrap:wrap;gap:26px;justify-content:center;align-items:flex-start}
+.col{width:372px}
+.col>h3{font:800 14px var(--f);margin:0 0 8px 6px}
+.tel{border-radius:34px;background:linear-gradient(180deg,#f3ecfd,#faf8fd 340px);padding:18px 16px 22px;box-shadow:0 30px 60px -30px rgba(60,20,120,.45);min-height:760px;display:flex;flex-direction:column;gap:12px}
+.atras{width:42px;height:42px;border-radius:50%;background:#fff;box-shadow:0 2px 8px -2px rgba(60,20,120,.2);color:var(--pd);display:flex;align-items:center;justify-content:center;font-size:16px}
+.hero{display:flex;flex-direction:column;align-items:center;gap:10px;padding:6px 0 8px;text-align:center}
+.bolsa{width:62px;height:62px;border-radius:20px;background:linear-gradient(145deg,#9a55f5,var(--pd));color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 16px 24px -12px rgba(97,5,220,.75);position:relative}
+.bolsa.no{background:linear-gradient(145deg,#fb7185,#e11d48);box-shadow:0 16px 24px -12px rgba(225,29,72,.6)}
+.hero h2{font:800 24px var(--f);letter-spacing:-.5px}
+.hero small{font-size:12.5px;color:var(--mut)}
+.prods{background:#fff;border-radius:24px;box-shadow:0 10px 24px -16px rgba(97,5,220,.35);overflow:hidden}
+.pr{display:flex;align-items:center;gap:12px;padding:14px 16px}
+.pr+.pr{border-top:1px solid #f1ecf8}
+.th{width:56px;height:56px;border-radius:18px;background:linear-gradient(145deg,#f4eefe,#e7dbfb);color:var(--p);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.pr .n{flex:1;min-width:0;font-size:14.5px;font-weight:600;line-height:1.25}
+.pr .n small{display:block;font-size:12px;font-weight:400;color:var(--mut);margin-top:3px}
+.pr .m{font-weight:700;font-size:14px;color:var(--pd);font-variant-numeric:tabular-nums}
+.extra{display:flex;justify-content:space-between;padding:10px 16px;font-size:13px;color:var(--mut);border-top:1px solid #f1ecf8}
+.extra b{font-weight:600;color:var(--ink)}
+.total{display:flex;justify-content:space-between;align-items:center;padding:15px 16px;border-top:2px solid #f1ecf8;font-size:14.5px;font-weight:600}
+.total b{font:800 18px var(--f);color:var(--pd)}
+.dat{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#f3eefa;border-radius:999px;min-height:50px;padding:0 20px;font-size:13.5px;font-weight:500}
+.dat span:last-child{font-weight:600;color:var(--pd);text-align:right}
+.dat .cod{font-family:ui-monospace,Consolas,monospace;letter-spacing:.06em}
+.dat.alto{border-radius:22px;padding:12px 20px;align-items:flex-start}
+.est{display:inline-flex;align-items:center;gap:6px}
+.est i{width:8px;height:8px;border-radius:50%;background:#16a34a}
+.est.no i{background:#e11d48}
+.est.no{color:#e11d48!important}
+.pie{margin-top:auto;display:flex;flex-direction:column;gap:10px;align-items:center;padding-top:12px}
+.cta{height:54px;width:100%;border-radius:999px;background:linear-gradient(110deg,#8a3df2,var(--pd));color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 14px 24px -12px rgba(97,5,220,.7)}
+.cta.l{background:#fff;color:var(--pd);box-shadow:inset 0 0 0 1.5px #ddd0f5;height:48px;font-size:14px}
+.cta .ic{font-size:18px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="back" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+  <symbol id="bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+  <symbol id="chat" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.600 7.100L4 20l1-3.800A8 8 0 1 1 20 12Z"/><path d="M9 12h.01M12 12h.01M15 12h.01"/></symbol>
+  <symbol id="redo" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.500-5.800M20 4v5h-5"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+</svg>
+
+<div class="top">
+  <h1>Detalle del pedido · propuesta</h1>
+  <p>Dos casos: un pedido retirado en tienda y uno cancelado a domicilio. Datos que ya guarda la app.</p>
+</div>
+
+<div class="fila">
+
+  <div class="col"><h3>Retirado en tienda</h3>
+  <div class="tel">
+    <button class="atras" aria-label="Volver"><svg class="ic"><use href="#back"/></svg></button>
+    <div class="hero">
+      <span class="bolsa"><svg class="ic"><use href="#bag"/></svg></span>
+      <h2>Detalle del pedido</h2>
+      <small>Bodega Demo · Ayer, 2:08 p. m.</small>
+    </div>
+
+    <div class="prods">
+      <div class="pr"><span class="th"><svg class="ic"><use href="#bag"/></svg></span><div class="n">Agua Cristalina Sin Gas Botella 500ml<small>2 × S/ 1.50</small></div><span class="m">S/ 3.00</span></div>
+      <div class="pr"><span class="th"><svg class="ic"><use href="#bag"/></svg></span><div class="n">Galleta Soda Field<small>1 × S/ 1.20</small></div><span class="m">S/ 1.20</span></div>
+      <div class="total"><span>Total</span><b>S/ 4.20</b></div>
+    </div>
+
+    <div class="dat"><span>Estado</span><span class="est"><i></i>Retirado</span></div>
+    <div class="dat"><span>Código</span><span class="cod">CW7K96</span></div>
+    <div class="dat"><span>Entrega</span><span>Retiro en tienda</span></div>
+
+    <div class="pie">
+      <button class="cta"><svg class="ic"><use href="#redo"/></svg>Pedir de nuevo</button>
+      <button class="cta l"><svg class="ic"><use href="#chat"/></svg>Escribir a la tienda</button>
+    </div>
+  </div></div>
+
+  <div class="col"><h3>Cancelado · delivery</h3>
+  <div class="tel">
+    <button class="atras" aria-label="Volver"><svg class="ic"><use href="#back"/></svg></button>
+    <div class="hero">
+      <span class="bolsa no"><svg class="ic"><use href="#x"/></svg></span>
+      <h2>Detalle del pedido</h2>
+      <small>Bodega Demo · 13 oct., 6:35 p. m.</small>
+    </div>
+
+    <div class="prods">
+      <div class="pr"><span class="th"><svg class="ic"><use href="#bag"/></svg></span><div class="n">Combo Pollo + Gaseosa<small>1 × S/ 16.50</small></div><span class="m">S/ 16.50</span></div>
+      <div class="extra"><span>Envío a domicilio</span><b>S/ 4.00</b></div>
+      <div class="total"><span>Total</span><b>S/ 20.50</b></div>
+    </div>
+
+    <div class="dat"><span>Estado</span><span class="est no"><i></i>Cancelado</span></div>
+    <div class="dat"><span>Código</span><span class="cod">GJ6PDR</span></div>
+    <div class="dat alto"><span>Entrega</span><span>Delivery<br><small style="font-weight:400;color:var(--mut)">Portón verde, 2.º piso</small></span></div>
+    <div class="dat"><span>Pago</span><span>Efectivo al recibir</span></div>
+
+    <div class="pie">
+      <button class="cta"><svg class="ic"><use href="#redo"/></svg>Pedir de nuevo</button>
+      <button class="cta l"><svg class="ic"><use href="#chat"/></svg>Escribir a la tienda</button>
+    </div>
+  </div></div>
+
+</div>
+</body>
+</html>

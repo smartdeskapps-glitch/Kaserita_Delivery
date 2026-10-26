@@ -1334,7 +1334,7 @@ function StepperPedido({ estado, tipoEntrega }) {
   );
 }
 
-function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido }) {
+function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido, fotoDeItem, whatsappTienda }) {
   const [pedidos, setPedidos] = useState([]);
   const [nombresBodegas, setNombresBodegas] = useState({});
   const [cargando, setCargando] = useState(true);
@@ -1653,54 +1653,84 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
     );
   };
 
-  // Pantalla de un pedido terminado: estado, productos y total.
+  // Pantalla de un pedido terminado: estado, productos con foto y total.
   const renderDetalle = (p) => {
     const cancelado = p.estado === "cancelado";
     const domicilio = p.tipo_entrega === "domicilio";
-    const aviso = cancelado
-      ? "Este pedido fue cancelado."
-      : domicilio
-      ? "Tu pedido fue entregado. ¡Gracias por tu compra!"
-      : "Retiraste tu pedido con tu código. ¡Gracias por tu compra!";
+    const tienda = nombresBodegas[p.bodega_id];
+    const medio = p.medio_pago ? TEXTO_MEDIO_PAGO[p.medio_pago] || p.medio_pago : "";
+    const esTiendaActual = p.bodega_id === bodegaActualId;
+    const telefono = (whatsappTienda || "").replace(/\D/g, "");
+    const enlaceTienda = esTiendaActual && telefono.length >= 7
+      ? `https://wa.me/${telefono}?text=${encodeURIComponent(`Hola, te escribo por mi pedido ${p.codigo_corto}.`)}`
+      : null;
+    const fila = (rotulo, valor, extra) => (
+      <div className={`kmp-dat ${extra || ""}`}>
+        <span>{rotulo}</span>
+        <span>{valor}</span>
+      </div>
+    );
     return (
-      <div className="space-y-4">
-        <div className="kmp-hd">
-          <span className={`kmp-ci ${cancelado ? "no" : ""}`}>
-            <i className={`fa-solid ${cancelado ? "fa-xmark" : "fa-check"}`} aria-hidden="true"></i>
+      <div className="space-y-3">
+        <div className="kmp-hero2">
+          <span className={`kmp-bolsa ${cancelado ? "no" : ""}`}>
+            <i className={`fa-solid ${cancelado ? "fa-xmark" : "fa-bag-shopping"}`} aria-hidden="true"></i>
           </span>
-          <h2>{etiquetaEstadoPedido(p).texto}</h2>
-          <div className="kmp-meta">
-            <span className="kmp-cod">{p.codigo_corto}</span>
-            {nombresBodegas[p.bodega_id] && <><span>·</span><span>{nombresBodegas[p.bodega_id]}</span></>}
-          </div>
-          <div className="kmp-meta">
-            <span><i className="fa-solid fa-box" aria-hidden="true"></i>{textoUnidades(p)}</span>
-            <span><i className="fa-regular fa-clock" aria-hidden="true"></i>{fechaPedido(p.creado_en)}</span>
-          </div>
-          <div className="kmp-aviso">{aviso}</div>
+          <h2>Detalle del pedido</h2>
+          <small>{tienda ? `${tienda} · ` : ""}{fechaPedido(p.creado_en)}</small>
         </div>
 
-        <div className="kmp-dt">
-          <h3>Productos <em>({unidadesPedido(p)})</em></h3>
-          {(p.items || []).map((it, i) => (
-            <div key={i} className="kmp-prod">
-              <span className="kmp-th"><i className="fa-solid fa-bag-shopping" aria-hidden="true"></i></span>
-              <div className="kmp-pn">
-                {it.combo_id ? it.descripcion : tituloProducto(it.descripcion)}
-                <small>{it.cantidad} × {formatoMoneda(it.precio_venta)}</small>
+        <div className="kmp-prods">
+          {(p.items || []).map((it, i) => {
+            const foto = fotoDeItem ? fotoDeItem(it) : null;
+            return (
+              <div key={i} className="kmp-pr">
+                <span className="kmp-th">
+                  {foto ? (
+                    <img src={foto} alt="" loading="lazy" decoding="async" />
+                  ) : (
+                    <i className={`fa-solid ${it.combo_id ? "fa-gift" : "fa-bag-shopping"}`} aria-hidden="true"></i>
+                  )}
+                </span>
+                <div className="kmp-pn">
+                  {it.combo_id ? it.descripcion : tituloProducto(it.descripcion)}
+                  <small>{it.cantidad} × {formatoMoneda(it.precio_venta)}</small>
+                </div>
+                <span className="kmp-pp">{formatoMoneda(it.precio_venta * it.cantidad)}</span>
               </div>
-              <span className="kmp-pp">{formatoMoneda(it.precio_venta * it.cantidad)}</span>
+            );
+          })}
+          {domicilio && Number(p.costo_envio) > 0 && (
+            <div className="kmp-extra"><span>Envío a domicilio</span><b>{formatoMoneda(p.costo_envio)}</b></div>
+          )}
+          {p.cita_fecha && (
+            <div className="kmp-extra">
+              <span>Cita</span>
+              <b>{fechaCitaTitulo(p.cita_fecha)} · {p.cita_hora}{p.cita_barbero ? ` · ${p.cita_barbero}` : ""}</b>
             </div>
-          ))}
-          {extrasPedido(p)}
-          <div className="kmp-totf"><span>Total</span><b>{formatoMoneda(totalPedido(p))}</b></div>
+          )}
+          <div className="kmp-total"><span>Total</span><b>{formatoMoneda(totalPedido(p))}</b></div>
         </div>
 
-        {p.bodega_id === bodegaActualId && (
-          <button type="button" onClick={() => onRepetirPedido(p)} className="kmp-btn">
-            <i className="fa-solid fa-rotate-right text-xs" aria-hidden="true"></i> Pedir de nuevo
-          </button>
-        )}
+        {fila("Estado", <span className={`kmp-est ${cancelado ? "no" : ""}`}><i></i>{etiquetaEstadoPedido(p).texto}</span>)}
+        {fila("Código", <span className="kmp-cod">{p.codigo_corto}</span>)}
+        {domicilio
+          ? fila("Entrega", <>Delivery{p.entrega_referencia && <small>{p.entrega_referencia}</small>}</>, "alto")
+          : fila("Entrega", "Retiro en tienda")}
+        {domicilio && medio && fila("Pago", `${medio} al recibir`)}
+
+        <div className="kmp-pie">
+          {esTiendaActual && (
+            <button type="button" onClick={() => onRepetirPedido(p)} className="kmp-btn">
+              <i className="fa-solid fa-rotate-right text-xs" aria-hidden="true"></i> Pedir de nuevo
+            </button>
+          )}
+          {enlaceTienda && (
+            <a href={enlaceTienda} target="_blank" rel="noopener noreferrer" className="kmp-btn kmp-l">
+              <i className="fa-brands fa-whatsapp" aria-hidden="true"></i> Escribir a la tienda
+            </a>
+          )}
+        </div>
       </div>
     );
   };
@@ -1733,7 +1763,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
         >
           <i className="fa-solid fa-arrow-left text-sm" aria-hidden="true"></i>
         </button>
-        <h1 className="text-[1.375rem] font-extrabold tracking-tight text-[#1c1830]">{pedidoDetalle ? "Detalle del pedido" : "Mis pedidos"}</h1>
+        {pedidoDetalle ? <span className="sr-only">Detalle del pedido</span> : <h1 className="text-[1.375rem] font-extrabold tracking-tight text-[#1c1830]">Mis pedidos</h1>}
       </div>
 
       {permisoPush === "default" && !pedidoDetalle && (
@@ -3930,6 +3960,11 @@ function App() {
             onVolver={() => setVistaMisPedidos(false)}
             bodegaActualId={bodega?.bodega_id}
             onRepetirPedido={repetirPedido}
+            whatsappTienda={bodega?.telefono}
+            fotoDeItem={(it) => {
+              if (it.combo_id) return productosPorId[combosPorId[it.combo_id]?.items?.[0]?.producto_id]?.foto_url || null;
+              return productosPorId[it.id]?.foto_url || null;
+            }}
           />
         </div>
         {barraNavegacion("pedidos")}
