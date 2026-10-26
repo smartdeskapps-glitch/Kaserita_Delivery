@@ -1102,20 +1102,20 @@ const MEDIOS_PAGO_ENTREGA = [
 ];
 const TEXTO_MEDIO_PAGO = { efectivo: "Efectivo", yape_plin: "Yape / Plin", tarjeta: "Tarjeta" };
 const PIN_MAPA_HTML =
-  '<svg viewBox="0 0 24 24" width="40" height="40" style="filter:drop-shadow(0 4px 4px rgba(76,29,149,.35))"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z" fill="#7c3aed" stroke="#fff" stroke-width="1.4"/><circle cx="12" cy="10" r="2.6" fill="#fff"/></svg>';
+  '<span class="kpin-halo"></span><svg viewBox="0 0 40 48" width="40" height="48" style="position:relative;filter:drop-shadow(0 6px 5px rgba(77,4,176,.35))"><defs><linearGradient id="kpin-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a3df2"/><stop offset="1" stop-color="#4d04b0"/></linearGradient></defs><path d="M20 46C20 46 36 30 36 18a16 16 0 0 0-32 0c0 12 16 28 16 28Z" fill="url(#kpin-g)"/><circle cx="20" cy="18" r="6.5" fill="#fff"/></svg>';
 
 function enlaceMapa(lat, lng) {
   return `https://www.google.com/maps?q=${lat},${lng}`;
 }
 
-// Mapa con pin movible (Leaflet + OpenStreetMap: gratis y sin claves).
-// Leaflet se carga recién cuando el cliente elige "A domicilio", para no
-// sumarle peso a la vitrina de quien solo retira en tienda.
+// Mapa con pin movible (MapLibre + OpenFreeMap, estilo "Positron": gratis y sin
+// claves). La librería se carga recién cuando el cliente elige "A domicilio",
+// para no sumarle peso a la vitrina de quien solo retira en tienda.
 function MapaEntrega({ punto, onCambiar, alto = "h-[200px]", redondeo = "rounded-2xl" }) {
   const contenedorRef = useRef(null);
   const mapaRef = useRef(null);
   const marcadorRef = useRef(null);
-  const leafletRef = useRef(null);
+  const libRef = useRef(null);
   const onCambiarRef = useRef(onCambiar);
   onCambiarRef.current = onCambiar;
   const [falloMapa, setFalloMapa] = useState(false);
@@ -1125,21 +1125,25 @@ function MapaEntrega({ punto, onCambiar, alto = "h-[200px]", redondeo = "rounded
     let cancelado = false;
     (async () => {
       try {
-        const [leaflet] = await Promise.all([import("leaflet"), import("leaflet/dist/leaflet.css")]);
-        const L = leaflet.default || leaflet;
+        const [lib] = await Promise.all([import("maplibre-gl"), import("maplibre-gl/dist/maplibre-gl.css")]);
+        const maplibregl = lib.default || lib;
         if (cancelado || !contenedorRef.current) return;
-        leafletRef.current = L;
-        const mapa = L.map(contenedorRef.current, { zoomControl: false }).setView(
-          punto ? [punto.lat, punto.lng] : CENTRO_MAPA_POR_DEFECTO,
-          punto ? 17 : 13
-        );
-        L.control.zoom({ position: "topright" }).addTo(mapa);
-        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          maxZoom: 19,
-          attribution: "&copy; OpenStreetMap",
-        }).addTo(mapa);
+        libRef.current = maplibregl;
+        const centro = punto ? [punto.lng, punto.lat] : [CENTRO_MAPA_POR_DEFECTO[1], CENTRO_MAPA_POR_DEFECTO[0]];
+        const mapa = new maplibregl.Map({
+          container: contenedorRef.current,
+          style: "https://tiles.openfreemap.org/styles/positron",
+          center: centro,
+          zoom: punto ? 17 : 12.5,
+          attributionControl: { compact: true },
+        });
+        mapa.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
         mapa.on("click", (e) => {
-          onCambiarRef.current({ lat: +e.latlng.lat.toFixed(6), lng: +e.latlng.lng.toFixed(6) });
+          onCambiarRef.current({ lat: +e.lngLat.lat.toFixed(6), lng: +e.lngLat.lng.toFixed(6) });
+        });
+        mapa.on("error", (e) => {
+          // si ni el estilo llega a cargar, se muestra el aviso en vez de un cuadro vacío
+          if (!mapa.isStyleLoaded() && /style|fetch|network/i.test(String(e?.error?.message || ""))) setFalloMapa(true);
         });
         mapaRef.current = mapa;
         setListo(true);
@@ -1160,22 +1164,26 @@ function MapaEntrega({ punto, onCambiar, alto = "h-[200px]", redondeo = "rounded
 
   // El pin sigue al punto elegido (por toque, arrastre o GPS).
   useEffect(() => {
-    const L = leafletRef.current;
+    const maplibregl = libRef.current;
     const mapa = mapaRef.current;
-    if (!listo || !L || !mapa || !punto) return;
-    const pos = [punto.lat, punto.lng];
+    if (!listo || !maplibregl || !mapa || !punto) return;
+    const pos = [punto.lng, punto.lat];
     if (!marcadorRef.current) {
-      const icono = L.divIcon({ className: "", html: PIN_MAPA_HTML, iconSize: [40, 40], iconAnchor: [20, 40] });
-      const marcador = L.marker(pos, { icon: icono, draggable: true }).addTo(mapa);
+      const el = document.createElement("div");
+      el.innerHTML = PIN_MAPA_HTML;
+      el.style.cssText = "width:40px;height:48px;cursor:grab";
+      // tocar el pin no debe contar como tocar el mapa (movería el punto)
+      el.addEventListener("click", (e) => e.stopPropagation());
+      const marcador = new maplibregl.Marker({ element: el, anchor: "bottom", draggable: true }).setLngLat(pos).addTo(mapa);
       marcador.on("dragend", () => {
-        const ll = marcador.getLatLng();
+        const ll = marcador.getLngLat();
         onCambiarRef.current({ lat: +ll.lat.toFixed(6), lng: +ll.lng.toFixed(6) });
       });
       marcadorRef.current = marcador;
     } else {
-      marcadorRef.current.setLatLng(pos);
+      marcadorRef.current.setLngLat(pos);
     }
-    mapa.setView(pos, Math.max(mapa.getZoom(), 17));
+    mapa.easeTo({ center: pos, zoom: Math.max(mapa.getZoom(), 17), duration: 400 });
   }, [punto, listo]);
 
   if (falloMapa) {

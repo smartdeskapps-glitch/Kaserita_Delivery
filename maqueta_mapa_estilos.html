@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Estilos de mapa</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--p:#6105dc;--pd:#4d04b0;--ink:#1c1830;--mut:#78729a;--f:'Plus Jakarta Sans',system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',system-ui,sans-serif;background:#e9e4f5;color:var(--ink);padding:22px 14px 40px;-webkit-font-smoothing:antialiased}
+h1{font:800 20px var(--f);text-align:center;margin:0 0 4px}
+.sub{text-align:center;color:var(--mut);font-size:13px;margin:0 0 20px}
+.grid{display:flex;flex-wrap:wrap;gap:22px;justify-content:center}
+.op{width:330px}
+.op h2{font:800 15px var(--f);margin:0 0 2px}
+.op p{margin:0 0 10px;font-size:12px;color:var(--mut);min-height:32px}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;background:var(--p);color:#fff;border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:2px}
+.hoja{background:#fff;border-radius:24px;padding:12px;box-shadow:0 20px 40px -26px rgba(60,20,120,.5)}
+.mapa{border:1px solid #efe6fc;border-radius:20px;overflow:hidden}
+.mp{position:relative;height:300px;background:#eee}
+.mp .maplibregl-map,.mp .leaflet-container{position:absolute;inset:0;font-family:inherit;background:#eee}
+.info{display:flex;align-items:center;gap:10px;padding:11px 13px;background:#fff}
+.info b{display:block;font-size:13px}
+.info small{font-size:11.5px;color:var(--mut)}
+.info div{flex:1}
+.chip{font-size:12px;font-weight:600;color:var(--pd);background:#f4eefe;border-radius:999px;padding:6px 10px;white-space:nowrap}
+.gps{position:absolute;right:10px;bottom:10px;z-index:600;height:36px;padding:0 13px;border-radius:999px;background:#fff;color:var(--pd);font:700 12.5px 'Inter';border:0;box-shadow:0 4px 12px rgba(60,20,120,.22)}
+/* pin violeta con halo */
+.kpin{position:relative;width:40px;height:48px}
+.kpin .halo{position:absolute;left:50%;bottom:-6px;width:46px;height:46px;margin-left:-23px;border-radius:50%;background:rgba(97,5,220,.16);animation:pulso 2.2s ease-out infinite}
+.kpin svg{position:absolute;left:0;top:0;width:40px;height:48px;filter:drop-shadow(0 6px 5px rgba(77,4,176,.35))}
+@keyframes pulso{0%{transform:scale(.55);opacity:.9}100%{transform:scale(1.25);opacity:0}}
+@media (prefers-reduced-motion:reduce){.kpin .halo{animation:none}}
+/* controles de zoom redondos y blancos */
+.leaflet-control-zoom{border:0!important;box-shadow:0 4px 12px rgba(60,20,120,.22)!important;border-radius:14px!important;overflow:hidden}
+.leaflet-control-zoom a{width:34px!important;height:34px!important;line-height:34px!important;color:var(--pd)!important;font-weight:700}
+.leaflet-control-attribution{font-size:9px!important;background:rgba(255,255,255,.7)!important}
+/* filtros */
+.lavanda .leaflet-tile-pane{filter:grayscale(.75) sepia(.35) hue-rotate(215deg) saturate(1.6) brightness(1.04) contrast(.95)}
+.suave .leaflet-tile-pane{filter:saturate(.6) hue-rotate(8deg) brightness(1.03)}
+.positron-lav .maplibregl-canvas{filter:sepia(.25) hue-rotate(215deg) saturate(1.5) brightness(1.01)}
+.xx{filter:sepia(.25) hue-rotate(215deg) saturate(1.5) brightness(1.01)}
+</style>
+</head>
+<body>
+<h1>Estilos de mapa para la dirección de entrega</h1>
+<p class="sub">Mapas reales con el pin violeta propuesto. Mueve y haz zoom en cada uno para compararlos.</p>
+
+<div class="grid">
+  <div class="op"><h2>A · Actual (OpenStreetMap)</h2><p>Lo que ve hoy el cliente. Muchos colores: rojo, naranja y verde fuertes.</p>
+    <div class="hoja"><div class="mapa"><div class="mp" id="m1"><button class="gps">Usar mi ubicación</button></div><div class="info"><div><b>Ubicación marcada en el mapa</b><small>Zona de reparto: Surco</small></div><span class="chip">Mín. S/ 20</span></div></div></div></div>
+
+  <div class="op"><h2>B · Positron (OpenFreeMap) <span class="tag">Recomendado</span></h2><p>Gris claro y limpio. Las calles se leen y el pin violeta resalta.</p>
+    <div class="hoja"><div class="mapa"><div class="mp" id="m2"><button class="gps">Usar mi ubicación</button></div><div class="info"><div><b>Ubicación marcada en el mapa</b><small>Zona de reparto: Surco</small></div><span class="chip">Mín. S/ 20</span></div></div></div></div>
+
+  <div class="op"><h2>C · Positron teñido de lavanda</h2><p>El mismo mapa limpio con un tono violeta suave, más de la marca.</p>
+    <div class="hoja"><div class="mapa"><div class="mp positron-lav" id="m3"><button class="gps">Usar mi ubicación</button></div><div class="info"><div><b>Ubicación marcada en el mapa</b><small>Zona de reparto: Surco</small></div><span class="chip">Mín. S/ 20</span></div></div></div></div>
+
+  <div class="op"><h2>D · Bright (OpenFreeMap)</h2><p>Claro y con color suave: parques en verde y avenidas en crema.</p>
+    <div class="hoja"><div class="mapa"><div class="mp" id="m4"><button class="gps">Usar mi ubicación</button></div><div class="info"><div><b>Ubicación marcada en el mapa</b><small>Zona de reparto: Surco</small></div><span class="chip">Mín. S/ 20</span></div></div></div></div>
+
+  <div class="op"><h2>E · OpenStreetMap teñido de lavanda</h2><p>Sin cambiar de proveedor: se aplica un filtro de color al mapa actual.</p>
+    <div class="hoja"><div class="mapa"><div class="mp lavanda" id="m5"><button class="gps">Usar mi ubicación</button></div><div class="info"><div><b>Ubicación marcada en el mapa</b><small>Zona de reparto: Surco</small></div><span class="chip">Mín. S/ 20</span></div></div></div></div>
+
+  <div class="op"><h2>F · OpenStreetMap con colores suaves</h2><p>El mapa actual con menos saturación. El cambio más pequeño posible.</p>
+    <div class="hoja"><div class="mapa"><div class="mp suave" id="m6"><button class="gps">Usar mi ubicación</button></div><div class="info"><div><b>Ubicación marcada en el mapa</b><small>Zona de reparto: Surco</small></div><span class="chip">Mín. S/ 20</span></div></div></div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
+<script>
+var OSM='https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+var POS='https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+var VOY='https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+var centro=[-12.1105,-76.9920];
+var pin=L.divIcon({className:'',iconSize:[40,48],iconAnchor:[20,46],
+  html:'<div class="kpin"><span class="halo"></span><svg viewBox="0 0 40 48"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a3df2"/><stop offset="1" stop-color="#4d04b0"/></linearGradient></defs><path d="M20 46C20 46 36 30 36 18a16 16 0 0 0-32 0c0 12 16 28 16 28Z" fill="url(#g)"/><circle cx="20" cy="18" r="6.500" fill="#fff"/></svg></div>'});
+function mapa(id,url){
+  var m=L.map(id,{zoomControl:false,attributionControl:true}).setView(centro,16);
+  L.control.zoom({position:'topright'}).addTo(m);
+  L.tileLayer(url,{maxZoom:19,subdomains:'abcd',attribution:'&copy; OpenStreetMap &copy; CARTO'}).addTo(m);
+  L.marker(centro,{icon:pin,draggable:true}).addTo(m);
+}
+function vec(id,estilo){
+  var m=new maplibregl.Map({container:id,style:'https://tiles.openfreemap.org/styles/'+estilo,center:[centro[1],centro[0]],zoom:15.5,attributionControl:{compact:true}});
+  m.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+  var el=document.createElement('div');el.innerHTML=pin.options.html;el.style.cssText='width:40px;height:48px';
+  new maplibregl.Marker({element:el,anchor:'bottom',draggable:true}).setLngLat([centro[1],centro[0]]).addTo(m);
+}
+mapa('m1',OSM);vec('m2','positron');vec('m3','positron');vec('m4','bright');mapa('m5',OSM);mapa('m6',OSM);
+</script>
+</body>
+</html>
