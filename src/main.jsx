@@ -32,6 +32,16 @@ function prepararAvisoPedidoListo() {
   }
   return audioAvisoPedidoListo;
 }
+// Si el sistema devolvió un texto claro en español se muestra; si es técnico (en inglés o de la
+// base de datos) se cambia por el aviso de siempre y el detalle queda solo en la consola.
+const TEXTO_TECNICO = /(violates|constraint|duplicate key|jwt|relation |column |function |permission denied|row-level|null value|syntax|fetch|network|timeout|failed|exception|undefined|\bpg|pgrst|supabase|postgres|schema|cannot|could not|invalid|already exists|\bnull\b)/i;
+function mensajeAmable(err, porDefecto) {
+  const m = String(err && err.message ? err.message : "").trim();
+  const claro = m.length > 8 && /^[¡¿A-ZÁÉÍÓÚ]/.test(m) && /[áéíóúñ¿¡]|\b(no|el|la|los|las|tu|tus|ya|de|que|para|se)\b/i.test(m) && !TEXTO_TECNICO.test(m);
+  if (claro) return m;
+  if (err) console.warn(porDefecto, err);
+  return porDefecto;
+}
 function sonarAvisoPedidoListo() {
   try {
     const audio = prepararAvisoPedidoListo();
@@ -764,18 +774,18 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedi
     ? [
         { titulo: "Cita reservada", detalle: "Tu hora quedó apartada con tu barbero.", estado: "hecho" },
         { titulo: "Avísale por WhatsApp", detalle: "Es opcional: así saben que vienes.", estado: "actual" },
-        { titulo: "Te esperan en el local", detalle: "Si no puedes ir, cancela la cita desde Pedidos.", estado: "pendiente" },
+        { titulo: "Te esperan en la tienda", detalle: "Si no puedes ir, cancela la cita desde Pedidos.", estado: "pendiente" },
       ]
     : reserva
     ? [
-        { titulo: "Reserva registrada", detalle: "El local ya la ve en su sistema.", estado: "hecho" },
+        { titulo: "Reserva registrada", detalle: "La tienda ya la ve en su sistema.", estado: "hecho" },
         { titulo: "Envíales el mensaje por WhatsApp", detalle: "Así te confirman el horario.", estado: "actual" },
         { titulo: "Te confirman la cita", detalle: "Te responden por WhatsApp si el horario está libre.", estado: "pendiente" },
       ]
     : [
-        { titulo: "Pedido registrado", detalle: "El local ya lo ve en su sistema.", estado: "hecho" },
+        { titulo: "Pedido registrado", detalle: "La tienda ya lo ve en su sistema.", estado: "hecho" },
         { titulo: "Avísale por WhatsApp", detalle: "Envía el mensaje para que lo atiendan más rápido.", estado: "actual" },
-        { titulo: "El local lo prepara", detalle: domicilio ? "Te avisamos cuando salga en camino." : "Te avisamos cuando esté listo.", estado: "pendiente" },
+        { titulo: "La tienda lo prepara", detalle: domicilio ? "Te avisamos cuando salga en camino." : "Te avisamos cuando esté listo.", estado: "pendiente" },
       ];
   return (
     <div className="max-w-md mx-auto min-h-screen px-4 pt-9 pb-6 flex flex-col gap-3.5">
@@ -996,7 +1006,7 @@ function ModalCuenta({ onCerrar, onGoogle }) {
             <i className="fa-solid fa-bag-shopping"></i>
           </span>
           <p className="text-[12.5px] leading-snug text-[#4d04b0]">
-            Con tu cuenta ves el estado de tus pedidos, guardás tus tiendas favoritas y te avisamos cuando tu pedido esté listo.
+            Con tu cuenta ves el estado de tus pedidos, guardas tus tiendas favoritas y te avisamos cuando tu pedido esté listo.
           </p>
         </div>
         <button
@@ -1007,7 +1017,7 @@ function ModalCuenta({ onCerrar, onGoogle }) {
           <IconGoogle /> Continuar con Google
         </button>
         <p className="text-[11.5px] text-[#78729a] text-center">
-          Entrás con tu cuenta de Google: no hace falta crear ni recordar ningún PIN.
+          Entras con tu cuenta de Google: no hace falta crear ni recordar ningún PIN.
         </p>
         <p className="text-[11px] text-[#a29cbd] text-center leading-snug">
           Al continuar aceptás los{" "}
@@ -1051,7 +1061,7 @@ function ModalCompletarPerfil({ inicial, onListo, onCancelar }) {
       }
       onListo(cliente);
     } catch (err) {
-      setError(err.message || "Algo salió mal, intenta de nuevo.");
+      setError(mensajeAmable(err, "Algo salió mal. Inténtalo de nuevo."));
     } finally {
       setCargando(false);
     }
@@ -1440,7 +1450,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
       await activarNotificaciones(cliente.id);
       setAvisoPush("¡Listo! Te avisaremos aquí cuando tu pedido esté listo.");
     } catch (err) {
-      setAvisoPush(err.message || "No se pudo activar.");
+      setAvisoPush(mensajeAmable(err, "No se pudo activar. Inténtalo de nuevo."));
     } finally {
       setActivandoPush(false);
       setPermisoPush(permisoNotificaciones());
@@ -2135,7 +2145,7 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
             <i className="fa-solid fa-arrow-left text-sm"></i>
           </button>
         )}
-        <h1 className="text-[22px] font-extrabold tracking-tight text-[#1c1830]">{esInicio ? "Tus bodegas" : "Mis tiendas"}</h1>
+        <h1 className="text-[22px] font-extrabold tracking-tight text-[#1c1830]">{esInicio ? "Tus tiendas" : "Mis tiendas"}</h1>
         {tiendas.length > 0 && (
           <span className="bg-[#ece0fd] text-[#4d04b0] text-[11.5px] font-bold px-2.5 py-0.5 rounded-full">
             {tiendas.length} guardada{tiendas.length === 1 ? "" : "s"}
@@ -2150,7 +2160,7 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
             type="text"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar entre mis bodegas..."
+            placeholder="Buscar entre mis tiendas..."
             className="w-full bg-white border border-[#e6dcf7] rounded-full pl-11 pr-4 py-3 text-sm text-stone-800 placeholder-[#a29cbd] focus:outline-none focus:border-[#6105dc]/45 focus:ring-4 focus:ring-[#6105dc]/[0.07]"
           />
         </div>
@@ -2161,11 +2171,11 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
       ) : tiendas.length === 0 ? (
         <div className="text-center text-[#78729a] py-10 space-y-2">
           <i className="fa-solid fa-store text-2xl block text-[#cfc4ea]"></i>
-          <p>Todavía no compraste en ninguna bodega.</p>
+          <p>Todavía no compraste en ninguna tienda.</p>
           <p className="text-xs">En cuanto hagas tu primer pedido, aparecerá aquí.</p>
         </div>
       ) : tiendasFiltradas.length === 0 ? (
-        <p className="text-center text-[#78729a] py-10">No encontramos ninguna bodega con ese nombre.</p>
+        <p className="text-center text-[#78729a] py-10">No encontramos ninguna tienda con ese nombre.</p>
       ) : (
         <div className="space-y-3">
           {(() => {
@@ -2240,7 +2250,7 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
                           <span className="kmt-pr">{formatoMoneda(totalUlt)}</span>
                         </div>
                       ) : (
-                        <p className="kmt-vacio">Todavía no hiciste pedidos en esta bodega.</p>
+                        <p className="kmt-vacio">Todavía no hiciste pedidos en esta tienda.</p>
                       )}
 
                       <div className={`kmt-acc ${itemsUlt ? "" : "kmt-solo"}`}>
@@ -2258,7 +2268,7 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
                 })()}
 
                 {otras.length > 0 && (
-                  <p className="text-xs font-bold uppercase tracking-wider text-[#78729a] px-1 pt-1">Otras bodegas</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#78729a] px-1 pt-1">Otras tiendas</p>
                 )}
                 {otras.map((t) => {
                   const estado = estadoAtencionBodega(t.horario_atencion);
@@ -2315,7 +2325,7 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
               <i className="fa-solid fa-plus"></i>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-[#1c1830] leading-tight">¿Compraste en otra bodega?</p>
+              <p className="text-sm font-bold text-[#1c1830] leading-tight">¿Compraste en otra tienda?</p>
               <p className="text-xs text-[#78729a] mt-0.5">Escanea su QR o pega el link</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -2347,7 +2357,7 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
           <video ref={videoRef} playsInline muted className="absolute inset-0 w-full h-full object-cover"></video>
           <div className="absolute inset-0 bg-black/30"></div>
           <div className="relative z-10 w-56 h-56 border-4 border-white/70 rounded-2xl"></div>
-          <p className="relative z-10 text-white text-sm font-semibold mt-4 bg-black/50 px-3 py-1.5 rounded-full">Apuntá al código QR</p>
+          <p className="relative z-10 text-white text-sm font-semibold mt-4 bg-black/50 px-3 py-1.5 rounded-full">Apunta al código QR</p>
           <button
             onClick={detenerEscaneo}
             className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/20 backdrop-blur text-white flex items-center justify-center"
@@ -2358,7 +2368,7 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
       )}
 
       {modalPegarLink && (
-        <HojaInferior titulo="Pegar link de la bodega" onCerrar={() => setModalPegarLink(false)}>
+        <HojaInferior titulo="Pegar link de la tienda" onCerrar={() => setModalPegarLink(false)}>
           <div className="px-[18px] pb-6 pt-1 flex flex-col gap-3">
             <input
               type="text"
@@ -2404,7 +2414,7 @@ function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarD
       setErrorEliminar(
         error.code === "PGRST202" || /could not find the function/i.test(error.message || "")
           ? "Esta opción todavía no está disponible. Inténtalo de nuevo más tarde."
-          : error.message || "No se pudo eliminar la cuenta."
+          : mensajeAmable(error, "No se pudo eliminar la cuenta. Inténtalo de nuevo.")
       );
       return;
     }
@@ -2493,7 +2503,7 @@ function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarD
         await activarNotificaciones(cliente.id);
         setPushActivo(true);
       } catch (err) {
-        setAvisoNotif(err.message || "No se pudieron activar las notificaciones.");
+        setAvisoNotif(mensajeAmable(err, "No se pudieron activar las notificaciones. Inténtalo de nuevo."));
       }
     }
   };
@@ -2844,7 +2854,7 @@ function BarraNavegacion({ activa, contadorPedidos, onInicio, onTiendas, onPedid
                   )}
                 </div>
                 <div className="kdock-tx">
-                  <small>MI PEDIDO</small>
+                  <small>Mi pedido</small>
                   <b>{formatoMoneda(carrito.total)}</b>
                 </div>
                 <button className="kdock-ver" onClick={carrito.onVer} tabIndex={modoCarrito ? 0 : -1}>
@@ -3577,7 +3587,7 @@ function App() {
     });
     setCarrito(nuevoCarrito);
     setCarritoCombos(nuevoCarritoCombos);
-    setError(saltados > 0 ? `${saltados} producto${saltados === 1 ? "" : "s"} de ese pedido ya no ${saltados === 1 ? "está disponible" : "están disponibles"} y no se agregó al carrito.` : "");
+    setError(saltados > 0 ? `${saltados} producto${saltados === 1 ? "" : "s"} de ese pedido ya no ${saltados === 1 ? "está disponible" : "están disponibles"} y no se agregó al pedido.` : "");
     setVistaMisPedidos(false);
     setCarritoAbierto(true);
   }, [productosPorId, combosPorId]);
@@ -3771,8 +3781,8 @@ function App() {
             <img src="/logo-vertical-delivery.svg" alt="Kaserita Delivery" width="1490" height="1386" className="w-44 h-auto" />
             <div className="space-y-1.5">
               <h1 className="sr-only">Kaserita Delivery</h1>
-              <p className="text-sm text-[#78729a]">Este es el catálogo de pedidos de Kaserita.</p>
-              <p className="text-sm text-[#78729a]">Pídele a tu bodega el link de su catálogo para empezar a pedir.</p>
+              <p className="text-sm text-[#78729a]">Kaserita Delivery te deja pedir a tu tienda de barrio.</p>
+              <p className="text-sm text-[#78729a]">Pídele su link o escanea su QR para empezar.</p>
             </div>
             {ultimaBodega && (
               <a
@@ -3799,7 +3809,7 @@ function App() {
               onClick={() => setModalCuentaAbierto(true)}
               className="h-11 px-6 rounded-full bg-white ring-1 ring-[#e6dcf7] text-[#4d04b0] text-sm font-bold active:scale-[0.98] transition"
             >
-              Ingresa para ver tus bodegas guardadas
+              Ingresa para ver tus tiendas guardadas
             </button>
           </div>
         )}
@@ -3839,7 +3849,7 @@ function App() {
           <i className="fa-solid fa-circle-exclamation text-2xl"></i>
         </span>
         <h1 className="text-lg font-extrabold text-[#1c1830]">No encontramos este catálogo</h1>
-        <p className="text-sm text-[#78729a]">Puede que el link esté mal escrito o que la bodega no tenga delivery habilitado.</p>
+        <p className="text-sm text-[#78729a]">Puede que el link esté mal escrito o que la tienda no tenga delivery habilitado.</p>
       </div>
     );
   }
@@ -4010,7 +4020,7 @@ function App() {
               <span className="truncate">{bodega.direccion}</span>
             </a>
           ) : (
-            <p className="text-xs text-stone-400 truncate">Armá tu pedido y mandalo por WhatsApp</p>
+            <p className="text-xs text-stone-400 truncate">Arma tu pedido y envíalo por WhatsApp</p>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -4212,7 +4222,7 @@ function App() {
         {cargandoProductos ? (
           <p className="text-center text-stone-400 py-10">Cargando catálogo...</p>
         ) : productos.length === 0 ? (
-          <p className="text-center text-stone-400 py-10">Esta bodega todavía no tiene productos publicados.</p>
+          <p className="text-center text-stone-400 py-10">Esta tienda todavía no tiene productos publicados.</p>
         ) : productosFiltrados.length === 0 ? (
           <div className="text-center text-stone-400 py-10">
             <p>{soloFavoritos ? "Todavía no marcaste ningún favorito." : "No encontramos productos con ese criterio."}</p>
@@ -4245,7 +4255,7 @@ function App() {
       {productosAgotados.length > 0 && (
         <div className="px-4 pb-4">
           <p className="text-sm font-bold text-stone-500 flex items-center gap-1.5 mb-2">
-            <i className="fa-solid fa-box-open text-stone-400"></i> Agotados por ahora
+            <i className="fa-solid fa-box-open text-stone-400"></i> Agotados
           </p>
           <div className="bg-white ring-1 ring-[#efe6fc] rounded-2xl divide-y divide-[#f4eefe]">
             {productosAgotados.map((p) => {
@@ -4260,7 +4270,7 @@ function App() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-stone-600 truncate">{tituloProducto(p.descripcion)}</p>
-                    <p className="text-xs text-stone-400">Sin stock</p>
+                    <p className="text-xs text-stone-400">Agotado</p>
                   </div>
                 </div>
               );
@@ -4323,7 +4333,7 @@ function App() {
               {itemsCarrito.length === 0 && itemsCarritoCombos.length === 0 ? (
                 <div className="text-center py-16 space-y-3">
                   <i className="fa-solid fa-bag-shopping text-3xl text-[#cfc4ea] block"></i>
-                  <p className="text-[#78729a]">Tu carrito está vacío.</p>
+                  <p className="text-[#78729a]">Tu pedido está vacío.</p>
                   <button
                     onClick={() => setCarritoAbierto(false)}
                     className="h-11 px-6 rounded-full bg-[#6105dc] text-white text-sm font-bold"
@@ -4451,7 +4461,7 @@ function App() {
                   </div>
                   )}
                   {!esBarberia && !entregaDisponible && (
-                    <p className="text-[11px] text-[#78729a] -mt-1.5 px-1">Este local no tiene entrega a domicilio por ahora.</p>
+                    <p className="text-[11px] text-[#78729a] -mt-1.5 px-1">Esta tienda no tiene delivery por ahora.</p>
                   )}
 
                   <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
@@ -4503,7 +4513,7 @@ function App() {
                           <span className="flex-1 min-w-0">
                             <span className="block text-sm font-bold text-[#1c1830]">Elige tu cita</span>
                             <span className="block text-xs text-[#78729a]">
-                              {agendaActiva ? "Elige una hora libre con tu barbero" : "El local te confirma el horario por WhatsApp"}
+                              {agendaActiva ? "Elige una hora libre con tu barbero" : "La tienda te confirma el horario por WhatsApp"}
                             </span>
                           </span>
                         </div>
@@ -4616,7 +4626,7 @@ function App() {
                       <span className="flex-1 min-w-0">
                         <span className="block text-sm font-bold text-[#1c1830]">Lo antes posible</span>
                         <span className="block text-xs text-[#78729a]">
-                          {esDomicilio ? "El local te confirma el tiempo por WhatsApp" : "Te avisamos cuando esté listo"}
+                          {esDomicilio ? "La tienda te confirma el tiempo por WhatsApp" : "Te avisamos cuando esté listo"}
                         </span>
                       </span>
                     </div>
@@ -4711,7 +4721,7 @@ function App() {
                   {estadoHorario && !estadoHorario.abierto && (
                     <p className="text-xs text-[#78729a] bg-white ring-1 ring-[#efe6fc] rounded-2xl px-3 py-2.5 flex items-center gap-1.5">
                       <i className="fa-solid fa-clock text-[#a29cbd]"></i>
-                      Este local está cerrado ahora: tu pedido va a esperar hasta que vuelvan a abrir.
+                      Esta tienda está cerrada ahora: tu pedido espera hasta que vuelva a abrir.
                     </p>
                   )}
                 </>
