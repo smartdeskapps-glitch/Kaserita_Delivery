@@ -2079,67 +2079,59 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
                     .map((it) => `${it.cantidad > 1 ? `${it.cantidad}× ` : ""}${it.combo_id ? it.descripcion : tituloProducto(it.descripcion)}`)
                     .join(", ");
                   return (
-                    <div className="rounded-[30px] p-4 bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] text-white flex flex-col gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-[54px] h-[54px] rounded-[18px] bg-white/20 overflow-hidden shrink-0 flex items-center justify-center">
+                    <div className="kmt-hero">
+                      <i className="kmt-c kmt-c1"></i>
+                      <i className="kmt-c kmt-c2"></i>
+                      <button
+                        type="button"
+                        onClick={() => alternarFavorita(t.bodega_id)}
+                        title={favoritas.has(t.bodega_id) ? "Dejar de seguir" : "Seguir esta tienda"}
+                        className="kmt-fav"
+                      >
+                        <i className={`${favoritas.has(t.bodega_id) ? "fa-solid" : "fa-regular"} fa-heart text-sm`}></i>
+                      </button>
+                      <div className="kmt-arriba">
+                        <div className="kmt-logo">
                           {t.logo_url ? (
-                            <img src={t.logo_url} alt={t.nombre} className="w-full h-full object-cover" />
+                            <img src={t.logo_url} alt={t.nombre} />
                           ) : (
-                            <span className="font-extrabold text-xl">{t.nombre?.charAt(0).toUpperCase()}</span>
+                            <span>{t.nombre?.charAt(0).toUpperCase()}</span>
                           )}
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-bold text-[17px] leading-tight">{t.nombre}</p>
-                            {indicadorAtencion(estado, true)}
-                          </div>
+                        <div className="kmt-tx">
+                          {estado && <div className="mb-1.5">{indicadorAtencion(estado, true)}</div>}
+                          <h2>{t.nombre}</h2>
                           {t.direccion && (
-                            <p className="text-xs text-white/80 flex items-center gap-1 mt-0.5">
-                              <i className="fa-solid fa-location-dot text-[10px] shrink-0"></i>
-                              <span className="line-clamp-1">{t.direccion}</span>
+                            <p className="kmt-dir">
+                              <i className="fa-solid fa-location-dot text-[10px] shrink-0 mt-[3px]"></i>
+                              <span className="line-clamp-2">{t.direccion}</span>
                             </p>
                           )}
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => alternarFavorita(t.bodega_id)}
-                          title={favoritas.has(t.bodega_id) ? "Dejar de seguir" : "Seguir esta tienda"}
-                          className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0 active:scale-90 transition"
-                        >
-                          <i className={`${favoritas.has(t.bodega_id) ? "fa-solid" : "fa-regular"} fa-heart text-sm`}></i>
-                        </button>
                       </div>
 
-                      <ModalidadesEntrega t={t} oscuro />
+                      <div className="kmt-mods"><ModalidadesEntrega t={t} oscuro /></div>
 
                       {itemsUlt ? (
-                        <div className="bg-white/15 rounded-[20px] px-3.5 py-3 text-[12.5px] leading-relaxed">
-                          <p className="text-[11px] font-bold uppercase tracking-wider text-white/75 mb-0.5">
-                            Tu último pedido · {fechaRelativa(ultimoPedidoPorBodega[t.bodega_id]).toLowerCase()}
-                          </p>
-                          <span className="line-clamp-2">{resumen}</span>
-                          <strong className="block mt-0.5">{formatoMoneda(totalUlt)}</strong>
+                        <div className="kmt-ultimo">
+                          <span className="kmt-mini"><i className="fa-solid fa-bag-shopping"></i></span>
+                          <div className="kmt-ut">
+                            <small>Tu último pedido · {fechaRelativa(ultimoPedidoPorBodega[t.bodega_id]).toLowerCase()}</small>
+                            <b>{resumen}</b>
+                          </div>
+                          <span className="kmt-pr">{formatoMoneda(totalUlt)}</span>
                         </div>
                       ) : (
-                        <p className="text-xs text-white/80">Todavía no hiciste pedidos en esta bodega.</p>
+                        <p className="kmt-vacio">Todavía no hiciste pedidos en esta bodega.</p>
                       )}
 
-                      <div className="flex gap-2">
+                      <div className={`kmt-acc ${itemsUlt ? "" : "kmt-solo"}`}>
                         {itemsUlt && (
-                          <button
-                            type="button"
-                            onClick={() => pedirDeNuevo(t)}
-                            className="flex-1 h-11 rounded-full bg-white text-[#4d04b0] font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition"
-                          >
+                          <button type="button" onClick={() => pedirDeNuevo(t)} className="kmt-b1">
                             <i className="fa-solid fa-rotate-right text-xs"></i> Pedir de nuevo
                           </button>
                         )}
-                        <a
-                          href={`/${t.slug}`}
-                          className={`flex-1 h-11 rounded-full font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition ${
-                            itemsUlt ? "bg-white/20 text-white" : "bg-white text-[#4d04b0]"
-                          }`}
-                        >
+                        <a href={`/${t.slug}`} className={itemsUlt ? "kmt-b2" : "kmt-b1"}>
                           Ver catálogo
                         </a>
                       </div>
@@ -2154,17 +2146,17 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
                   const estado = estadoAtencionBodega(t.horario_atencion);
                   const sigue = favoritas.has(t.bodega_id);
                   return (
-                    <div key={t.bodega_id} className="bg-white rounded-[26px] ring-1 ring-[#efe6fc] p-2.5 flex flex-col gap-2.5">
-                     <div className="flex items-center gap-3">
-                      <div className="w-[54px] h-[54px] rounded-[18px] bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] overflow-hidden shrink-0 flex items-center justify-center text-white">
+                    <div key={t.bodega_id} className="kmt-item">
+                     <div className="kmt-fila">
+                      <div className="kmt-logo kmt-sm">
                         {t.logo_url ? (
-                          <img src={t.logo_url} alt={t.nombre} className="w-full h-full object-cover" />
+                          <img src={t.logo_url} alt={t.nombre} />
                         ) : (
-                          <span className="font-extrabold text-xl">{t.nombre?.charAt(0).toUpperCase()}</span>
+                          <span>{t.nombre?.charAt(0).toUpperCase()}</span>
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-bold text-[14.5px] text-[#1c1830] leading-tight truncate">{t.nombre}</p>
+                        <p className="kmt-nom">{t.nombre}</p>
                         <div className="flex items-center gap-1.5 mt-1 text-xs text-[#78729a] min-w-0">
                           {indicadorAtencion(estado, false)}
                           <span className="truncate">
@@ -2180,16 +2172,14 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
                         type="button"
                         onClick={() => alternarFavorita(t.bodega_id)}
                         title={sigue ? "Dejar de seguir" : "Seguir esta tienda"}
-                        className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 active:scale-90 transition ${
-                          sigue ? "bg-[#f4eefe] text-[#6105dc]" : "bg-white ring-1 ring-[#efe6fc] text-[#a29cbd]"
-                        }`}
+                        className={`kmt-cor ${sigue ? "kmt-sigue" : ""}`}
                       >
                         <i className={`${sigue ? "fa-solid" : "fa-regular"} fa-heart text-sm`}></i>
                       </button>
                       <a
                         href={`/${t.slug}`}
                         aria-label={`Ver catálogo de ${t.nombre}`}
-                        className="w-9 h-9 rounded-full bg-[#6105dc] text-white flex items-center justify-center shrink-0 active:scale-90 transition"
+                        className="kmt-ir"
                       >
                         <i className="fa-solid fa-arrow-right text-xs"></i>
                       </a>

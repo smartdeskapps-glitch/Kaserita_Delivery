@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Mis tiendas</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--p:#6105dc;--pd:#4d04b0;--ring:#efe6fc;--ink:#1c1830;--mut:#78729a;--f:'Plus Jakarta Sans',system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:#e9e4f5;-webkit-font-smoothing:antialiased;display:flex;justify-content:center;padding:24px 12px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+p,h1,h2{margin:0}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.tel{width:100%;max-width:390px;border-radius:34px;background:linear-gradient(180deg,#f1eafc,#f7f5fb 300px,#f5f4f8);padding:18px 14px 26px;box-shadow:0 30px 60px -30px rgba(60,20,120,.45);display:flex;flex-direction:column;gap:14px}
+.cab{display:flex;align-items:center;gap:12px}
+.atras{width:40px;height:40px;border-radius:50%;background:#fff;box-shadow:0 1px 0 var(--ring);color:var(--pd);display:flex;align-items:center;justify-content:center;font-size:16px}
+.cab h1{font:800 22px var(--f);letter-spacing:-.4px}
+.cab em{font-style:normal;font-size:11.5px;font-weight:700;color:var(--pd);background:#ece1fb;border-radius:999px;padding:4px 10px}
+.busca{display:flex;align-items:center;gap:10px;background:#fff;border-radius:999px;height:46px;padding:0 16px;box-shadow:0 1px 0 var(--ring);color:#a29cbd}
+.busca input{border:0;outline:0;background:none;flex:1;font-size:14px}
+
+/* tienda principal */
+.hero{position:relative;overflow:hidden;border-radius:28px;color:#fff;background:linear-gradient(150deg,#8a3df2 0,#5a08cf 55%,#3f0394 100%);box-shadow:0 22px 32px -22px rgba(77,4,176,.8)}
+.hero .arriba{position:relative;padding:16px 16px 0;display:flex;gap:14px;align-items:flex-start}
+.hero i.c{position:absolute;border-radius:50%;background:rgba(255,255,255,.1)}
+.hero i.c1{width:170px;height:170px;right:-50px;top:-60px}
+.hero i.c2{width:90px;height:90px;right:70px;top:70px;background:rgba(255,214,0,.18)}
+.logo{width:84px;height:84px;border-radius:24px;background:#fff;box-shadow:0 10px 20px -10px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;font:800 34px var(--f);color:var(--pd)}
+.logo.sm{width:68px;height:68px;border-radius:20px;font-size:28px;color:#fff;background:linear-gradient(135deg,#8a3df2,var(--pd));box-shadow:0 8px 16px -10px rgba(77,4,176,.8)}
+.tx{position:relative;min-width:0;flex:1}
+.tags{display:flex;gap:6px;margin-bottom:7px;flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:4px 9px;background:rgba(255,255,255,.2)}
+.tag.ok{background:#16a34a}
+.tag.ok::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff}
+.hero h2{font:800 22px var(--f);letter-spacing:-.4px;line-height:1.1}
+.hero .dir{font-size:12px;opacity:.85;margin-top:4px;display:flex;gap:5px;align-items:flex-start}
+.fav{position:absolute;right:14px;top:14px;z-index:2;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:16px}
+.fav svg{fill:currentColor}
+.mods{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 16px 0}
+.mod{background:rgba(255,255,255,.14);border-radius:16px;padding:10px 12px;display:flex;gap:10px;align-items:center}
+.mod .ic{font-size:18px}
+.mod b{display:block;font-size:13px}
+.mod small{font-size:11.5px;opacity:.85}
+.ultimo{position:relative;margin:10px 16px 0;background:#fff;color:var(--ink);border-radius:18px;padding:10px 12px;display:flex;align-items:center;gap:12px}
+.mini{width:46px;height:46px;border-radius:14px;background:#e8f1ff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.ultimo .t{flex:1;min-width:0}
+.ultimo small{font-size:10.5px;font-weight:700;color:var(--mut);letter-spacing:.04em;text-transform:uppercase}
+.ultimo b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.ultimo .pr{font:800 14px var(--f);color:var(--pd)}
+.acc{position:relative;display:grid;grid-template-columns:1.1fr 1fr;gap:8px;padding:12px 16px 16px}
+.acc button{height:46px;border-radius:999px;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+.b1{background:#fff;color:var(--pd)}
+.b2{background:rgba(255,255,255,.18);color:#fff}
+
+/* lista */
+.sec{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);padding:2px 4px 0}
+.item{background:#fff;border-radius:24px;padding:12px;display:flex;flex-direction:column;gap:10px;box-shadow:0 1px 0 var(--ring)}
+.fila{display:flex;align-items:center;gap:12px}
+.fila .n{flex:1;min-width:0}
+.fila b{display:block;font:800 16px var(--f);letter-spacing:-.2px}
+.fila small{font-size:12px;color:var(--mut)}
+.cor{width:38px;height:38px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--ring);color:var(--mut);display:flex;align-items:center;justify-content:center;font-size:16px}
+.ir{width:38px;height:38px;border-radius:50%;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px}
+.chips{display:flex;gap:8px}
+.chip{flex:1;display:flex;align-items:center;gap:9px;border-radius:14px;padding:8px 11px;background:#f4eefe;color:var(--pd)}
+.chip.off{background:#f6f5f9;color:#b0abc4}
+.chip .ic{font-size:17px}
+.chip b{display:block;font:600 12.5px 'Inter'}
+.chip small{font-size:11.5px;color:inherit;opacity:.8}
+.nueva{display:flex;align-items:center;gap:12px;border:1.5px dashed #d9cdf2;border-radius:24px;padding:14px;background:rgba(255,255,255,.55)}
+.nueva .mas{width:42px;height:42px;border-radius:50%;background:#ece1fb;color:var(--pd);display:flex;align-items:center;justify-content:center;font-size:20px}
+.nueva .t{flex:1}
+.nueva b{display:block;font-size:14px}
+.nueva small{font-size:12px;color:var(--mut)}
+.nueva .pega{background:#fff;color:var(--pd);font-weight:700;font-size:13px;border-radius:999px;padding:9px 14px;box-shadow:inset 0 0 0 1px #ddd0f5;display:flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="back" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.500-3.500"/></symbol>
+  <symbol id="pin" viewBox="0 0 24 24"><path d="M12 22s7-6.200 7-12a7 7 0 0 0-14 0c0 5.800 7 12 7 12Z"/><circle cx="12" cy="10" r="2.500"/></symbol>
+  <symbol id="heart" viewBox="0 0 24 24"><path d="M12 20s-8-4.800-8-10.500A4.500 4.500 0 0 1 12 7a4.500 4.500 0 0 1 8 2.500C20 15.200 12 20 12 20Z"/></symbol>
+  <symbol id="bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+  <symbol id="moto" viewBox="0 0 24 24"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M9 17h6l-3-8h3M6 17l3-6h3"/></symbol>
+  <symbol id="redo" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.500-5.800M20 4v5h-5"/></symbol>
+  <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.600 0l3-3a4 4 0 0 0-5.600-5.600L12 6.400M14 10a4 4 0 0 0-5.600 0l-3 3a4 4 0 0 0 5.600 5.600L12 17.600"/></symbol>
+</svg>
+
+<div class="tel">
+  <div class="cab">
+    <button class="atras" aria-label="Volver"><svg class="ic"><use href="#back"/></svg></button>
+    <h1>Mis tiendas</h1><em>2 guardadas</em>
+  </div>
+
+  <label class="busca"><svg class="ic"><use href="#search"/></svg><input placeholder="Buscar entre mis bodegas..."></label>
+
+  <div class="hero">
+    <i class="c c1"></i><i class="c c2"></i>
+    <button class="fav" aria-label="Quitar de guardadas"><svg class="ic"><use href="#heart"/></svg></button>
+    <div class="arriba">
+      <div class="logo">K</div>
+      <div class="tx" style="padding-right:44px">
+        <div class="tags"><span class="tag ok">Abierto</span></div>
+        <h2>Bodega Demo</h2>
+        <p class="dir"><svg class="ic" style="margin-top:2px"><use href="#pin"/></svg>Av. Los Álamos 245, San Miguel</p>
+      </div>
+    </div>
+    <div class="mods">
+      <div class="mod"><svg class="ic"><use href="#bag"/></svg><div><b>Retiro</b><small>Gratis</small></div></div>
+      <div class="mod"><svg class="ic"><use href="#moto"/></svg><div><b>Delivery</b><small>S/ 4.00 · mín. S/ 20</small></div></div>
+    </div>
+    <div class="ultimo">
+      <div class="mini">💧</div>
+      <div class="t"><small>Tu último pedido · hoy</small><b>Agua Cristalina Sin Gas Botella 500ml</b></div>
+      <span class="pr">S/ 1.50</span>
+    </div>
+    <div class="acc">
+      <button class="b1"><svg class="ic"><use href="#redo"/></svg>Pedir de nuevo</button>
+      <button class="b2">Ver catálogo</button>
+    </div>
+  </div>
+
+  <p class="sec">Otras bodegas</p>
+  <div class="item">
+    <div class="fila">
+      <div class="logo sm">B</div>
+      <div class="n"><b>Barbería Demo</b><small>Visto: hace 6 días</small></div>
+      <button class="cor" aria-label="Guardar"><svg class="ic"><use href="#heart"/></svg></button>
+      <button class="ir" aria-label="Abrir"><svg class="ic"><use href="#arrow"/></svg></button>
+    </div>
+    <div class="chips">
+      <div class="chip"><svg class="ic"><use href="#bag"/></svg><div><b>Retiro</b><small>Gratis</small></div></div>
+      <div class="chip off"><svg class="ic"><use href="#moto"/></svg><div><b>Delivery</b><small>No disponible</small></div></div>
+    </div>
+  </div>
+
+  <div class="nueva">
+    <span class="mas"><svg class="ic"><use href="#plus"/></svg></span>
+    <div class="t"><b>¿Compraste en otra bodega?</b><small>Escanea su QR o pega el link</small></div>
+    <button class="pega"><svg class="ic"><use href="#link"/></svg>Pegar</button>
+  </div>
+</div>
+</body>
+</html>
