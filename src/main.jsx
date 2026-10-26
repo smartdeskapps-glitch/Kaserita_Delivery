@@ -1195,7 +1195,7 @@ function MapaEntrega({ punto, onCambiar, alto = "h-[200px]", redondeo = "rounded
   }
   return (
     <div className={`relative ${alto} ${redondeo} overflow-hidden bg-stone-100`}>
-      <div ref={contenedorRef} className="absolute inset-0"></div>
+      <div ref={contenedorRef} className="absolute inset-0" style={{ position: "absolute", inset: 0 }}></div>
       {!punto && listo && (
         <div className="absolute left-2 bottom-6 z-[500] bg-white/95 rounded-full px-3 py-1 text-[11px] text-stone-600 shadow pointer-events-none">
           Toca el mapa para poner el pin
