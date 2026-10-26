@@ -1079,3 +1079,48 @@ body { overflow-x: clip; }
 .kmt-cor{width:38px;height:38px;border-radius:50%;box-shadow:inset 0 0 0 1px #efe6fc;color:#a29cbd;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .kmt-cor.kmt-sigue{background:#f4eefe;color:#6105dc;box-shadow:none}
 .kmt-ir{width:38px;height:38px;border-radius:50%;background:#6105dc;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+/* Mis pedidos: pestanas, tarjetas en curso, historial por fecha y detalle */
+.kmp-seg{display:grid;grid-template-columns:1fr 1fr;background:#ece6f7;border-radius:16px;padding:4px}
+.kmp-seg button{height:42px;border-radius:12px;font-size:13.5px;font-weight:600;color:#6b6590;display:flex;align-items:center;justify-content:center;gap:7px}
+.kmp-seg button.on{background:#fff;color:#4d04b0;box-shadow:0 2px 8px -2px rgba(60,20,120,.25)}
+.kmp-seg em{font-style:normal;font-size:11px;font-weight:700;background:#ece1fb;color:#4d04b0;border-radius:999px;padding:1px 7px}
+.kmp-seg .on em{background:#6105dc;color:#fff}
+.kmp-t{display:flex;align-items:center;gap:12px}
+.kmp-ico{width:46px;height:46px;border-radius:50%;background:#f1eafc;color:#4d04b0;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.kmp-ico.on{background:linear-gradient(135deg,#8a3df2,#4d04b0);color:#fff;box-shadow:0 8px 16px -8px rgba(97,5,220,.7)}
+.kmp-ico.ok{background:#e7f7ee;color:#15803d}
+.kmp-ico.no{background:#ffe9ed;color:#e11d48}
+.kmp-n{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left}
+.kmp-n b{font-size:16px;font-weight:800;letter-spacing:-.2px;color:#1c1830;line-height:1.15}
+.kmp-pill{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px}
+.kmp-p-ok{background:#e7f7ee;color:#15803d}
+.kmp-p-no{background:#ffe9ed;color:#e11d48}
+.kmp-meta{display:flex;align-items:center;flex-wrap:wrap;gap:3px 10px;font-size:12px;color:#6b6590}
+.kmp-meta span{display:inline-flex;align-items:center;gap:5px}
+.kmp-meta i{font-size:11px;color:#a29cbd}
+.kmp-cod{font-family:ui-monospace,Consolas,monospace;font-weight:700;color:#1c1830}
+.kmp-sec{margin:0;padding:0 4px;font-size:12px;font-weight:700;color:#6b6590}
+.kmp-lista{background:#fff;border-radius:26px;padding:2px 14px;box-shadow:0 0 0 1px #efe6fc}
+.kmp-it{display:flex;align-items:center;gap:12px;padding:14px 0;width:100%;text-align:left}
+.kmp-it+.kmp-it{border-top:1px solid #efe9f8}
+.kmp-tot{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.kmp-tot i{font-size:12px;color:#a29cbd}
+.kmp-price{font-size:15px;font-weight:800;color:#1c1830;font-variant-numeric:tabular-nums}
+.kmp-hd{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.kmp-ci{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#8a3df2,#4d04b0);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 12px 20px -10px rgba(97,5,220,.7)}
+.kmp-ci.no{background:linear-gradient(135deg,#fb7185,#e11d48);box-shadow:0 12px 20px -10px rgba(225,29,72,.6)}
+.kmp-hd h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.4px;color:#1c1830}
+.kmp-aviso{align-self:stretch;background:#f1eafc;border-radius:14px;padding:11px 13px;font-size:13px;color:#4a4468}
+.kmp-dt{background:#fff;border-radius:26px;padding:14px;box-shadow:0 0 0 1px #efe6fc}
+.kmp-dt h3{margin:0 0 4px;font-size:15px;font-weight:800;color:#1c1830}
+.kmp-dt h3 em{font-style:normal;color:#6105dc;margin-left:4px}
+.kmp-prod{display:flex;align-items:center;gap:12px;padding:11px 0}
+.kmp-prod+.kmp-prod{border-top:1px solid #efe9f8}
+.kmp-th{width:48px;height:48px;border-radius:15px;background:#f4eefe;color:#6105dc;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.kmp-pn{flex:1;min-width:0;font-size:14px;font-weight:600;line-height:1.25;color:#1c1830}
+.kmp-pn small{display:block;font-size:12px;font-weight:400;color:#6b6590;margin-top:2px}
+.kmp-pp{font-size:14px;font-weight:700;color:#1c1830;font-variant-numeric:tabular-nums}
+.kmp-totf{display:flex;justify-content:space-between;align-items:baseline;border-top:2px dashed #e4dbf5;margin-top:6px;padding-top:12px}
+.kmp-totf span{font-size:13px;font-weight:600;color:#6b6590}
+.kmp-totf b{font-size:22px;font-weight:800;color:#1c1830;font-variant-numeric:tabular-nums}
+.kmp-btn{height:50px;border-radius:999px;background:#6105dc;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
