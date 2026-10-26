@@ -1334,7 +1334,7 @@ function StepperPedido({ estado, tipoEntrega }) {
   );
 }
 
-function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido, fotoDeItem, whatsappTienda }) {
+function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido, fotoDeItem }) {
   const [pedidos, setPedidos] = useState([]);
   const [nombresBodegas, setNombresBodegas] = useState({});
   const [cargando, setCargando] = useState(true);
@@ -1660,10 +1660,6 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
     const tienda = nombresBodegas[p.bodega_id];
     const medio = p.medio_pago ? TEXTO_MEDIO_PAGO[p.medio_pago] || p.medio_pago : "";
     const esTiendaActual = p.bodega_id === bodegaActualId;
-    const telefono = (whatsappTienda || "").replace(/\D/g, "");
-    const enlaceTienda = esTiendaActual && telefono.length >= 7
-      ? `https://wa.me/${telefono}?text=${encodeURIComponent(`Hola, te escribo por mi pedido ${p.codigo_corto}.`)}`
-      : null;
     const fila = (rotulo, valor, extra) => (
       <div className={`kmp-dat ${extra || ""}`}>
         <span>{rotulo}</span>
@@ -1724,11 +1720,6 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
             <button type="button" onClick={() => onRepetirPedido(p)} className="kmp-btn">
               <i className="fa-solid fa-rotate-right text-xs" aria-hidden="true"></i> Pedir de nuevo
             </button>
-          )}
-          {enlaceTienda && (
-            <a href={enlaceTienda} target="_blank" rel="noopener noreferrer" className="kmp-btn kmp-l">
-              <i className="fa-brands fa-whatsapp" aria-hidden="true"></i> Escribir a la tienda
-            </a>
           )}
         </div>
       </div>
@@ -3960,7 +3951,6 @@ function App() {
             onVolver={() => setVistaMisPedidos(false)}
             bodegaActualId={bodega?.bodega_id}
             onRepetirPedido={repetirPedido}
-            whatsappTienda={bodega?.telefono}
             fotoDeItem={(it) => {
               if (it.combo_id) return productosPorId[combosPorId[it.combo_id]?.items?.[0]?.producto_id]?.foto_url || null;
               return productosPorId[it.id]?.foto_url || null;
