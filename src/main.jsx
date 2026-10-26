@@ -1108,7 +1108,7 @@ function enlaceMapa(lat, lng) {
   return `https://www.google.com/maps?q=${lat},${lng}`;
 }
 
-// Mapa con pin movible (MapLibre + OpenFreeMap, estilo "Positron": gratis y sin
+// Mapa con pin movible (MapLibre + OpenFreeMap, estilo "Bright": gratis y sin
 // claves). La librería se carga recién cuando el cliente elige "A domicilio",
 // para no sumarle peso a la vitrina de quien solo retira en tienda.
 function MapaEntrega({ punto, onCambiar, alto = "h-[200px]", redondeo = "rounded-2xl" }) {
@@ -1132,7 +1132,7 @@ function MapaEntrega({ punto, onCambiar, alto = "h-[200px]", redondeo = "rounded
         const centro = punto ? [punto.lng, punto.lat] : [CENTRO_MAPA_POR_DEFECTO[1], CENTRO_MAPA_POR_DEFECTO[0]];
         const mapa = new maplibregl.Map({
           container: contenedorRef.current,
-          style: "https://tiles.openfreemap.org/styles/positron",
+          style: "https://tiles.openfreemap.org/styles/bright",
           center: centro,
           zoom: punto ? 17 : 12.5,
           attributionControl: { compact: true },
