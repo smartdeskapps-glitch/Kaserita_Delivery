@@ -2395,50 +2395,44 @@ function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarD
     ? new Date(cliente.creado_en).toLocaleDateString("es-PE", { month: "long", year: "numeric" })
     : "";
 
-  const filaEditable = (campo, icono, etiqueta, texto) => (
-    <div className="px-3.5 py-3 border-t border-[#efe6fc] first:border-t-0">
-      {editando === campo ? (
-        <div className="flex flex-col gap-2">
-          <p className="text-[11px] font-semibold text-[#78729a]">{etiqueta}</p>
-          <input
-            type={campo === "telefono" ? "tel" : "text"}
-            inputMode={campo === "telefono" ? "tel" : undefined}
-            value={valor}
-            onChange={(e) => setValor(e.target.value)}
-            maxLength={campo === "telefono" ? 20 : 60}
-            autoFocus
-            className="w-full bg-white border border-[#e6dcf7] rounded-full px-4 py-2.5 text-sm text-stone-800 focus:outline-none focus:border-[#6105dc]/45 focus:ring-4 focus:ring-[#6105dc]/[0.07]"
-          />
-          {error && <p className="text-xs text-rose-600">{error}</p>}
-          <div className="flex gap-2">
-            <button
-              onClick={guardar}
-              disabled={guardando}
-              className="flex-1 h-10 rounded-full bg-[#6105dc] text-white text-sm font-bold disabled:opacity-50"
-            >
-              {guardando ? "Guardando..." : "Guardar"}
-            </button>
-            <button onClick={() => { setEditando(null); setError(""); }} className="flex-1 h-10 rounded-full bg-white ring-1 ring-[#e6dcf7] text-[#4d04b0] text-sm font-semibold">
-              Cancelar
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-3">
-          <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
-            <i className={`fa-solid ${icono} text-sm`}></i>
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold text-[#78729a]">{etiqueta}</p>
-            <p className="text-sm font-bold text-[#1c1830] truncate">{texto}</p>
-          </div>
-          <button onClick={() => empezarEdicion(campo)} aria-label={`Editar ${etiqueta.toLowerCase()}`} className="text-[#6105dc] w-8 h-8 flex items-center justify-center">
-            <i className="fa-solid fa-pen text-xs"></i>
+  const flecha = (
+    <span className="kpf-fl"><i className="fa-solid fa-arrow-right"></i></span>
+  );
+
+  const filaEditable = (campo, icono, etiqueta, texto) =>
+    editando === campo ? (
+      <div className="kpf-fila kpf-edit">
+        <p className="text-[11px] font-semibold text-[#78729a]">{etiqueta}</p>
+        <input
+          type={campo === "telefono" ? "tel" : "text"}
+          inputMode={campo === "telefono" ? "tel" : undefined}
+          value={valor}
+          onChange={(e) => setValor(e.target.value)}
+          maxLength={campo === "telefono" ? 20 : 60}
+          autoFocus
+          className="w-full bg-white border border-[#e6dcf7] rounded-full px-4 py-2.5 text-sm text-stone-800 focus:outline-none focus:border-[#6105dc]/45 focus:ring-4 focus:ring-[#6105dc]/[0.07]"
+        />
+        {error && <p className="text-xs text-rose-600">{error}</p>}
+        <div className="flex gap-2">
+          <button
+            onClick={guardar}
+            disabled={guardando}
+            className="flex-1 h-10 rounded-full bg-[#6105dc] text-white text-sm font-bold disabled:opacity-50"
+          >
+            {guardando ? "Guardando..." : "Guardar"}
+          </button>
+          <button onClick={() => { setEditando(null); setError(""); }} className="flex-1 h-10 rounded-full bg-white ring-1 ring-[#e6dcf7] text-[#4d04b0] text-sm font-semibold">
+            Cancelar
           </button>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    ) : (
+      <button className="kpf-fila" onClick={() => empezarEdicion(campo)} aria-label={`Editar ${etiqueta.toLowerCase()}`}>
+        <span className="kpf-i"><i className={`fa-solid ${icono}`}></i></span>
+        <span className="kpf-t"><b>{etiqueta}</b><small>{texto}</small></span>
+        {flecha}
+      </button>
+    );
 
   const interruptor = (activo, onClick, etiqueta) => (
     <button
@@ -2447,141 +2441,95 @@ function PantallaPerfil({ cliente, onActualizado, onVolver, direccion, onEditarD
       aria-checked={activo}
       aria-label={etiqueta}
       onClick={onClick}
-      className={`relative w-11 h-[26px] rounded-full shrink-0 transition-colors ${activo ? "bg-[#6105dc]" : "bg-[#d9d5e2]"}`}
-    >
-      <span className={`absolute top-[3px] w-5 h-5 rounded-full bg-white transition-all ${activo ? "left-[21px]" : "left-[3px]"}`}></span>
-    </button>
+      className={`kpf-sw ${activo ? "on" : ""}`}
+    ></button>
   );
 
   return (
-    <div className="fixed inset-0 z-20 overflow-y-auto bg-gradient-to-br from-[#f4effc] via-[#f9f8fb] to-[#f5f4f8]">
-      <div className="kd-entra relative max-w-md mx-auto px-4 pt-5 pb-28 flex flex-col gap-3 min-h-full" style={{ "--d": direccionEntrada }}>
-        <div className="flex items-center gap-3">
-          <button onClick={onVolver} aria-label="Volver" className="w-10 h-10 rounded-full bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] flex items-center justify-center">
-            <i className="fa-solid fa-arrow-left text-sm"></i>
+    <div className="fixed inset-0 z-20 overflow-y-auto kpf-fondo">
+      <div className="kd-entra relative max-w-md mx-auto flex flex-col min-h-full" style={{ "--d": direccionEntrada }}>
+        <div className="kpf-cab">
+          <button onClick={onVolver} aria-label="Volver" className="kpf-atras">
+            <i className="fa-solid fa-arrow-left"></i>
           </button>
-          <h1 className="text-[22px] font-extrabold tracking-tight text-[#1c1830]">Mi perfil</h1>
+          <h1>Mi perfil</h1>
+          <span></span>
         </div>
 
-        <div className="flex items-center gap-3.5 px-0.5 py-1">
-          <span className="w-14 h-14 rounded-full bg-gradient-to-br from-[#8a3df2] to-[#4d04b0] text-white text-2xl font-extrabold flex items-center justify-center shrink-0">
-            {(cliente.nombre || "?").charAt(0).toUpperCase()}
-          </span>
-          <div className="min-w-0">
-            <p className="text-[17px] font-bold text-[#1c1830] truncate">{cliente.nombre}</p>
-            {desde && <p className="text-[12.5px] text-[#78729a]">Cliente desde {desde}</p>}
-          </div>
+        <div className="kpf-yo">
+          <div className="kpf-av"><span>{(cliente.nombre || "?").charAt(0).toUpperCase()}</span></div>
+          <h2>{cliente.nombre}</h2>
+          {correo && <small>{correo}</small>}
+          {desde && <em>Cliente desde {desde}</em>}
         </div>
 
-        <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
-          <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-[#78729a] px-3.5 pt-3 pb-1">Datos personales</p>
-          {filaEditable("nombre", "fa-user", "Nombre", cliente.nombre)}
-          {filaEditable("telefono", "fa-mobile-screen", "Teléfono de contacto", cliente.telefono)}
-          <div className="px-3.5 py-3 border-t border-[#efe6fc] flex items-center gap-3">
-            <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
-              <i className="fa-regular fa-envelope text-sm"></i>
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold text-[#78729a]">Correo (Google)</p>
-              <p className="text-sm font-bold text-[#1c1830] truncate">{correo || "—"}</p>
+        <div className="kpf-hoja">
+          {onInstalar && (
+            <button className="kpf-banner" onClick={onInstalar}>
+              <i></i><i></i>
+              <span className="kpf-bt"><b>Instala Kaserita</b><span>Pide más rápido, sin abrir el navegador</span></span>
+              <span className="kpf-go">Instalar</span>
+            </button>
+          )}
+
+          <div className="kpf-grupo">
+            {filaEditable("nombre", "fa-user", "Nombre", cliente.nombre)}
+            {filaEditable("telefono", "fa-mobile-screen", "Teléfono de contacto", cliente.telefono)}
+            <div className="kpf-fila">
+              <span className="kpf-i"><i className="fa-regular fa-envelope"></i></span>
+              <span className="kpf-t"><b>Correo (Google)</b><small>{correo || "—"}</small></span>
+              <span className="kpf-fl kpf-lock"><i className="fa-solid fa-lock"></i></span>
             </div>
-            <span className="text-[11px] text-[#a29cbd] flex items-center gap-1 shrink-0">
-              <i className="fa-solid fa-lock text-[10px]"></i> Fijo
-            </span>
           </div>
-        </div>
 
-        <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
-          <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-[#78729a] px-3.5 pt-3 pb-1">Entrega</p>
-          <div className="px-3.5 py-3 flex items-center gap-3">
-            <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
-              <i className="fa-solid fa-location-dot text-sm"></i>
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold text-[#78729a]">Dirección guardada en este dispositivo</p>
-              <p className="text-sm font-bold text-[#1c1830] line-clamp-2">
-                {direccion.referencia || (direccion.tiene ? "Ubicación marcada en el mapa" : "Todavía no guardaste una dirección")}
-              </p>
-            </div>
-            <button onClick={onEditarDireccion} className="text-[12.5px] font-bold text-[#6105dc] shrink-0">
-              {direccion.tiene ? "Cambiar" : "Agregar"}
+          <div className="kpf-grupo">
+            <button className="kpf-fila" onClick={onEditarDireccion}>
+              <span className="kpf-i"><i className="fa-solid fa-location-dot"></i></span>
+              <span className="kpf-t">
+                <b>{direccion.tiene ? "Mi dirección" : "Agregar mi dirección"}</b>
+                <small>{direccion.referencia || (direccion.tiene ? "Ubicación marcada en el mapa" : "Todavía no guardaste una dirección")}</small>
+              </span>
+              {flecha}
             </button>
           </div>
-        </div>
 
-        <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
-          <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-[#78729a] px-3.5 pt-3 pb-1">Notificaciones</p>
-          <div className="px-3.5 py-3 flex items-center gap-3">
-            <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
-              <i className="fa-solid fa-bell text-sm"></i>
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-[#1c1830]">Estado de mis pedidos</p>
-              <p className="text-xs text-[#78729a]">Aviso cuando esté listo o en camino</p>
+          <div className="kpf-grupo">
+            <div className="kpf-fila">
+              <span className="kpf-i"><i className="fa-solid fa-bell"></i></span>
+              <span className="kpf-t"><b>Estado de mis pedidos</b><small>Aviso cuando esté listo o en camino</small></span>
+              {interruptor(pushActivo, alternarPush, "Notificaciones de mis pedidos")}
             </div>
-            {interruptor(pushActivo, alternarPush, "Notificaciones de mis pedidos")}
-          </div>
-          <div className="px-3.5 py-3 border-t border-[#efe6fc] flex items-center gap-3">
-            <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
-              <i className="fa-solid fa-heart text-sm"></i>
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-[#1c1830]">Novedades de mis tiendas</p>
-              <p className="text-xs text-[#78729a]">Cuando abren o suman delivery</p>
+            <div className="kpf-fila">
+              <span className="kpf-i"><i className="fa-solid fa-heart"></i></span>
+              <span className="kpf-t"><b>Novedades de mis tiendas</b><small>Cuando abren o suman delivery</small></span>
+              {interruptor(novedades, alternarNovedades, "Novedades de mis tiendas")}
             </div>
-            {interruptor(novedades, alternarNovedades, "Novedades de mis tiendas")}
+            {avisoNotif && <p className="text-xs text-rose-600 px-3.5 pb-3">{avisoNotif}</p>}
           </div>
-          {avisoNotif && <p className="text-xs text-rose-600 px-3.5 pb-3">{avisoNotif}</p>}
-        </div>
 
-        {onInstalar && (
-          <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
-            <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-[#78729a] px-3.5 pt-3 pb-1">Cuenta</p>
-            <button onClick={onInstalar} className="w-full px-3.5 py-3 flex items-center gap-3 text-left">
-              <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
-                <i className="fa-solid fa-download text-sm"></i>
-              </span>
-              <p className="text-sm font-bold text-[#1c1830] flex-1">Instalar la app</p>
-              <i className="fa-solid fa-chevron-right text-xs text-[#a29cbd]"></i>
-            </button>
+          <div className="kpf-grupo">
+            {[
+              ["fa-shield-halved", "Política de privacidad", "https://kaserita.smartdeskapps.com/privacidad.html"],
+              ["fa-file-lines", "Términos y condiciones", "https://kaserita.smartdeskapps.com/terminos-delivery.html"],
+            ].map(([icono, texto, url]) => (
+              <a key={texto} href={url} target="_blank" rel="noopener noreferrer" className="kpf-fila">
+                <span className="kpf-i"><i className={`fa-solid ${icono}`}></i></span>
+                <span className="kpf-t"><b>{texto}</b></span>
+                {flecha}
+              </a>
+            ))}
           </div>
-        )}
 
-        <div className="bg-white rounded-[22px] ring-1 ring-[#efe6fc] overflow-hidden">
-          <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-[#78729a] px-3.5 pt-3 pb-1">Legal</p>
-          {[
-            ["fa-shield-halved", "Política de privacidad", "https://kaserita.smartdeskapps.com/privacidad.html"],
-            ["fa-file-lines", "Términos y condiciones", "https://kaserita.smartdeskapps.com/terminos-delivery.html"],
-          ].map(([icono, texto, url], i) => (
-            <a
-              key={texto}
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`px-3.5 py-3 flex items-center gap-3 ${i > 0 ? "border-t border-[#efe6fc]" : ""}`}
-            >
-              <span className="w-9 h-9 rounded-xl bg-[#f4eefe] text-[#4d04b0] shrink-0 flex items-center justify-center">
-                <i className={`fa-solid ${icono} text-sm`}></i>
-              </span>
-              <p className="text-sm font-bold text-[#1c1830] flex-1">{texto}</p>
-              <i className="fa-solid fa-arrow-up-right-from-square text-[11px] text-[#a29cbd]"></i>
-            </a>
-          ))}
+          <button onClick={onSalir} className="kpf-salir">
+            <i className="fa-solid fa-right-from-bracket text-xs"></i> Cerrar sesión
+          </button>
+          <button
+            onClick={() => { setTextoConfirmar(""); setErrorEliminar(""); setConfirmarEliminar(true); }}
+            className="kpf-elim"
+          >
+            Eliminar mi cuenta
+          </button>
         </div>
-
-        <div className="flex-1"></div>
-        <button
-          onClick={onSalir}
-          className="h-12 rounded-full bg-white ring-1 ring-rose-200 text-rose-600 font-bold text-sm flex items-center justify-center gap-2"
-        >
-          <i className="fa-solid fa-right-from-bracket text-xs"></i> Cerrar sesión
-        </button>
-        <button
-          onClick={() => { setTextoConfirmar(""); setErrorEliminar(""); setConfirmarEliminar(true); }}
-          className="text-[12.5px] font-semibold text-[#78729a] underline py-1"
-        >
-          Eliminar mi cuenta
-        </button>
       </div>
 
       {confirmarEliminar && (
