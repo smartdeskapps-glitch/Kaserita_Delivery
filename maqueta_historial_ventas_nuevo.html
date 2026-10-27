@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Historial de ventas</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--p:#6105dc;--pd:#4d04b0;--ring:#efe6fc;--ink:#1c1830;--mut:#78729a;--f:'Plus Jakarta Sans',system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:#cfc8e0;-webkit-font-smoothing:antialiased;padding:22px 12px 40px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+p,h1,h2,h3{margin:0}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.top{text-align:center;margin-bottom:18px}
+.top h1{font:800 20px var(--f)}
+.top p{font-size:13px;color:#5d5678;margin-top:4px}
+.fila{display:flex;flex-wrap:wrap;gap:26px;justify-content:center;align-items:flex-start}
+.col{width:430px}
+.col>h3{font:800 14px var(--f);margin:0 0 8px 6px}
+.modal{height:860px;border-radius:30px;background:linear-gradient(180deg,#f3ecfd,#f9f8fb 240px);box-shadow:0 30px 70px -28px rgba(40,10,90,.6);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.cab{display:flex;align-items:center;gap:12px;padding:18px 18px 8px}
+.cab h2{flex:1;font:800 20px var(--f);letter-spacing:-.4px}
+.x{width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:0 1px 0 var(--ring);color:var(--mut);display:flex;align-items:center;justify-content:center;font-size:15px}
+.scroll{flex:1;overflow-y:auto;padding:4px 16px 20px;display:flex;flex-direction:column;gap:12px}
+.scroll::-webkit-scrollbar{display:none}
+.scroll>*{flex-shrink:0}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:#ece6f7;border-radius:16px;padding:4px}
+.seg button{height:40px;border-radius:12px;font-size:13.5px;font-weight:600;color:var(--mut)}
+.seg button.on{background:#fff;color:var(--pd);box-shadow:0 2px 8px -2px rgba(60,20,120,.25)}
+
+/* periodo */
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;height:36px;padding:0 15px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1px #e6dcf7;color:var(--mut);font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.chip.on{background:var(--p);color:#fff;box-shadow:none}
+.rango{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--mut);margin:-2px 2px 0}
+.rango b{color:var(--ink);font-weight:600}
+.bus{display:flex;gap:8px}
+.busca{flex:1;display:flex;align-items:center;gap:9px;height:46px;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px #e6dcf7;padding:0 14px;color:#a29cbd}
+.busca input{border:0;outline:0;background:none;flex:1;font-size:14px;color:var(--ink);min-width:0}
+.xl{height:46px;width:46px;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px #e6dcf7;color:#15803d;display:flex;align-items:center;justify-content:center;font-size:19px}
+
+/* resumen */
+.res{position:relative;overflow:hidden;border-radius:24px;padding:16px;color:#fff;background:linear-gradient(150deg,#8a3df2,#5a08cf 55%,#3f0394);box-shadow:0 20px 30px -22px rgba(77,4,176,.85)}
+.res i{position:absolute;border-radius:50%;background:rgba(255,255,255,.1);right:-40px;top:-50px;width:140px;height:140px}
+.res small{position:relative;font-size:12px;opacity:.85}
+.res .tot{position:relative;font:800 32px var(--f);letter-spacing:-.8px;margin:2px 0 12px}
+.res .sub{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.res .sub div{background:rgba(255,255,255,.14);border-radius:14px;padding:9px 10px}
+.res .sub small{display:block;font-size:11px}
+.res .sub b{display:block;font-size:14.5px;margin-top:2px;font-variant-numeric:tabular-nums}
+.res .sub .g b{color:#86efac}
+
+/* lista */
+.dia{font-size:12px;font-weight:700;color:var(--mut);padding:0 4px;display:flex;justify-content:space-between;align-items:baseline}
+.dia span{font-weight:600}
+.lista{background:#fff;border-radius:24px;box-shadow:0 1px 0 var(--ring);padding:2px 6px}
+.v{position:relative;display:flex;align-items:center;gap:12px;padding:12px 8px;width:100%;text-align:left}
+.v+.v{border-top:1px solid #f1ecf8}
+.pm{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.pm.ef{background:#e7f7ee;color:#15803d}
+.pm.mv{background:#f1eafc;color:var(--p)}
+.pm.tj{background:#e8f1ff;color:#2563eb}
+.v .n{flex:1;min-width:0}
+.cod{font-family:ui-monospace,Consolas,monospace;font-weight:700;font-size:13.5px}
+.v small{display:block;font-size:12px;color:var(--mut);margin-top:2px}
+.mt{font:800 15px var(--f);font-variant-numeric:tabular-nums}
+.v .der{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.bd{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 8px;background:#f1f0f4;color:#6b6590}
+.bd.an{background:#ffe9ed;color:#e11d48}
+.v.anulada .cod,.v.anulada .mt{text-decoration:line-through;color:#a29cbd}
+.v.anulada .pm{background:#f1f0f4;color:#a29cbd}
+.mas{width:34px;height:34px;border-radius:50%;color:#a29cbd;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.mas:hover{background:#f4eefe;color:var(--p)}
+.menu{position:absolute;right:8px;top:48px;z-index:5;background:#fff;border-radius:16px;box-shadow:0 18px 40px -12px rgba(40,10,90,.45),0 0 0 1px #efe6fc;padding:6px;min-width:190px;display:none}
+.menu.abierto{display:block}
+.menu button{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;font-size:13.5px;font-weight:600;text-align:left}
+.menu button:hover{background:#f7f5fb}
+.menu .pel{color:#e11d48}
+.menu hr{border:0;border-top:1px solid #f1ecf8;margin:4px 0}
+.mas-lista{display:flex;justify-content:center;padding:4px}
+.mas-lista button{height:40px;padding:0 18px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1px #e6dcf7;color:var(--pd);font-weight:700;font-size:13px}
+
+/* detalle */
+.hd{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:4px 0 2px}
+.chk{width:60px;height:60px;border-radius:20px;background:linear-gradient(145deg,#9a55f5,var(--pd));color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 16px 24px -12px rgba(97,5,220,.75)}
+.hd .mt2{font:800 30px var(--f);letter-spacing:-.8px}
+.card{background:#fff;border-radius:22px;box-shadow:0 1px 0 var(--ring);padding:4px 16px}
+.f2{display:flex;justify-content:space-between;gap:12px;padding:12px 0;font-size:13.5px}
+.f2+.f2{border-top:1px solid #f1ecf8}
+.f2 span:first-child{color:var(--mut)}
+.f2 span:last-child{font-weight:600;text-align:right}
+.it{display:flex;align-items:center;gap:12px;padding:11px 0}
+.it+.it{border-top:1px solid #f1ecf8}
+.th{width:46px;height:46px;border-radius:14px;background:#f4eefe;color:var(--p);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.it .nn{flex:1;font-size:13.5px;font-weight:600;line-height:1.25}
+.it small{display:block;font-weight:400;font-size:12px;color:var(--mut);margin-top:2px}
+.acc2{display:grid;grid-template-columns:1fr;gap:8px;margin-top:auto;padding-top:6px}
+.b1{height:52px;border-radius:999px;background:linear-gradient(110deg,#8a3df2,var(--pd));color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 14px 24px -12px rgba(97,5,220,.7)}
+.b2{height:46px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1.5px #fecdd3;color:#e11d48;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.500-3.500"/></symbol>
+  <symbol id="xls" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7Z"/><path d="M14 3v5h5M10 12l4 5M14 12l-4 5"/></symbol>
+  <symbol id="cash" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.500"/><circle cx="12" cy="12" r="2.500"/></symbol>
+  <symbol id="mov" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.500"/><path d="M11 18h2"/></symbol>
+  <symbol id="card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.500"/><path d="M3 10h18"/></symbol>
+  <symbol id="dots" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.600"/><circle cx="12" cy="12" r="1.600"/><circle cx="12" cy="19" r="1.600"/></symbol>
+  <symbol id="print" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3"/><rect x="7" y="14" width="10" height="7" rx="1"/></symbol>
+  <symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s3.500-7 10-7 10 7 10 7-3.500 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.700 5.700 12.600 12.600"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="m5 12.500 4.500 4.500L19 7.500"/></symbol>
+  <symbol id="bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+  <symbol id="back" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+</svg>
+
+<div class="top">
+  <h1>Historial de ventas · propuesta</h1>
+  <p>Lista agrupada por día, resumen claro y "Anular" dentro de un menú. Toca los tres puntos de una venta para verlo.</p>
+</div>
+
+<div class="fila">
+
+<!-- LISTA -->
+<div class="col"><h3>1 · Lista</h3>
+<div class="modal">
+  <div class="cab"><h2>Historial de ventas</h2><button class="x" aria-label="Cerrar"><svg class="ic"><use href="#x"/></svg></button></div>
+  <div class="scroll">
+    <div class="seg" id="seg"><button class="on">Ventas</button><button>Cierres de caja</button></div>
+
+    <div class="chips" id="chips">
+      <button class="chip">Hoy</button><button class="chip">Ayer</button><button class="chip">7 días</button><button class="chip on">Este mes</button><button class="chip">Elegir fechas</button>
+    </div>
+    <p class="rango">Mostrando <b>1 oct – 26 oct 2026</b></p>
+
+    <div class="bus">
+      <label class="busca"><svg class="ic"><use href="#search"/></svg><input placeholder="Buscar boleta o cliente"></label>
+      <button class="xl" aria-label="Descargar Excel"><svg class="ic"><use href="#xls"/></svg></button>
+    </div>
+
+    <div class="res">
+      <i></i>
+      <small>Total vendido · 58 ventas</small>
+      <p class="tot">S/ 2,545.42</p>
+      <div class="sub">
+        <div><small>Efectivo</small><b>S/ 2,308.30</b></div>
+        <div><small>Yape y otros</small><b>S/ 237.12</b></div>
+        <div class="g"><small>Ganancia</small><b>S/ 860.84</b></div>
+      </div>
+    </div>
+
+    <div class="dia">Ayer, 25 de octubre <span>3 ventas · S/ 18.50</span></div>
+    <div class="lista">
+      <div class="v" data-venta>
+        <span class="pm ef"><svg class="ic"><use href="#cash"/></svg></span>
+        <div class="n"><span class="cod">B001-00000034</span><small>2:49 p. m. · Cliente general</small></div>
+        <div class="der"><span class="mt">S/ 1.50</span></div>
+        <button class="mas" aria-label="Más acciones"><svg class="ic"><use href="#dots"/></svg></button>
+        <div class="menu"><button><svg class="ic"><use href="#eye"/></svg>Ver detalle</button><button><svg class="ic"><use href="#print"/></svg>Reimprimir boleta</button><hr><button class="pel"><svg class="ic"><use href="#ban"/></svg>Anular venta</button></div>
+      </div>
+      <div class="v" data-venta>
+        <span class="pm mv"><svg class="ic"><use href="#mov"/></svg></span>
+        <div class="n"><span class="cod">B001-00000033</span><small>2:27 p. m. · Cliente general</small></div>
+        <div class="der"><span class="mt">S/ 15.50</span><span class="bd">Yape</span></div>
+        <button class="mas" aria-label="Más acciones"><svg class="ic"><use href="#dots"/></svg></button>
+        <div class="menu"><button><svg class="ic"><use href="#eye"/></svg>Ver detalle</button><button><svg class="ic"><use href="#print"/></svg>Reimprimir boleta</button><hr><button class="pel"><svg class="ic"><use href="#ban"/></svg>Anular venta</button></div>
+      </div>
+      <div class="v anulada" data-venta>
+        <span class="pm"><svg class="ic"><use href="#ban"/></svg></span>
+        <div class="n"><span class="cod">B001-00000032</span><small>2:09 p. m. · Cliente general</small></div>
+        <div class="der"><span class="mt">S/ 1.50</span><span class="bd an">Anulada</span></div>
+        <button class="mas" aria-label="Más acciones"><svg class="ic"><use href="#dots"/></svg></button>
+        <div class="menu"><button><svg class="ic"><use href="#eye"/></svg>Ver detalle</button><button><svg class="ic"><use href="#print"/></svg>Reimprimir boleta</button></div>
+      </div>
+    </div>
+
+    <div class="dia">12 de octubre <span>2 ventas · S/ 40.90</span></div>
+    <div class="lista">
+      <div class="v" data-venta>
+        <span class="pm ef"><svg class="ic"><use href="#cash"/></svg></span>
+        <div class="n"><span class="cod">B001-00000031</span><small>1:04 p. m. · Cliente general</small></div>
+        <div class="der"><span class="mt">S/ 21.90</span></div>
+        <button class="mas" aria-label="Más acciones"><svg class="ic"><use href="#dots"/></svg></button>
+        <div class="menu"><button><svg class="ic"><use href="#eye"/></svg>Ver detalle</button><button><svg class="ic"><use href="#print"/></svg>Reimprimir boleta</button><hr><button class="pel"><svg class="ic"><use href="#ban"/></svg>Anular venta</button></div>
+      </div>
+      <div class="v" data-venta>
+        <span class="pm tj"><svg class="ic"><use href="#card"/></svg></span>
+        <div class="n"><span class="cod">B001-00000030</span><small>12:47 p. m. · María Torres</small></div>
+        <div class="der"><span class="mt">S/ 19.00</span><span class="bd">Tarjeta</span></div>
+        <button class="mas" aria-label="Más acciones"><svg class="ic"><use href="#dots"/></svg></button>
+        <div class="menu"><button><svg class="ic"><use href="#eye"/></svg>Ver detalle</button><button><svg class="ic"><use href="#print"/></svg>Reimprimir boleta</button><hr><button class="pel"><svg class="ic"><use href="#ban"/></svg>Anular venta</button></div>
+      </div>
+    </div>
+    <div class="mas-lista"><button>Ver más ventas</button></div>
+  </div>
+</div></div>
+
+<!-- DETALLE -->
+<div class="col"><h3>2 · Detalle de una venta</h3>
+<div class="modal">
+  <div class="cab"><button class="x" aria-label="Volver"><svg class="ic"><use href="#back"/></svg></button><h2 style="font-size:17px">Detalle de la venta</h2><button class="x" aria-label="Cerrar"><svg class="ic"><use href="#x"/></svg></button></div>
+  <div class="scroll">
+    <div class="hd">
+      <span class="chk"><svg class="ic"><use href="#check"/></svg></span>
+      <p class="mt2">S/ 15.50</p>
+      <p><span class="cod">B001-00000033</span></p>
+      <p style="font-size:12.5px;color:var(--mut)">Ayer, 25 oct 2026 · 2:27 p. m.</p>
+    </div>
+
+    <div class="card">
+      <div class="it"><span class="th"><svg class="ic"><use href="#bag"/></svg></span><div class="nn">Combo Desayuno<small>1 × S/ 12.50</small></div><b class="mt" style="font-size:14px">S/ 12.50</b></div>
+      <div class="it"><span class="th"><svg class="ic"><use href="#bag"/></svg></span><div class="nn">Agua Cristalina 500ml<small>2 × S/ 1.50</small></div><b class="mt" style="font-size:14px">S/ 3.00</b></div>
+    </div>
+
+    <div class="card">
+      <div class="f2"><span>Cliente</span><span>Cliente general</span></div>
+      <div class="f2"><span>Atendió</span><span>Dueño Demo</span></div>
+      <div class="f2"><span>Medio de pago</span><span>Yape</span></div>
+      <div class="f2"><span>Ganancia de la venta</span><span style="color:#15803d">S/ 5.20</span></div>
+    </div>
+
+    <div class="acc2">
+      <button class="b1"><svg class="ic"><use href="#print"/></svg>Reimprimir boleta</button>
+      <button class="b2"><svg class="ic"><use href="#ban"/></svg>Anular venta</button>
+    </div>
+  </div>
+</div></div>
+
+</div>
+<script>
+document.querySelectorAll('#chips .chip').forEach(c=>c.addEventListener('click',()=>{document.querySelectorAll('#chips .chip').forEach(x=>x.classList.remove('on'));c.classList.add('on')}));
+document.querySelectorAll('#seg button').forEach(c=>c.addEventListener('click',()=>{document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('on'));c.classList.add('on')}));
+document.querySelectorAll('.mas').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const m=b.parentElement.querySelector('.menu');const ya=m.classList.contains('abierto');document.querySelectorAll('.menu').forEach(x=>x.classList.remove('abierto'));if(!ya)m.classList.add('abierto')}));
+document.addEventListener('click',()=>document.querySelectorAll('.menu').forEach(x=>x.classList.remove('abierto')));
+</script>
+</body>
+</html>
