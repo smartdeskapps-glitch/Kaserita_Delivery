@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Fiados (sobrio)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ac:#6105dc;--ac-d:#4d04b0;--ac-l:#f3effd;--ink:#16141f;--tx:#3d3a4d;--mut:#6f6b82;--line:#e7e4ef;--bg:#f6f5f9;--ok:#0f7b4a;--bad:#c0262d;--warn:#a15c07}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:#d9d7e0;-webkit-font-smoothing:antialiased;font-feature-settings:'tnum' 1,'cv11' 1;padding:22px 16px 40px;display:flex;flex-direction:column;align-items:center;gap:22px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+p,h1,h2,h3,h4{margin:0}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.nota{text-align:center;color:#2b2838;font-size:13px}
+.nota b{display:block;font-size:17px;margin-bottom:3px}
+.rotulo{font-size:12px;font-weight:600;color:#2b2838;margin:0 0 8px 4px}
+.win{background:#fff;border-radius:14px;box-shadow:0 24px 60px -20px rgba(20,10,50,.45),0 0 0 1px rgba(0,0,0,.06);display:flex;flex-direction:column;overflow:hidden}
+.pc{width:100%;max-width:1120px;height:720px}
+.mo{width:390px;height:780px}
+.cab{display:flex;align-items:center;gap:12px;padding:15px 20px;border-bottom:1px solid var(--line)}
+.cab h2{font-size:17px;font-weight:700;letter-spacing:-.2px}
+.cab small{font-size:12.5px;color:var(--mut)}
+.sp{flex:1}
+.x{width:32px;height:32px;border-radius:8px;color:var(--mut);display:flex;align-items:center;justify-content:center;font-size:16px}
+.x:hover{background:var(--bg)}
+.cuerpo{flex:1;min-height:0;display:grid;grid-template-columns:360px 1fr}
+
+/* lista */
+.lis{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
+.res{padding:16px 18px 12px;border-bottom:1px solid var(--line)}
+.res small{font-size:12px;color:var(--mut);font-weight:500}
+.res b{display:block;font-size:28px;font-weight:700;letter-spacing:-.9px;margin-top:2px}
+.res .sub{display:flex;gap:14px;margin-top:6px;font-size:12.5px;color:var(--mut)}
+.res .sub .v{color:var(--bad);font-weight:600}
+.res .sub .o{color:var(--ok);font-weight:600}
+.fil{padding:10px 18px;display:flex;flex-direction:column;gap:9px;border-bottom:1px solid var(--line)}
+.busca{display:flex;align-items:center;gap:8px;height:36px;border:1px solid var(--line);border-radius:9px;padding:0 11px;color:var(--mut)}
+.busca:focus-within{border-color:var(--ac)}
+.busca input{border:0;outline:0;background:none;flex:1;font-size:13px;color:var(--ink);min-width:0}
+.seg{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;align-self:flex-start}
+.seg button{height:28px;padding:0 11px;border-radius:7px;font-size:12.5px;font-weight:500;color:var(--mut);white-space:nowrap;display:flex;align-items:center;gap:6px}
+.seg button.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 0 0 1px var(--line)}
+.seg em{font-style:normal;font-size:11px;color:var(--mut);font-weight:600}
+.ord{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);padding:8px 18px;background:var(--bg);border-bottom:1px solid var(--line)}
+.ord button{font-weight:600;color:var(--tx)}
+.cl{overflow-y:auto;flex:1;min-height:0}
+.f{display:grid;grid-template-columns:36px 1fr auto;gap:11px;align-items:center;padding:12px 18px;border-bottom:1px solid #f0eef5;cursor:pointer;width:100%;text-align:left}
+.f:hover{background:#fbfafd}
+.f.sel{background:var(--ac-l);box-shadow:inset 3px 0 0 var(--ac)}
+.av{width:36px;height:36px;border-radius:50%;background:var(--bg);color:var(--tx);font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.f b{display:block;font-size:13.5px;font-weight:600}
+.f small{display:block;font-size:12px;color:var(--mut);margin-top:2px}
+.f small.v{color:var(--bad);font-weight:500}
+.f .m{text-align:right}
+.f .m b{font-size:14px;font-weight:700}
+.barra{height:3px;width:56px;border-radius:2px;background:#ece9f4;margin:6px 0 0 auto;overflow:hidden}
+.barra i{display:block;height:100%;background:#9d9aae}
+.barra i.a{background:#d98a14}.barra i.r{background:var(--bad)}
+
+/* detalle */
+.det{overflow-y:auto;min-height:0;padding:20px 24px;display:flex;flex-direction:column;gap:18px}
+.cli{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.cli .av{width:46px;height:46px;font-size:15px}
+.cli h3{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.cli small{display:block;font-size:12.5px;color:var(--mut);margin-top:2px}
+.btn{height:34px;padding:0 12px;border:1px solid var(--line);border-radius:9px;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:7px;background:#fff;color:var(--tx);white-space:nowrap}
+.btn:hover{background:var(--bg)}
+.btn.pri{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+.btn.pri:hover{background:var(--ac-d)}
+.btn.pri[disabled]{background:#ebe8f1;border-color:#ebe8f1;color:#8b869a;cursor:not-allowed}
+.deuda{border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.deuda .t{display:flex;justify-content:space-between;align-items:baseline}
+.deuda .t span{font-size:13px;color:var(--mut);font-weight:500}
+.deuda .t b{font-size:30px;font-weight:700;letter-spacing:-1px;color:var(--bad)}
+.lim{height:6px;border-radius:3px;background:#ece9f4;margin-top:12px;overflow:hidden}
+.lim i{display:block;height:100%;background:var(--bad)}
+.lim i.a{background:#d98a14}
+.limt{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-top:6px}
+.aviso{margin-top:12px;font-size:12.5px;color:var(--bad);background:#fdf1f1;border-radius:8px;padding:9px 12px;line-height:1.4}
+.pago{border:1px solid #cfc3ec;border-radius:12px;padding:16px 18px;box-shadow:0 0 0 3px rgba(97,5,220,.05)}
+.pago h4{font-size:14px;font-weight:700;margin-bottom:10px}
+.campo{display:flex;align-items:center;gap:8px;height:54px;border:1px solid var(--line);border-radius:10px;padding:0 14px}
+.campo:focus-within{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
+.campo em{font-style:normal;color:var(--mut);font-weight:600;font-size:18px}
+.campo input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:26px;font-weight:700;letter-spacing:-.6px}
+.rap{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.rap button{height:30px;padding:0 12px;border:1px solid var(--line);border-radius:8px;font-size:12.5px;font-weight:500;color:var(--tx);background:#fff}
+.rap button:hover{background:var(--bg)}
+.rap button.on{border-color:var(--ac);background:var(--ac-l);color:var(--ac-d);font-weight:600}
+.sal{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding:10px 14px;background:var(--bg);border-radius:9px;font-size:13px;color:var(--mut)}
+.sal b{font-size:17px;color:var(--ink);letter-spacing:-.3px}
+.sal.ok b{color:var(--ok)}
+.sal.ex{background:#fdf1f1;color:var(--bad)}.sal.ex b{color:var(--bad)}
+.cub{font-size:12px;color:var(--mut);margin-top:8px}
+.pago .btn.pri{width:100%;height:44px;justify-content:center;margin-top:12px;font-size:14px}
+.sec h4{font-size:14px;font-weight:700;margin-bottom:4px}
+.sech{display:flex;justify-content:space-between;align-items:baseline}
+.sech button{font-size:12.5px;font-weight:600;color:var(--ac)}
+.bo{display:grid;grid-template-columns:20px 1fr auto;gap:11px;padding:11px 0;border-bottom:1px solid #f0eef5;align-items:start}
+.ck{width:18px;height:18px;border-radius:50%;border:1.5px solid #bdb9cc;margin-top:1px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px}
+.ck.on{background:var(--ok);border-color:var(--ok)}
+.bo b{font-family:ui-monospace,Consolas,monospace;font-size:13px;font-weight:600}
+.bo small{display:block;font-size:12px;color:var(--mut);margin-top:2px}
+.bo .ven{font-size:11.5px;font-weight:600;color:var(--bad);margin-left:8px;font-family:'Inter'}
+.bo .im{font-weight:700;font-size:14px}
+.pr{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0eef5;font-size:13px;color:var(--mut)}
+.pr b{color:var(--ok);font-weight:600}
+.vista{display:none;flex-direction:column;gap:18px}
+.vista.on{display:flex}
+.exito{margin:auto;text-align:center;max-width:340px;padding:30px 0}
+.exito .o{width:64px;height:64px;border-radius:50%;background:#e7f7ee;color:var(--ok);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px}
+.exito h3{font-size:22px;font-weight:700;letter-spacing:-.5px}
+.exito p{font-size:13.5px;color:var(--mut);margin:6px 0 16px}
+.exito .tb{border:1px solid var(--line);border-radius:10px;padding:2px 16px;text-align:left;margin-bottom:16px}
+.exito .tb div{display:flex;justify-content:space-between;padding:10px 0;font-size:13px;border-bottom:1px dashed var(--line)}
+.exito .tb div:last-child{border:0}
+.exito .tb span{color:var(--mut)}
+.exito .btn{width:100%;justify-content:center;height:42px;margin-top:8px}
+
+/* celular */
+.mo .cab{padding:14px 16px}
+.mo .lis{border:0;flex:1}
+.mo .res{padding:14px 16px 10px}
+.mo .res b{font-size:26px}
+.mo .fil{padding:10px 16px}
+.mo .f{padding:12px 16px}
+.mo .ord{padding:7px 16px}
+.mo .scr{overflow-x:auto}
+.mo .scr::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.500-3.500"/></symbol>
+  <symbol id="pdf" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7Z"/><path d="M14 3v5h5M10 14h4"/></symbol>
+  <symbol id="wa" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.600 7.100L4 20l1-3.800A8 8 0 1 1 20 12Z"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="m5 12.500 4.500 4.500L19 7.500"/></symbol>
+  <symbol id="back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+</svg>
+
+<div class="nota"><b>Fiados · propuesta sobria</b>Misma pantalla y funciones. Elige un cliente, escribe un monto o toca "Pagar todo", y registra el pago.</div>
+
+<!-- PC -->
+<div style="width:100%;max-width:1120px">
+<p class="rotulo">Versión PC</p>
+<div class="win pc">
+  <div class="cab"><h2>Fiados</h2><small>Lo que tus clientes te deben a crédito</small><span class="sp"></span><button class="x" aria-label="Cerrar"><svg class="ic"><use href="#x"/></svg></button></div>
+  <div class="cuerpo">
+    <div class="lis">
+      <div class="res">
+        <small>Total por cobrar</small><b>S/ 671.90</b>
+        <div class="sub"><span>5 clientes</span><span class="v">S/ 146.50 vencido</span></div>
+      </div>
+      <div class="fil">
+        <label class="busca"><svg class="ic"><use href="#search"/></svg><input placeholder="Buscar por nombre o DNI"></label>
+        <div class="seg" id="seg1"><button class="on">Todos <em>5</em></button><button>Vencidos <em>2</em></button><button>Cerca del límite <em>1</em></button></div>
+      </div>
+      <div class="ord"><span>5 resultados</span><button>Orden: mayor deuda</button></div>
+      <div class="cl" id="lista">
+        <button class="f" data-c="0"><span class="av">MT</span><span><b>María Torres</b><small class="v">Vencida hace 6 d · 3 boletas</small></span><span class="m"><b>S/ 185.40</b><span class="barra"><i style="width:62%"></i></span></span></button>
+        <button class="f sel" data-c="1"><span class="av">JR</span><span><b>José Ramírez</b><small class="v">Vencida hace 3 d · 4 boletas</small></span><span class="m"><b>S/ 276.00</b><span class="barra"><i class="r" style="width:92%"></i></span></span></button>
+        <button class="f" data-c="2"><span class="av">LP</span><span><b>Luis Paredes</b><small>Debe desde hace 9 d · 2 boletas</small></span><span class="m"><b>S/ 120.00</b><span class="barra"><i style="width:40%"></i></span></span></button>
+        <button class="f" data-c="3"><span class="av">AC</span><span><b>Ana Cárdenas</b><small>Debe desde hace 4 d · 1 boleta</small></span><span class="m"><b>S/ 52.50</b><span class="barra"><i style="width:18%"></i></span></span></button>
+        <button class="f" data-c="4"><span class="av">CD</span><span><b>Carmen Díaz</b><small>Debe desde hace 2 d · 1 boleta</small></span><span class="m"><b>S/ 38.00</b><span class="barra"><i style="width:13%"></i></span></span></button>
+      </div>
+    </div>
+
+    <div class="det">
+      <div class="vista on" id="vDet">
+        <div class="cli">
+          <span class="av">JR</span>
+          <div style="flex:1;min-width:160px"><h3>José Ramírez</h3><small>DNI 45678123 · 987 654 321 · Plazo 15 días</small></div>
+          <button class="btn"><svg class="ic"><use href="#pdf"/></svg>PDF</button>
+          <button class="btn"><svg class="ic"><use href="#wa"/></svg>WhatsApp</button>
+        </div>
+
+        <div class="deuda">
+          <div class="t"><span>Deuda actual</span><b>S/ 276.00</b></div>
+          <div class="lim"><i class="a" style="width:92%"></i></div>
+          <div class="limt"><span>Usa S/ 276.00 de S/ 300.00 de crédito (92%)</span><span>Disponible S/ 24.00</span></div>
+          <p class="aviso"><b>S/ 96.50 vencido.</b> La boleta B001-00000018 pasó su plazo hace 3 días.</p>
+        </div>
+
+        <div class="pago">
+          <h4>Registrar pago</h4>
+          <label class="campo"><em>S/</em><input id="abono" placeholder="0.00" inputmode="decimal"></label>
+          <div class="rap" id="rap"><button data-v="276">Pagar todo</button><button data-v="138">Mitad</button><button data-v="96.5">Boleta más antigua S/ 96.50</button></div>
+          <div class="sal" id="sal"><span id="salT">Saldo después del pago</span><b id="salV">S/ 276.00</b></div>
+          <p class="cub" id="cub"></p>
+          <button class="btn pri" id="reg" disabled><svg class="ic"><use href="#check"/></svg><span id="regT">Registrar pago</span></button>
+        </div>
+
+        <div class="sec">
+          <div class="sech"><h4>Boletas pendientes</h4><button>Ver historial completo (6)</button></div>
+          <div id="bols"></div>
+        </div>
+
+        <div class="sec"><h4>Pagos recientes</h4>
+          <div class="pr"><span>18 oct · Dueño Demo</span><b>+ S/ 50.00</b></div>
+          <div class="pr"><span>5 oct · Rosa Quispe</span><b>+ S/ 80.00</b></div>
+        </div>
+      </div>
+
+      <div class="vista" id="vOk">
+        <div class="exito">
+          <div class="o"><svg class="ic"><use href="#check"/></svg></div>
+          <h3>Pago registrado</h3>
+          <p id="okTxt">José Ramírez sigue debiendo S/ 0.00.</p>
+          <div class="tb"><div><span>Deuda anterior</span><b>S/ 276.00</b></div><div><span>Pago recibido</span><b style="color:var(--ok)" id="okPago">+ S/ 0.00</b></div><div><span>Deuda actual</span><b id="okDeuda">S/ 0.00</b></div></div>
+          <button class="btn pri" style="width:100%" id="sig">Siguiente cliente</button>
+          <button class="btn" id="otra">Volver a la lista</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Celular -->
+<div>
+<p class="rotulo">Versión celular (lista)</p>
+<div class="win mo">
+  <div class="cab"><h2>Fiados</h2><span class="sp"></span><button class="x" aria-label="Cerrar"><svg class="ic"><use href="#x"/></svg></button></div>
+  <div class="lis">
+    <div class="res"><small>Total por cobrar</small><b>S/ 671.90</b><div class="sub"><span>5 clientes</span><span class="v">S/ 146.50 vencido</span></div></div>
+    <div class="fil">
+      <label class="busca"><svg class="ic"><use href="#search"/></svg><input placeholder="Buscar por nombre o DNI"></label>
+      <div class="scr"><div class="seg"><button class="on">Todos <em>5</em></button><button>Vencidos <em>2</em></button><button>Cerca del límite <em>1</em></button></div></div>
+    </div>
+    <div class="ord"><span>5 resultados</span><button>Orden: mayor deuda</button></div>
+    <div class="cl">
+      <button class="f"><span class="av">MT</span><span><b>María Torres</b><small class="v">Vencida hace 6 d · 3 boletas</small></span><span class="m"><b>S/ 185.40</b><span class="barra"><i style="width:62%"></i></span></span></button>
+      <button class="f"><span class="av">JR</span><span><b>José Ramírez</b><small class="v">Vencida hace 3 d · 4 boletas</small></span><span class="m"><b>S/ 276.00</b><span class="barra"><i class="r" style="width:92%"></i></span></span></button>
+      <button class="f"><span class="av">LP</span><span><b>Luis Paredes</b><small>Debe desde hace 9 d · 2 boletas</small></span><span class="m"><b>S/ 120.00</b><span class="barra"><i style="width:40%"></i></span></span></button>
+      <button class="f"><span class="av">AC</span><span><b>Ana Cárdenas</b><small>Debe desde hace 4 d · 1 boleta</small></span><span class="m"><b>S/ 52.50</b><span class="barra"><i style="width:18%"></i></span></span></button>
+      <button class="f"><span class="av">CD</span><span><b>Carmen Díaz</b><small>Debe desde hace 2 d · 1 boleta</small></span><span class="m"><b>S/ 38.00</b><span class="barra"><i style="width:13%"></i></span></span></button>
+    </div>
+  </div>
+</div>
+<p class="rotulo" style="margin-top:6px">En el celular, tocar un cliente abre la misma ficha de la derecha a pantalla completa, con "← Clientes" arriba.</p>
+</div>
+
+<script>
+const B=[{n:'B001-00000018',f:'12 oct',d:'Aceite Primor 1L x2, Arroz Costeño 5kg x3',m:96.5,v:3},{n:'B001-00000024',f:'17 oct',d:'Leche Gloria x6, Galleta Soda x10',m:80,v:0},{n:'B001-00000029',f:'20 oct',d:'Coca Cola 500ml x8, Agua Cristalina x6',m:59.5,v:0},{n:'B001-00000033',f:'23 oct',d:'Yogurt Gloria 1L x4, Pan x6',m:40,v:0}];
+const saldo=276;
+const abono=document.getElementById('abono');
+function pinta(){
+  const a=parseFloat(abono.value)||0, ex=a>saldo+0.004, rest=Math.max(0,+(saldo-a).toFixed(2));
+  const sal=document.getElementById('sal');
+  sal.className='sal'+(ex?' ex':(a>0&&rest===0?' ok':''));
+  document.getElementById('salT').textContent=ex?'El monto excede la deuda':'Saldo después del pago';
+  document.getElementById('salV').textContent='S/ '+(ex?saldo:rest).toFixed(2);
+  let acu=a, cub=0; const ids=[];
+  B.forEach((b,i)=>{ if(!ex&&acu>=b.m-0.004){acu-=b.m;cub++;ids.push(i)} else acu=-1e9 });
+  document.getElementById('cub').textContent=(a>0&&!ex)?(cub===0?'No alcanza para cubrir una boleta completa; queda como pago a cuenta.':'Cubre '+cub+' de '+B.length+' boletas pendientes (las más antiguas primero).'):'';
+  document.getElementById('bols').innerHTML=B.map((b,i)=>`<div class="bo"><span class="ck${ids.includes(i)?' on':''}">${ids.includes(i)?'✓':''}</span><div><b>${b.n}</b>${b.v?`<span class="ven">Vencida hace ${b.v} d</span>`:''}<small>${b.f} · ${b.d}</small></div><span class="im">S/ ${b.m.toFixed(2)}</span></div>`).join('');
+  const reg=document.getElementById('reg'); reg.disabled=!(a>0)||ex;
+  document.getElementById('regT').textContent=(a>0&&!ex)?'Registrar pago de S/ '+a.toFixed(2):'Registrar pago';
+  document.querySelectorAll('#rap button').forEach(b=>b.classList.toggle('on',Math.abs(parseFloat(b.dataset.v)-a)<0.005&&a>0));
+}
+abono.addEventListener('input',pinta);
+document.querySelectorAll('#rap button').forEach(b=>b.addEventListener('click',()=>{abono.value=parseFloat(b.dataset.v).toFixed(2);pinta()}));
+document.getElementById('reg').addEventListener('click',()=>{const a=parseFloat(abono.value)||0;const rest=Math.max(0,saldo-a);document.getElementById('okPago').textContent='+ S/ '+a.toFixed(2);document.getElementById('okDeuda').textContent='S/ '+rest.toFixed(2);document.getElementById('okTxt').textContent=rest<=0.004?'José Ramírez quedó sin deuda.':'José Ramírez sigue debiendo S/ '+rest.toFixed(2)+'.';vDet.classList.remove('on');vOk.classList.add('on')});
+['otra','sig'].forEach(id=>document.getElementById(id).addEventListener('click',()=>{abono.value='';pinta();vOk.classList.remove('on');vDet.classList.add('on')}));
+document.querySelectorAll('.seg').forEach(g=>g.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{g.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on')})));
+document.querySelectorAll('#lista .f').forEach(f=>f.addEventListener('click',()=>{document.querySelectorAll('#lista .f').forEach(x=>x.classList.remove('sel'));f.classList.add('sel')}));
+pinta();
+</script>
+</body>
+</html>
