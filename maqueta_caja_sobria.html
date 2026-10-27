@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Caja (sobria)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ac:#6105dc;--ac-d:#4d04b0;--ac-l:#f3effd;--ink:#16141f;--tx:#3d3a4d;--mut:#6f6b82;--line:#e7e4ef;--bg:#f6f5f9;--ok:#0f7b4a;--bad:#c0262d;--warn:#a15c07}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:#d9d7e0;-webkit-font-smoothing:antialiased;font-feature-settings:'tnum' 1,'cv11' 1;padding:22px 16px 40px;display:flex;flex-direction:column;align-items:center;gap:22px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+p,h1,h2,h3{margin:0}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.nota{text-align:center;color:#2b2838;font-size:13px}
+.nota b{display:block;font-size:17px;margin-bottom:3px}
+.rotulo{font-size:12px;font-weight:600;color:#2b2838;margin:0 0 8px 4px}
+.win{background:#fff;border-radius:14px;box-shadow:0 24px 60px -20px rgba(20,10,50,.45),0 0 0 1px rgba(0,0,0,.06);overflow:hidden}
+.pc{width:100%;max-width:1180px;height:720px;display:grid;grid-template-columns:1fr 380px}
+.mo{width:390px;height:780px;display:flex;flex-direction:column;position:relative}
+
+/* ---- zona de productos ---- */
+.izq{display:flex;flex-direction:column;min-width:0;min-height:0;border-right:1px solid var(--line);background:#fff}
+.top{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--line)}
+.logo{width:30px;height:30px;border-radius:8px;background:var(--ac);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:15px}
+.top h1{font-size:14.5px;font-weight:700;letter-spacing:-.1px}
+.top small{display:block;font-size:12px;color:var(--mut);margin-top:1px}
+.sp{flex:1}
+.turno{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border:1px solid var(--line);border-radius:8px;font-size:12.5px;font-weight:500;color:var(--tx);background:#fff}
+.turno::before{content:"";width:7px;height:7px;border-radius:50%;background:#16a34a}
+.ib{width:34px;height:34px;border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--tx);font-size:16px;background:#fff}
+.ib:hover,.turno:hover{background:var(--bg)}
+.bus{display:flex;gap:10px;padding:12px 20px 0}
+.busca{flex:1;display:flex;align-items:center;gap:9px;height:38px;border:1px solid var(--line);border-radius:9px;padding:0 12px;color:var(--mut)}
+.busca:focus-within{border-color:var(--ac)}
+.busca input{flex:1;border:0;outline:0;background:none;font-size:14px;color:var(--ink);min-width:0}
+.busca kbd{font:500 11px 'Inter';color:var(--mut);border:1px solid var(--line);border-radius:5px;padding:2px 6px;background:var(--bg)}
+.btn{height:38px;padding:0 13px;border:1px solid var(--line);border-radius:9px;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:7px;background:#fff;color:var(--tx);white-space:nowrap}
+.btn:hover{background:var(--bg)}
+.cats{display:flex;gap:2px;padding:10px 20px 0;border-bottom:1px solid var(--line);overflow-x:auto}
+.cats::-webkit-scrollbar{display:none}
+.cats button{padding:8px 12px;font-size:13px;font-weight:500;color:var(--mut);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.cats button.on{color:var(--ac);border-color:var(--ac);font-weight:600}
+.cats button:hover{color:var(--ink)}
+.grid{flex:1;min-height:0;overflow-y:auto;padding:16px 20px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;align-content:start}
+.p{border:1px solid var(--line);border-radius:10px;padding:10px;text-align:left;background:#fff;display:flex;flex-direction:column;gap:8px;transition:border-color .12s}
+.p:hover{border-color:#c9bfe6}
+.p:active{background:var(--ac-l)}
+.ph{height:88px;border-radius:7px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:#b3afc4;font-size:11px;font-weight:600;letter-spacing:.04em}
+.p b{font-size:13px;font-weight:600;line-height:1.25;display:block;min-height:33px}
+.p .pie{display:flex;justify-content:space-between;align-items:baseline}
+.p .pr{font-size:14.5px;font-weight:700;letter-spacing:-.2px}
+.p small{font-size:11.5px;color:var(--mut)}
+.p small.bajo{color:var(--warn);font-weight:600}
+.p.ago{opacity:.5}
+
+/* ---- carrito / cobro ---- */
+.der{display:flex;flex-direction:column;min-height:0;background:#fff}
+.dh{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.dh h2{font-size:14.5px;font-weight:700}
+.dh span{font-size:12.5px;color:var(--mut)}
+.link{font-size:12.5px;font-weight:500;color:var(--mut);padding:5px 8px;border-radius:7px}
+.link:hover{background:var(--bg);color:var(--ink)}
+.link.pel:hover{color:var(--bad)}
+.lista{flex:1;overflow-y:auto;min-height:0}
+.it{display:grid;grid-template-columns:40px 1fr auto 62px;gap:10px;align-items:center;padding:11px 18px;border-bottom:1px solid #f0eef5}
+.it .t{width:40px;height:40px;border-radius:8px;background:var(--bg)}
+.it b{display:block;font-size:13px;font-weight:600;line-height:1.25}
+.it small{font-size:12px;color:var(--mut)}
+.q{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;height:30px}
+.q button{width:28px;height:28px;color:var(--tx);font-size:14px;display:flex;align-items:center;justify-content:center}
+.q button:hover{background:var(--bg)}
+.q span{min-width:20px;text-align:center;font-size:13px;font-weight:600}
+.it .s{text-align:right;font-size:13.5px;font-weight:600}
+.tot{border-top:1px solid var(--line);padding:14px 18px 16px;display:flex;flex-direction:column;gap:7px;background:#fff}
+.tot .f{display:flex;justify-content:space-between;font-size:13px;color:var(--mut)}
+.tot .f.d{color:var(--bad)}
+.tot .g{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--ink);padding-top:10px;margin-top:3px}
+.tot .g span{font-size:13px;font-weight:600}
+.tot .g b{font-size:30px;font-weight:700;letter-spacing:-1px}
+.tot .g b small{font-size:14px;font-weight:600;color:var(--mut);margin-right:4px;letter-spacing:0}
+.cob{height:48px;border-radius:10px;background:var(--ac);color:#fff;font-weight:600;font-size:15px;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:6px;width:100%}
+.cob:hover{background:var(--ac-d)}
+.cob.off{background:#ebe8f1;color:#8b869a;cursor:not-allowed}
+.vista{display:none;flex-direction:column;min-height:0;flex:1}
+.vista.on{display:flex}
+
+.cuerpo2{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:16px}
+.cuerpo2 h4{margin:0 0 8px;font-size:12.5px;font-weight:600;color:var(--mut)}
+.medios{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.medios button{height:42px;border:1px solid var(--line);border-radius:9px;font-size:13px;font-weight:500;color:var(--tx);display:flex;align-items:center;justify-content:center;gap:7px;background:#fff}
+.medios button:hover{background:var(--bg)}
+.medios button.on{border-color:var(--ac);background:var(--ac-l);color:var(--ac-d);font-weight:600;box-shadow:0 0 0 1px var(--ac)}
+.campo{display:flex;align-items:center;gap:8px;height:52px;border:1px solid var(--line);border-radius:10px;padding:0 14px}
+.campo:focus-within{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
+.campo em{font-style:normal;color:var(--mut);font-weight:600}
+.campo input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:26px;font-weight:700;letter-spacing:-.6px}
+.rap{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.rap button{height:30px;padding:0 12px;border:1px solid var(--line);border-radius:8px;font-size:12.5px;font-weight:500;color:var(--tx);background:#fff}
+.rap button:hover{background:var(--bg)}
+.vuelto{display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px;background:var(--bg);border-radius:10px;font-size:13px;color:var(--mut)}
+.vuelto b{font-size:20px;color:var(--ok);letter-spacing:-.4px}
+.cli{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:11px 14px;font-size:13px}
+.cli span:first-child{color:var(--mut)}
+
+/* ---- celular ---- */
+.mo .top{padding:11px 14px}
+.mo .bus{padding:10px 14px 0}
+.mo .cats{padding:8px 14px 0}
+.mo .grid{grid-template-columns:1fr 1fr;padding:12px 14px 90px;gap:10px;flex:1}
+.mo .ph{height:70px}
+.barra{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 14px 14px;display:flex;gap:10px;align-items:center}
+.barra .res{flex:1}
+.barra .res small{display:block;font-size:12px;color:var(--mut)}
+.barra .res b{font-size:20px;letter-spacing:-.5px}
+.barra .cob{width:auto;margin:0;padding:0 22px;height:46px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.500-3.500"/></symbol>
+  <symbol id="menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="scan" viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"/></symbol>
+  <symbol id="till" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M7 7V5h10v2M7 12h2M12 12h5"/></symbol>
+  <symbol id="back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="cash" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.500"/></symbol>
+  <symbol id="mov" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+  <symbol id="card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></symbol>
+  <symbol id="cred" viewBox="0 0 24 24"><path d="M7 3h10v18l-3-2-2 2-2-2-3 2Z"/><path d="M10 8h4M10 12h4"/></symbol>
+  <symbol id="mix" viewBox="0 0 24 24"><rect x="3" y="4" width="13" height="10" rx="2"/><rect x="8" y="10" width="13" height="10" rx="2"/></symbol>
+</svg>
+
+<div class="nota"><b>Caja · propuesta sobria</b>Misma pantalla y mismas funciones, con el estilo del historial de ventas. Toca <i>Cobrar</i> para ver el cobro.</div>
+
+<!-- PC -->
+<div style="width:100%;max-width:1180px">
+<p class="rotulo">Versión PC</p>
+<div class="win pc">
+  <div class="izq">
+    <div class="top">
+      <span class="logo">K</span>
+      <div><h1>Bodega Demo</h1><small>Dueño Demo</small></div>
+      <span class="sp"></span>
+      <button class="turno">Turno abierto</button>
+      <button class="ib" aria-label="Más opciones"><svg class="ic"><use href="#menu"/></svg></button>
+    </div>
+    <div class="bus">
+      <label class="busca"><svg class="ic"><use href="#search"/></svg><input placeholder="Buscar producto o escanear código de barras"><kbd>F2</kbd></label>
+      <button class="btn"><svg class="ic"><use href="#scan"/></svg>Escanear</button>
+    </div>
+    <div class="cats" id="cats">
+      <button class="on">Todos</button><button>Bebidas</button><button>Abarrotes</button><button>Lácteos</button><button>Limpieza</button><button>Snacks</button><button>Combos</button>
+    </div>
+    <div class="grid">
+      <button class="p"><div class="ph">FOTO</div><b>Agua Cristalina Sin Gas 500ml</b><div class="pie"><span class="pr">S/ 1.50</span><small>48 und.</small></div></button>
+      <button class="p"><div class="ph">FOTO</div><b>Aceite Primor 1L</b><div class="pie"><span class="pr">S/ 11.50</span><small>12 und.</small></div></button>
+      <button class="p"><div class="ph">FOTO</div><b>Leche Gloria Evaporada 400g</b><div class="pie"><span class="pr">S/ 3.80</span><small class="bajo">Quedan 4</small></div></button>
+      <button class="p"><div class="ph">FOTO</div><b>Galleta Soda Field</b><div class="pie"><span class="pr">S/ 1.20</span><small>60 und.</small></div></button>
+      <button class="p"><div class="ph">FOTO</div><b>Arroz Costeño 5kg</b><div class="pie"><span class="pr">S/ 24.90</span><small>9 und.</small></div></button>
+      <button class="p"><div class="ph">FOTO</div><b>Coca Cola 500ml</b><div class="pie"><span class="pr">S/ 3.50</span><small>30 und.</small></div></button>
+      <button class="p"><div class="ph">FOTO</div><b>Yogurt Gloria Fresa 1L</b><div class="pie"><span class="pr">S/ 7.90</span><small class="bajo">Quedan 3</small></div></button>
+      <button class="p ago"><div class="ph">FOTO</div><b>Queso Fresco Paria 500g</b><div class="pie"><span class="pr">S/ 14.00</span><small>Agotado</small></div></button>
+    </div>
+  </div>
+
+  <div class="der">
+    <!-- Vista carrito -->
+    <div class="vista on" id="vCarrito">
+      <div class="dh"><h2>Venta actual</h2><span>4 ítems</span><span class="sp"></span><button class="link">En espera (1)</button><button class="link">Pausar</button><button class="link pel">Vaciar</button></div>
+      <div class="lista">
+        <div class="it"><span class="t"></span><div><b>Aceite Primor 1L</b><small>S/ 11.50 / UND</small></div><div class="q"><button>−</button><span>1</span><button>+</button></div><span class="s">S/ 11.50</span></div>
+        <div class="it"><span class="t"></span><div><b>Agua Cristalina Sin Gas 500ml</b><small>S/ 1.50 / UND</small></div><div class="q"><button>−</button><span>2</span><button>+</button></div><span class="s">S/ 3.00</span></div>
+        <div class="it"><span class="t"></span><div><b>Leche Gloria Evaporada 400g</b><small>S/ 3.80 / UND</small></div><div class="q"><button>−</button><span>1</span><button>+</button></div><span class="s">S/ 3.80</span></div>
+      </div>
+      <div class="tot">
+        <div class="f"><span>Subtotal</span><span>S/ 18.30</span></div>
+        <div class="f d"><span>Descuento</span><span>- S/ 1.80</span></div>
+        <div class="g"><span>Total</span><b><small>S/</small>16.50</b></div>
+        <button class="cob" id="irCobro"><svg class="ic"><use href="#till"/></svg>Cobrar</button>
+      </div>
+    </div>
+
+    <!-- Vista cobro -->
+    <div class="vista" id="vCobro">
+      <div class="dh"><button class="link" id="volver" style="display:flex;align-items:center;gap:5px;padding-left:2px"><svg class="ic"><use href="#back"/></svg>Volver</button><span class="sp"></span><span>Total a cobrar</span><b style="font-size:16px">S/ 16.50</b></div>
+      <div class="cuerpo2">
+        <div><h4>Medio de pago</h4>
+          <div class="medios" id="medios">
+            <button class="on"><svg class="ic"><use href="#cash"/></svg>Efectivo</button><button><svg class="ic"><use href="#mov"/></svg>Yape</button><button><svg class="ic"><use href="#mov"/></svg>Plin</button>
+            <button><svg class="ic"><use href="#card"/></svg>Tarjeta</button><button><svg class="ic"><use href="#cred"/></svg>Crédito</button><button><svg class="ic"><use href="#mix"/></svg>Mixto</button>
+          </div></div>
+        <div><h4>Paga con</h4>
+          <label class="campo"><em>S/</em><input id="paga" value="20.00" inputmode="decimal"></label>
+          <div class="rap"><button data-v="16.50">Exacto</button><button data-v="20">S/ 20</button><button data-v="50">S/ 50</button><button data-v="100">S/ 100</button></div></div>
+        <div class="vuelto"><span>Vuelto</span><b id="vuelto">S/ 3.50</b></div>
+        <div class="cli"><span>Cliente</span><span>Sin registrar · <span style="color:var(--ac);font-weight:600">Cambiar</span></span></div>
+      </div>
+      <div class="tot"><button class="cob"><svg class="ic"><use href="#till"/></svg>Cobrar S/ 16.50 e imprimir boleta</button></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Celular -->
+<div>
+<p class="rotulo">Versión celular</p>
+<div class="win mo">
+  <div class="top"><span class="logo">K</span><div><h1>Bodega Demo</h1><small>Dueño Demo</small></div><span class="sp"></span><button class="ib" aria-label="Más opciones"><svg class="ic"><use href="#menu"/></svg></button></div>
+  <div class="bus"><label class="busca"><svg class="ic"><use href="#search"/></svg><input placeholder="Buscar o escanear"></label><button class="ib" style="height:38px;width:42px" aria-label="Escanear"><svg class="ic"><use href="#scan"/></svg></button></div>
+  <div class="cats"><button class="on">Todos</button><button>Bebidas</button><button>Abarrotes</button><button>Lácteos</button><button>Limpieza</button></div>
+  <div class="grid">
+    <button class="p"><div class="ph">FOTO</div><b>Agua Cristalina Sin Gas 500ml</b><div class="pie"><span class="pr">S/ 1.50</span><small>48</small></div></button>
+    <button class="p"><div class="ph">FOTO</div><b>Aceite Primor 1L</b><div class="pie"><span class="pr">S/ 11.50</span><small>12</small></div></button>
+    <button class="p"><div class="ph">FOTO</div><b>Leche Gloria Evaporada 400g</b><div class="pie"><span class="pr">S/ 3.80</span><small class="bajo">Quedan 4</small></div></button>
+    <button class="p"><div class="ph">FOTO</div><b>Galleta Soda Field</b><div class="pie"><span class="pr">S/ 1.20</span><small>60</small></div></button>
+    <button class="p"><div class="ph">FOTO</div><b>Arroz Costeño 5kg</b><div class="pie"><span class="pr">S/ 24.90</span><small>9</small></div></button>
+    <button class="p"><div class="ph">FOTO</div><b>Coca Cola 500ml</b><div class="pie"><span class="pr">S/ 3.50</span><small>30</small></div></button>
+  </div>
+  <div class="barra"><div class="res"><small>4 ítems</small><b>S/ 16.50</b></div><button class="cob">Ver y cobrar</button></div>
+</div>
+</div>
+
+<script>
+document.querySelectorAll('#cats button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#cats button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}));
+document.querySelectorAll('.cats button').forEach(b=>b.addEventListener('click',()=>{b.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}));
+document.getElementById('irCobro').addEventListener('click',()=>{vCarrito.classList.remove('on');vCobro.classList.add('on')});
+document.getElementById('volver').addEventListener('click',()=>{vCobro.classList.remove('on');vCarrito.classList.add('on')});
+document.querySelectorAll('#medios button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#medios button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}));
+const total=16.5;
+function vuelto(){const v=parseFloat(document.getElementById('paga').value)||0;const d=v-total;document.getElementById('vuelto').textContent=d>=0?'S/ '+d.toFixed(2):'Falta S/ '+(-d).toFixed(2);document.getElementById('vuelto').style.color=d>=0?'var(--ok)':'var(--bad)'}
+document.getElementById('paga').addEventListener('input',vuelto);
+document.querySelectorAll('.rap button').forEach(b=>b.addEventListener('click',()=>{document.getElementById('paga').value=parseFloat(b.dataset.v).toFixed(2);vuelto()}));
+</script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Historial de cierres de caja</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ac:#6105dc;--ac-d:#4d04b0;--ac-l:#f3effd;--ink:#16141f;--tx:#3d3a4d;--mut:#6f6b82;--line:#e7e4ef;--bg:#f6f5f9;--ok:#0f7b4a;--bad:#c0262d;--warn:#a15c07}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:#d9d7e0;-webkit-font-smoothing:antialiased;font-feature-settings:'tnum' 1,'cv11' 1;padding:22px 16px 40px;display:flex;flex-direction:column;align-items:center;gap:22px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+p,h1,h2,h3{margin:0}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.nota{text-align:center;color:#2b2838;font-size:13px}
+.nota b{display:block;font-size:17px;margin-bottom:3px}
+.rotulo{font-size:12px;font-weight:600;color:#2b2838;margin:0 0 8px 4px}
+.win{background:#fff;border-radius:14px;box-shadow:0 24px 60px -20px rgba(20,10,50,.45),0 0 0 1px rgba(0,0,0,.06);display:flex;flex-direction:column;overflow:hidden}
+.pc{width:100%;max-width:1120px;height:700px}
+.mo{width:390px;height:780px}
+.cab{display:flex;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.cab h2{font-size:17px;font-weight:700;letter-spacing:-.2px;white-space:nowrap}
+.tabs{display:flex;gap:4px;margin-left:8px}
+.tabs button{height:32px;padding:0 12px;border-radius:8px;font-size:13px;font-weight:500;color:var(--mut);white-space:nowrap}
+.tabs button.on{background:var(--bg);color:var(--ink);font-weight:600}
+.sp{flex:1}
+.x{width:32px;height:32px;border-radius:8px;color:var(--mut);display:flex;align-items:center;justify-content:center;font-size:16px}
+.x:hover{background:var(--bg)}
+.barra{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.seg{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px}
+.seg button{height:28px;padding:0 12px;border-radius:7px;font-size:12.5px;font-weight:500;color:var(--mut);white-space:nowrap}
+.seg button.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 0 0 1px var(--line)}
+.rango{font-size:12.5px;color:var(--mut)}
+.chk{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--tx);cursor:pointer;user-select:none}
+.chk i{width:34px;height:20px;border-radius:999px;background:#cfccdb;position:relative;transition:.15s;flex-shrink:0}
+.chk i::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.chk.on i{background:var(--ac)}
+.chk.on i::after{left:16px}
+.btn{height:34px;padding:0 12px;border:1px solid var(--line);border-radius:9px;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:7px;background:#fff;color:var(--tx);white-space:nowrap}
+.btn:hover{background:var(--bg)}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+.k{padding:14px 20px}
+.k+.k{border-left:1px solid var(--line)}
+.k small{display:block;font-size:12px;color:var(--mut);font-weight:500}
+.k b{display:block;font-size:22px;font-weight:700;letter-spacing:-.5px;margin-top:3px}
+.k b.m{color:var(--bad)}
+.k b.s{color:var(--ok)}
+.k em{font-style:normal;font-size:12px;color:var(--mut);font-weight:500;margin-left:6px;letter-spacing:0}
+
+.cuerpo{flex:1;min-height:0;display:grid;grid-template-columns:1fr 340px}
+.tabla{overflow-y:auto;min-height:0;border-right:1px solid var(--line)}
+table{width:100%;border-collapse:collapse}
+thead th{position:sticky;top:0;background:#fff;text-align:left;font-size:11.5px;font-weight:600;color:var(--mut);padding:9px 16px;border-bottom:1px solid var(--line);z-index:2;white-space:nowrap}
+th.n,td.n{text-align:right}
+td{padding:11px 16px;font-size:13.5px;border-bottom:1px solid #f0eef5;color:var(--tx);white-space:nowrap}
+tr.dia td{background:var(--bg);font-size:12px;font-weight:600;color:var(--mut);padding:7px 16px;border-bottom:1px solid var(--line)}
+tr.dia td:last-child{text-align:right}
+tbody tr:not(.dia){cursor:pointer}
+tbody tr:not(.dia):hover td{background:#fbfafd}
+tr.sel td{background:var(--ac-l)!important}
+tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--ac)}
+td.n{font-weight:500;color:var(--ink)}
+.dif{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px}
+.dif::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.dif.fa{color:var(--bad)}.dif.fa::before{background:var(--bad)}
+.dif.so{color:var(--warn)}.dif.so::before{background:#d98a14}
+.dif.ok{color:var(--ok)}
+.mut{color:var(--mut)}
+
+/* detalle */
+.det{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;min-height:0}
+.det h3{font-size:13px;font-weight:600;color:var(--mut)}
+.det .tt{font-size:26px;font-weight:700;letter-spacing:-.7px;line-height:1.1;margin-top:4px}
+.det .sub{font-size:13px;margin-top:5px}
+.fil{display:flex;justify-content:space-between;gap:12px;padding:9px 0;font-size:13.5px;border-bottom:1px solid #f0eef5}
+.fil span:first-child{color:var(--mut)}
+.fil span:last-child{font-weight:500;color:var(--ink)}
+.fil.t{border-bottom:0;border-top:1px solid var(--ink);margin-top:2px;padding-top:11px;font-weight:600}
+.fil.t span:first-child{color:var(--ink)}
+.fil.t span:last-child{font-size:17px;font-weight:700;letter-spacing:-.3px}
+.nota2{font-size:12.5px;color:var(--mut);background:var(--bg);border-radius:9px;padding:10px 12px;line-height:1.4}
+.acc{display:flex;gap:8px;margin-top:auto}
+.acc .btn{flex:1;justify-content:center;height:38px}
+
+/* celular */
+.mo .cab{padding:14px 16px}
+.mo .barra{padding:10px 16px;gap:8px}
+.mo .scr{overflow-x:auto;max-width:100%}
+.mo .scr::-webkit-scrollbar{display:none}
+.mo .kpis{grid-template-columns:1fr 1fr}
+.mo .k{padding:11px 16px}
+.mo .k:nth-child(odd){border-left:0}
+.mo .k:nth-child(n+3){border-top:1px solid var(--line)}
+.mo .k b{font-size:17px;letter-spacing:-.3px}
+.lst{flex:1;overflow-y:auto;min-height:0}
+.dm{padding:6px 16px;background:var(--bg);font-size:11.5px;font-weight:600;color:var(--mut);display:flex;justify-content:space-between;border-bottom:1px solid var(--line);position:sticky;top:0}
+.fm{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid #f0eef5}
+.fm .a{font-size:13.5px;font-weight:600}
+.fm .b{font-size:12px;color:var(--mut);margin-top:2px}
+.fm .c{text-align:right}
+.fm .c small{display:block;font-size:11.5px;color:var(--mut);margin-top:3px;font-weight:400}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="dl" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="print" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3"/><rect x="7" y="14" width="10" height="7" rx="1"/></symbol>
+</svg>
+
+<div class="nota"><b>Historial de cierres de caja · propuesta sobria</b>Para ver rápido qué turnos cuadraron y cuáles no. Toca una fila o el interruptor "Solo con diferencia".</div>
+
+<!-- PC -->
+<div style="width:100%;max-width:1120px">
+<p class="rotulo">Versión PC</p>
+<div class="win pc">
+  <div class="cab">
+    <h2>Historial de ventas</h2>
+    <div class="tabs"><button>Ventas</button><button class="on">Cierres de caja</button></div>
+    <span class="sp"></span>
+    <button class="x" aria-label="Cerrar"><svg class="ic"><use href="#x"/></svg></button>
+  </div>
+  <div class="barra">
+    <div class="seg" id="seg1"><button>Hoy</button><button>7 días</button><button class="on">30 días</button><button>Fechas</button></div>
+    <span class="rango">27 sep – 26 oct 2026</span>
+    <span class="sp"></span>
+    <label class="chk" id="soloDif"><i></i>Solo con diferencia</label>
+    <button class="btn"><svg class="ic"><use href="#dl"/></svg>Excel</button>
+  </div>
+  <div class="kpis">
+    <div class="k"><small>Turnos cerrados</small><b>24</b></div>
+    <div class="k"><small>Cuadraron</small><b class="s">20<em>83%</em></b></div>
+    <div class="k"><small>Con diferencia</small><b>4</b></div>
+    <div class="k"><small>Diferencia acumulada</small><b class="m">- S/ 5.70</b></div>
+  </div>
+  <div class="cuerpo">
+    <div class="tabla">
+      <table>
+        <thead><tr><th>Cajero</th><th>Apertura</th><th>Cierre</th><th class="n">Fondo</th><th class="n">Ventas efectivo</th><th class="n">Contado</th><th class="n">Diferencia</th></tr></thead>
+        <tbody>
+          <tr class="dia"><td colspan="5">Ayer, 25 de octubre</td><td colspan="2">2 turnos</td></tr>
+          <tr class="sel" data-r data-dif="0"><td>Dueño Demo</td><td class="mut">8:02 a. m.</td><td class="mut">10:15 p. m.</td><td class="n">S/ 100.00</td><td class="n">S/ 345.50</td><td class="n">S/ 445.50</td><td class="n"><span class="dif ok">Cuadra</span></td></tr>
+          <tr data-r data-dif="1"><td>Rosa Quispe</td><td class="mut">2:00 p. m.</td><td class="mut">9:40 p. m.</td><td class="n">S/ 50.00</td><td class="n">S/ 212.30</td><td class="n">S/ 260.30</td><td class="n"><span class="dif fa">- S/ 2.00</span></td></tr>
+          <tr class="dia"><td colspan="5">24 de octubre</td><td colspan="2">2 turnos</td></tr>
+          <tr data-r data-dif="1"><td>Dueño Demo</td><td class="mut">8:10 a. m.</td><td class="mut">10:05 p. m.</td><td class="n">S/ 100.00</td><td class="n">S/ 188.40</td><td class="n">S/ 288.90</td><td class="n"><span class="dif so">+ S/ 0.50</span></td></tr>
+          <tr data-r data-dif="0"><td>Rosa Quispe</td><td class="mut">1:55 p. m.</td><td class="mut">9:30 p. m.</td><td class="n">S/ 50.00</td><td class="n">S/ 164.00</td><td class="n">S/ 214.00</td><td class="n"><span class="dif ok">Cuadra</span></td></tr>
+          <tr class="dia"><td colspan="5">23 de octubre</td><td colspan="2">2 turnos</td></tr>
+          <tr data-r data-dif="1"><td>Dueño Demo</td><td class="mut">8:00 a. m.</td><td class="mut">10:20 p. m.</td><td class="n">S/ 100.00</td><td class="n">S/ 402.10</td><td class="n">S/ 500.60</td><td class="n"><span class="dif fa">- S/ 1.50</span></td></tr>
+          <tr data-r data-dif="0"><td>Rosa Quispe</td><td class="mut">2:05 p. m.</td><td class="mut">9:45 p. m.</td><td class="n">S/ 50.00</td><td class="n">S/ 98.70</td><td class="n">S/ 148.70</td><td class="n"><span class="dif ok">Cuadra</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="det">
+      <div><h3>Dueño Demo · Ayer, 25 oct</h3><p class="tt">Cuadra</p><p class="sub" style="color:var(--ok)">Lo contado es igual a lo esperado.</p></div>
+      <div>
+        <div class="fil"><span>Apertura</span><span>8:02 a. m.</span></div>
+        <div class="fil"><span>Cierre</span><span>10:15 p. m.</span></div>
+        <div class="fil"><span>Fondo inicial</span><span>S/ 100.00</span></div>
+        <div class="fil"><span>Ventas en efectivo</span><span>+ S/ 345.50</span></div>
+        <div class="fil"><span>Esperado en caja</span><span>S/ 445.50</span></div>
+        <div class="fil t"><span>Contado</span><span>S/ 445.50</span></div>
+      </div>
+      <p class="nota2">Las ventas con Yape, Plin o tarjeta no cuentan en el efectivo de la caja. Se ven en el historial de ventas.</p>
+      <div class="acc"><button class="btn"><svg class="ic"><use href="#print"/></svg>Imprimir cierre</button></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Celular -->
+<div>
+<p class="rotulo">Versión celular</p>
+<div class="win mo">
+  <div class="cab"><h2>Historial de ventas</h2><span class="sp"></span><button class="x" aria-label="Cerrar"><svg class="ic"><use href="#x"/></svg></button></div>
+  <div class="barra" style="border-bottom:0;padding-bottom:4px"><div class="tabs" style="margin:0"><button>Ventas</button><button class="on">Cierres de caja</button></div></div>
+  <div class="barra" style="padding-top:6px"><div class="scr" style="width:100%"><div class="seg"><button>Hoy</button><button>7 días</button><button class="on">30 días</button><button>Fechas</button></div></div>
+    <label class="chk" style="width:100%"><i></i>Solo con diferencia</label></div>
+  <div class="kpis">
+    <div class="k"><small>Turnos cerrados</small><b>24</b></div>
+    <div class="k"><small>Cuadraron</small><b class="s">20 <em>83%</em></b></div>
+    <div class="k"><small>Con diferencia</small><b>4</b></div>
+    <div class="k"><small>Diferencia acumulada</small><b class="m">- S/ 5.70</b></div>
+  </div>
+  <div class="lst">
+    <div class="dm"><span>Ayer, 25 de octubre</span><span>2 turnos</span></div>
+    <div class="fm"><div><p class="a">Dueño Demo</p><p class="b">8:02 a. m. – 10:15 p. m.</p></div><div class="c"><span class="dif ok">Cuadra</span><small>Contado S/ 445.50</small></div></div>
+    <div class="fm"><div><p class="a">Rosa Quispe</p><p class="b">2:00 p. m. – 9:40 p. m.</p></div><div class="c"><span class="dif fa">- S/ 2.00</span><small>Contado S/ 260.30</small></div></div>
+    <div class="dm"><span>24 de octubre</span><span>2 turnos</span></div>
+    <div class="fm"><div><p class="a">Dueño Demo</p><p class="b">8:10 a. m. – 10:05 p. m.</p></div><div class="c"><span class="dif so">+ S/ 0.50</span><small>Contado S/ 288.90</small></div></div>
+    <div class="fm"><div><p class="a">Rosa Quispe</p><p class="b">1:55 p. m. – 9:30 p. m.</p></div><div class="c"><span class="dif ok">Cuadra</span><small>Contado S/ 214.00</small></div></div>
+  </div>
+</div>
+</div>
+
+<script>
+document.querySelectorAll('.seg').forEach(g=>g.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{g.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on')})));
+document.querySelectorAll('[data-r]').forEach(r=>r.addEventListener('click',()=>{document.querySelectorAll('[data-r]').forEach(x=>x.classList.remove('sel'));r.classList.add('sel')}));
+document.querySelectorAll('.chk').forEach(c=>c.addEventListener('click',()=>{
+  c.classList.toggle('on');
+  const solo=c.classList.contains('on');
+  document.querySelectorAll('tr[data-r]').forEach(r=>{r.style.display=(solo&&r.dataset.dif==='0')?'none':''});
+  document.querySelectorAll('tr.dia').forEach(d=>{let n=d.nextElementSibling,vis=false;while(n&&!n.classList.contains('dia')){if(n.style.display!=='none')vis=true;n=n.nextElementSibling}d.style.display=vis?'':'none'});
+}));
+</script>
+</body>
+</html>
