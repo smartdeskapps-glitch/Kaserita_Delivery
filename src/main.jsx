@@ -2208,8 +2208,6 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
                     .join(", ");
                   return (
                     <div className="kmt-hero">
-                      <i className="kmt-c kmt-c1"></i>
-                      <i className="kmt-c kmt-c2"></i>
                       <button
                         type="button"
                         onClick={() => alternarFavorita(t.bodega_id)}
@@ -2227,7 +2225,7 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
                           )}
                         </div>
                         <div className="kmt-tx">
-                          {estado && <div className="mb-1.5">{indicadorAtencion(estado, true)}</div>}
+                          {estado && <div className="mb-1.5">{indicadorAtencion(estado, false)}</div>}
                           <h2>{t.nombre}</h2>
                           {t.direccion && (
                             <p className="kmt-dir">
@@ -2238,20 +2236,43 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
                         </div>
                       </div>
 
-                      <div className="kmt-mods"><ModalidadesEntrega t={t} oscuro /></div>
-
-                      {itemsUlt ? (
-                        <div className="kmt-ultimo">
-                          <span className="kmt-mini"><i className="fa-solid fa-bag-shopping"></i></span>
-                          <div className="kmt-ut">
-                            <small>Tu último pedido · {fechaRelativa(ultimoPedidoPorBodega[t.bodega_id]).toLowerCase()}</small>
-                            <b>{resumen}</b>
+                      <div className="kmt-vidrio">
+                        {typeof t.delivery_domicilio === "boolean" && (() => {
+                          const reparte = t.delivery_domicilio;
+                          const costo = Number(t.costo_envio || 0);
+                          const minimo = Number(t.pedido_minimo || 0);
+                          return (
+                            <div className="kmt-servicios">
+                              <div className="kmt-serv">
+                                <span className="kmt-ic"><i className="fa-solid fa-bag-shopping"></i></span>
+                                <span className="kmt-rot">Retiro</span>
+                                <strong>Gratis</strong>
+                                <small>En la tienda</small>
+                              </div>
+                              <div className={`kmt-serv ${reparte ? "" : "kmt-off"}`}>
+                                <span className="kmt-ic"><i className="fa-solid fa-motorcycle"></i></span>
+                                <span className="kmt-rot">Delivery</span>
+                                <strong>{reparte ? (costo > 0 ? formatoMoneda(costo) : "Gratis") : "No disponible"}</strong>
+                                <small>{reparte ? (minimo > 0 ? `Pedido mín. S/ ${Number.isInteger(minimo) ? minimo : minimo.toFixed(2)}` : "Sin mínimo") : "Solo retiro"}</small>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                        {itemsUlt ? (
+                          <div className="kmt-ultimo">
+                            <div className="kmt-ult-cab">
+                              <span>Último pedido</span>
+                              <time>{fechaRelativa(ultimoPedidoPorBodega[t.bodega_id]).toLowerCase()}</time>
+                            </div>
+                            <div className="kmt-ult-fila">
+                              <p>{resumen}</p>
+                              <span className="kmt-pr">{formatoMoneda(totalUlt)}</span>
+                            </div>
                           </div>
-                          <span className="kmt-pr">{formatoMoneda(totalUlt)}</span>
-                        </div>
-                      ) : (
-                        <p className="kmt-vacio">Todavía no hiciste pedidos en esta tienda.</p>
-                      )}
+                        ) : (
+                          <p className="kmt-vacio">Todavía no hiciste pedidos en esta tienda.</p>
+                        )}
+                      </div>
 
                       <div className={`kmt-acc ${itemsUlt ? "" : "kmt-solo"}`}>
                         {itemsUlt && (
