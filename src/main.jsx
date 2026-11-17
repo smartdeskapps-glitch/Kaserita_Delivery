@@ -3400,6 +3400,26 @@ function App() {
     return !err;
   };
 
+  // Comparte el link de la tienda (https://delivery.smartdeskapps.com/<slug>). En el celular abre el
+  // menú de compartir del sistema (WhatsApp, Instagram, mensajes...); donde no existe, copia el link.
+  const compartirTienda = async () => {
+    const url = `${window.location.origin}/${slug}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: bodega.nombre, text: `Haz tu pedido en ${bodega.nombre} desde Kaserita Delivery.`, url });
+        return;
+      } catch (err) {
+        if (err && err.name === "AbortError") return; // la persona cerró el menú: no es un error
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      mostrarAvisoSeguir("Link copiado. Pégalo en WhatsApp o donde quieras compartirlo.");
+    } catch {
+      mostrarAvisoSeguir(url);
+    }
+  };
+
   const alternarSeguirTienda = async () => {
     if (!clienteSesion) {
       iniciarConGoogle();
@@ -4119,6 +4139,14 @@ function App() {
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={compartirTienda}
+            title="Compartir esta tienda"
+            aria-label="Compartir esta tienda"
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-white ring-1 ring-[#efe6fc] text-[#4d04b0] transition active:scale-95"
+          >
+            <i className="fa-solid fa-share-nodes text-xs"></i>
+          </button>
           <button
             onClick={alternarSeguirTienda}
             title={tiendaSeguida ? "Dejar de seguir esta tienda" : "Seguir esta tienda"}
