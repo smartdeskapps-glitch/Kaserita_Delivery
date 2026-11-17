@@ -36,6 +36,11 @@
     }
   ],
   "rewrites": [
-    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+    {
+      "source": "/:slug([a-z0-9-]+)",
+      "has": [{ "type": "header", "key": "user-agent", "value": ".*(WhatsApp|facebookexternalhit|Facebot|Twitterbot|TelegramBot|Slackbot|LinkedInBot|Discordbot|Pinterest|SkypeUriPreview).*" }],
+      "destination": "/api/tienda?slug=:slug"
+    },
+    { "source": "/((?!assets/|api/).*)", "destination": "/index.html" }
   ]
 }
