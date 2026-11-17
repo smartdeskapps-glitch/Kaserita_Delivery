@@ -468,13 +468,17 @@ function HojaProducto({ producto, cantidadEnCarrito, onAgregar, onCerrar, onVerF
       >
         <div className="kc-hoja-escena" onTouchStart={tocarInicio} onTouchEnd={tocarFin}>
           <div className="kc-hoja-cielo" aria-hidden="true">
-            <i className="kc-mancha kc-mancha-a"></i>
-            <i className="kc-mancha kc-mancha-b"></i>
-            <i className="kc-mancha kc-mancha-c"></i>
-            <svg viewBox="0 0 400 370" preserveAspectRatio="none">
-              <ellipse cx="200" cy="205" rx="168" ry="46" transform="rotate(-14 200 205)" fill="none" stroke="#6105dc" strokeOpacity=".22" strokeWidth="2" />
-              <ellipse cx="200" cy="205" rx="140" ry="34" transform="rotate(-14 200 205)" fill="none" stroke="#6105dc" strokeOpacity=".12" strokeWidth="1.5" />
-            </svg>
+            {fotos.length === 0 && (
+              <>
+                <i className="kc-mancha kc-mancha-a"></i>
+                <i className="kc-mancha kc-mancha-b"></i>
+                <i className="kc-mancha kc-mancha-c"></i>
+                <svg viewBox="0 0 400 370" preserveAspectRatio="none">
+                  <ellipse cx="200" cy="205" rx="168" ry="46" transform="rotate(-14 200 205)" fill="none" stroke="#6105dc" strokeOpacity=".22" strokeWidth="2" />
+                  <ellipse cx="200" cy="205" rx="140" ry="34" transform="rotate(-14 200 205)" fill="none" stroke="#6105dc" strokeOpacity=".12" strokeWidth="1.5" />
+                </svg>
+              </>
+            )}
           </div>
           <button onClick={cerrar} aria-label="Volver" className="kc-hoja-btn kc-hoja-btn-izq">
             <i className="fa-solid fa-arrow-left"></i>
