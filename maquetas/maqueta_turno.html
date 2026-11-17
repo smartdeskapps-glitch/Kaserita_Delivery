@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Turno de caja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --p:#6105dc; --p-dark:#4d04b0; --p-soft:#f4eefe; --p-line:#e4d6fb; --p-ring:rgba(97,5,220,.16);
+  --ink:#1c1830; --mut:#78729a; --line:#ece7f5; --card:#fff;
+  --ok:#059669; --ok-soft:#e8f8f1; --warn:#b45309; --warn-soft:#fff4e0; --bad:#e11d48; --bad-soft:#fff0f3; --blue:#2563eb; --blue-soft:#eaf1ff;
+  --yellow:#ffc81a;
+  --f-head:'Plus Jakarta Sans',system-ui,sans-serif; --f-body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{font-family:var(--f-body);color:var(--ink);background:#e9e4f5;-webkit-font-smoothing:antialiased;min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select{font:inherit;color:inherit}
+em{font-style:normal;color:var(--mut);font-weight:500}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* ---- barra de la maqueta (no es parte del producto) ---- */
+.bar{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;justify-content:space-between;padding:10px 20px;background:#1c1830;color:#fff;font-size:12.5px}
+.bar b{font-family:var(--f-head);font-size:13.5px}
+.bar .grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bar .tog{display:inline-flex;background:rgba(255,255,255,.1);border-radius:999px;padding:3px}
+.bar .tog button{background:none;border:0;color:#d9d2ee;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600}
+.bar .tog button.on{background:#fff;color:#1c1830}
+.bar .reset{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:999px;padding:5px 13px;font-size:12px}
+.bar label{display:flex;align-items:center;gap:6px}
+
+.stage{display:flex;justify-content:center;align-items:flex-start;padding:22px 14px 40px;background:#e9e4f5}
+.frame{container-type:inline-size;container-name:m;position:relative;width:min(760px,100%);min-height:620px}
+.stage.mobile .frame{width:390px;height:790px;border-radius:34px;border:8px solid #1c1830;box-shadow:0 30px 70px -20px rgba(0,0,0,.5);overflow:hidden;background:#7a6ca3}
+.scrim{display:none}
+.stage.mobile .scrim{display:block;position:absolute;inset:0;background:#7a6ca3}
+.modal{position:relative;margin:0 auto;background:linear-gradient(150deg,#f4effc,#f9f8fb 55%,#f5f4f8);border:1px solid #fff;border-radius:28px;box-shadow:0 30px 70px -20px rgba(60,20,120,.4);display:flex;flex-direction:column;overflow:hidden;max-height:min(800px,calc(100vh - 100px))}
+.stage.mobile .modal{max-height:none;height:100%;border-radius:0;border:0;width:100%!important;position:absolute;inset:0}
+.frame.pad{padding:0}
+
+.head{background:#fff;border-bottom:1px solid var(--line);padding:16px 20px;flex-shrink:0;display:flex;align-items:center;gap:14px}
+.head .tile{width:44px;height:44px;border-radius:14px;background:var(--p-soft);color:var(--p);display:grid;place-items:center;font-size:22px;flex-shrink:0}
+.head .tile.dark{background:#1c1830;color:#fff}
+.head h1{margin:0;font-family:var(--f-head);font-size:18px;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+.head p{margin:2px 0 0;font-size:12.5px;color:var(--mut)}
+.grow{min-width:0;flex:1}
+.x{width:34px;height:34px;border:0;background:none;border-radius:50%;color:var(--mut);display:grid;place-items:center;flex-shrink:0}
+.x:hover{background:#f3f0fa;color:var(--ink)}
+.body{flex:1;min-height:0;overflow-y:auto;padding:18px 20px}
+.foot{flex-shrink:0;background:#fff;border-top:1px solid var(--line);padding:12px 20px;display:flex;gap:10px;align-items:center;box-shadow:0 -8px 24px -14px rgba(40,10,90,.18)}
+.sp{flex:1}
+
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px}
+.panel h2{margin:0 0 3px;font-family:var(--f-head);font-size:15px;font-weight:800;letter-spacing:-.01em}
+.panel .sub{margin:0 0 14px;font-size:12.5px;color:var(--mut)}
+label.l{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:600;margin-bottom:8px}
+.field{margin-bottom:18px}
+.field:last-child{margin-bottom:0}
+
+/* cajeros */
+.cajeros{display:grid;gap:8px}
+.cj{display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:9px 12px;text-align:left;width:100%;transition:all .15s}
+.cj:hover{border-color:var(--p-line);background:#fcfaff}
+.cj.on{border-color:var(--p);background:#fcfaff;box-shadow:0 0 0 3px var(--p-ring)}
+.av{width:38px;height:38px;border-radius:50%;background:linear-gradient(160deg,#8a3df2,#4d04b0);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;flex-shrink:0;font-family:var(--f-head)}
+.av.b{background:linear-gradient(160deg,#ffd45c,#f0a500);color:#1c1830}
+.cj .nm{font-size:13.5px;font-weight:700;display:block;line-height:1.25}
+.cj .rl{font-size:11.5px;color:var(--mut)}
+.cj .chk{margin-left:auto;width:22px;height:22px;border-radius:50%;border:2px solid #d8d2e8;display:grid;place-items:center;color:#fff;font-size:12px}
+.cj.on .chk{background:var(--p);border-color:var(--p)}
+.addlink{margin-top:8px;border:0;background:none;color:var(--p-dark);font-size:12.5px;font-weight:700;padding:6px 4px;border-radius:8px;display:inline-flex;align-items:center;gap:6px}
+.addlink:hover{background:var(--p-soft)}
+
+/* monto */
+.amount{display:flex;align-items:baseline;gap:10px;border:2px solid #e6e0f2;border-radius:20px;background:#fbfaff;padding:12px 18px;transition:all .15s}
+.amount:focus-within{border-color:var(--p);background:#fff;box-shadow:0 0 0 5px var(--p-ring)}
+.amount .cur{font-family:var(--f-head);font-weight:800;font-size:22px;color:#b5afcb}
+.amount input{border:0;background:none;padding:0;font-family:var(--f-head);font-weight:800;font-size:38px;letter-spacing:-.02em;outline:0;width:100%;min-width:0}
+.amount input::placeholder{color:#cfc8e4}
+.amount input[readonly]{cursor:default}
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.qb{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:6px 12px;font-size:12.5px;font-weight:700;transition:all .15s}
+.qb:hover{border-color:var(--p-line);background:var(--p-soft);color:var(--p-dark)}
+.qb.on{border-color:var(--p);background:var(--p-soft);color:var(--p-dark)}
+.qb.last{border-style:dashed}
+.qb small{font-weight:500;color:var(--mut);margin-left:4px}
+.toggle{margin-top:12px;border:0;background:none;color:var(--p-dark);font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:7px;padding:6px 4px;border-radius:8px}
+.toggle:hover{background:var(--p-soft)}
+.toggle .ic{transition:transform .2s}
+.toggle.open .ic{transform:rotate(180deg)}
+
+/* contador de billetes y monedas */
+.count{margin-top:6px;border:1px solid var(--line);border-radius:18px;background:#fcfaff;padding:6px 14px}
+.cr{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--p-line)}
+.cr:last-of-type{border-bottom:0}
+.cr .den{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700;min-width:88px}
+.note{width:34px;height:20px;border-radius:5px;display:grid;place-items:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0}
+.coin{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:800;flex-shrink:0;background:#e4d6fb;color:var(--p-dark);margin:0 6px}
+.cr .step{display:flex;align-items:center;background:#f1eef9;border-radius:11px;margin-left:auto}
+.cr .step button{width:30px;height:30px;border:0;background:none;border-radius:11px;color:var(--p-dark);display:grid;place-items:center;font-size:13px}
+.cr .step button:hover{background:#e6def7}
+.cr .step input{width:38px;height:30px;border:0;background:none;text-align:center;font-weight:800;font-size:14px;outline:0;padding:0}
+.cr .sb{min-width:70px;text-align:right;font-size:12.5px;font-weight:700;color:var(--mut)}
+.cr .sb.has{color:var(--ink)}
+.countfoot{display:flex;justify-content:space-between;align-items:center;padding:10px 0 6px;border-top:1px solid var(--p-line);font-size:12.5px;font-weight:700}
+.countfoot button{border:0;background:none;color:var(--mut);font-size:12px;font-weight:700;padding:4px 6px;border-radius:8px}
+.countfoot button:hover{background:#f1eef9;color:var(--ink)}
+
+/* resumen de lo esperado (estilo recibo) */
+.recibo{background:#fff;border:1px solid var(--line);border-radius:22px;padding:18px;position:relative}
+.rr{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:7px 0;font-size:13px}
+.rr span:first-child{color:var(--mut);font-weight:600}
+.rr b{font-weight:700}
+.rr.tot{border-top:2px dashed var(--p-line);margin-top:6px;padding-top:12px}
+.rr.tot span:first-child{color:var(--ink);font-weight:700}
+.rr.tot b{font-family:var(--f-head);font-size:28px;font-weight:800;color:var(--p-dark);letter-spacing:-.02em}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--p-soft);color:var(--p-dark);white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)} .tag.warn{background:var(--warn-soft);color:var(--warn)} .tag.bad{background:var(--bad-soft);color:var(--bad)} .tag.gray{background:#f1eef9;color:var(--mut)}
+.otros{margin-top:14px;border:1px solid var(--line);border-radius:18px;padding:4px 14px;background:#fcfaff}
+.otros .t{font-size:11.5px;color:var(--mut);padding:9px 0 4px;font-weight:600;line-height:1.4}
+.otros .rr{padding:6px 0;border-top:1px dashed var(--p-line)}
+.otros .rr:first-of-type{border-top:0}
+.dot{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:7px}
+
+/* resultado del conteo */
+.result{margin-top:14px;border-radius:18px;padding:14px 16px;display:flex;gap:12px;align-items:center}
+.result .ico{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:19px;flex-shrink:0;background:rgba(255,255,255,.7)}
+.result b{display:block;font-family:var(--f-head);font-size:17px;font-weight:800}
+.result small{display:block;font-size:12px;margin-top:2px;line-height:1.4}
+.result.ok{background:var(--ok-soft);color:var(--ok)} .result.up{background:var(--blue-soft);color:var(--blue)} .result.down{background:var(--bad-soft);color:var(--bad)} .result.none{background:#f1eef9;color:var(--mut)}
+.alert{display:flex;gap:9px;align-items:flex-start;border-radius:14px;padding:10px 12px;font-size:12px;line-height:1.45;margin-bottom:14px}
+.alert.warn{background:var(--warn-soft);color:var(--warn)} .alert.info{background:var(--p-soft);color:var(--p-dark)}
+.alert svg{margin-top:2px}
+
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+
+/* cajas abiertas */
+.caja{border:1.5px solid var(--line);background:#fff;border-radius:20px;padding:14px;display:flex;gap:12px;align-items:flex-start}
+.caja.old{border-color:#f3c98b;background:#fffaf1}
+.caja .nm{font-size:14px;font-weight:700}
+.caja .you{color:var(--p);font-weight:700}
+.caja .mt{font-size:12px;color:var(--mut);margin-top:2px;line-height:1.45}
+.caja .acts{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+.cajas{display:grid;gap:10px}
+
+/* botones */
+.btn{height:46px;border-radius:14px;border:0;padding:0 20px;font-weight:700;font-size:13.5px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;white-space:nowrap}
+.btn.pri{background:var(--p);color:#fff;box-shadow:0 8px 18px -8px rgba(97,5,220,.6)}
+.btn.pri:hover{background:var(--p-dark)}
+.btn.pri:disabled{background:#d9d2ea;box-shadow:none;cursor:not-allowed}
+.btn.ink{background:var(--ink);color:#fff;box-shadow:0 8px 18px -10px rgba(28,24,48,.7)}
+.btn.ink:hover{background:#000}
+.btn.ink:disabled{background:#cfc8e4;box-shadow:none;cursor:not-allowed}
+.btn.sec{background:var(--p-soft);color:var(--p-dark)} .btn.sec:hover{background:#ece0fd}
+.btn.amber{background:var(--warn-soft);color:var(--warn)} .btn.amber:hover{background:#ffe9c2}
+.btn.gho{background:none;color:var(--mut)} .btn.gho:hover{background:#f3f0fa;color:var(--ink)}
+.btn.sm{height:38px;padding:0 14px;font-size:12.5px;border-radius:12px}
+.btn.blk{width:100%}
+.need{font-size:12px;color:var(--mut);display:flex;align-items:center;gap:6px}
+
+/* resumen final */
+.fin{text-align:center;padding:8px 4px 2px}
+.fin .big{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;margin:0 auto 12px;font-size:38px}
+.fin .big.ok{background:var(--ok-soft);color:var(--ok)} .fin .big.up{background:var(--blue-soft);color:var(--blue)} .fin .big.down{background:var(--bad-soft);color:var(--bad)}
+.fin h2{font-family:var(--f-head);font-size:22px;font-weight:800;margin:0 0 4px}
+.fin p{margin:0 auto 14px;color:var(--mut);font-size:13.5px;line-height:1.5;max-width:340px}
+
+/* confirmación y aviso */
+.ov{position:absolute;inset:0;z-index:60;background:rgba(20,10,40,.55);backdrop-filter:blur(4px);display:grid;place-items:center;padding:20px;border-radius:28px;max-height:min(800px,calc(100vh - 100px))}
+.stage.mobile .ov{max-height:none;border-radius:0}
+.dlg{background:#fff;border-radius:24px;padding:22px;max-width:380px;width:100%;box-shadow:0 30px 60px -20px rgba(0,0,0,.5)}
+.dlg .ico{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;font-size:22px;margin-bottom:12px;background:var(--warn-soft);color:var(--warn)}
+.dlg h3{margin:0 0 6px;font-family:var(--f-head);font-size:18px;font-weight:800}
+.dlg p{margin:0 0 18px;font-size:13px;color:var(--mut);line-height:1.5}
+.dlg .acts{display:flex;gap:8px;justify-content:flex-end}
+.dlg .btn{height:42px}
+.toast{position:absolute;left:50%;bottom:20px;transform:translate(-50%,20px);background:#1c1830;color:#fff;padding:10px 16px;border-radius:14px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:70;max-width:88%;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+@container m (max-width:660px){
+  .two{grid-template-columns:minmax(0,1fr)}
+  .head{padding:12px 14px;gap:10px}.head .tile{width:38px;height:38px;font-size:19px}.head h1{font-size:16px}.head p{display:none}
+  .body{padding:14px}
+  .foot{padding:10px 14px;gap:6px}
+  .btn{padding:0 16px;height:44px}
+  .amount input{font-size:32px}
+  .need{display:none}
+  .rr.tot b{font-size:24px}
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="grp"><b>Maqueta · Turno de caja</b><span style="opacity:.7">propuesta de rediseño, no es el módulo real</span></div>
+  <div class="grp">
+    <span>Pantalla</span>
+    <div class="tog" id="tgScr"><button data-v="apertura" class="on">Abrir turno</button><button data-v="cajas">Cajas abiertas</button><button data-v="cierre">Cerrar turno</button><button data-v="resumen">Resumen</button></div>
+    <label><input type="checkbox" id="chkOld"> Caja antigua</label>
+    <span>Vista</span>
+    <div class="tog" id="tgView"><button data-v="desk" class="on">Escritorio</button><button data-v="mobile">Celular</button></div>
+    <button class="reset" id="btnReset">Reiniciar</button>
+  </div>
+</div>
+
+<div class="stage" id="stage">
+  <div class="frame" id="frame">
+    <div class="scrim"></div>
+    <div class="modal" id="modal"></div>
+    <div class="ov" id="ov" hidden></div>
+    <div class="toast" id="toast"></div>
+  </div>
+</div>
+
+<script>
+/* ---------- datos de ejemplo ---------- */
+const CAJEROS=[{id:'c1',n:'Diana Ramírez',r:'Administrador'},{id:'c2',n:'Luis Torres',r:'Cajero'},{id:'c3',n:'María Quispe',r:'Cajero'}];
+const ULTIMO_CIERRE={monto:150, cuando:'ayer 21:30', quien:'Luis Torres'};
+const TURNO={cajero:'Luis Torres', inicio:100, efectivo:385.5, ventas:27, desglose:[['Yape',120,'#7c3aed'],['Plin',45,'#06b6d4'],['Tarjeta',210.8,'#f59e0b']]};
+const BILLETES=[[200,'#b45309'],[100,'#2563eb'],[50,'#a21caf'],[20,'#d97706'],[10,'#059669']];
+const MONEDAS=[5,2,1,0.5,0.2,0.1];
+const DENOS=[...BILLETES.map(b=>b[0]),...MONEDAS];
+
+/* ---------- estado ---------- */
+let scr='apertura', cajero='c2', monto='', conteoOpen=false, conteo={}, mode='tipeado';
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const money=v=>'S/ '+(Number(v)||0).toFixed(2);
+const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:0};
+const old=()=>$('#chkOld').checked;
+const esperado=()=>TURNO.inicio+TURNO.efectivo;
+const totalConteo=()=>DENOS.reduce((a,d)=>a+(conteo[d]||0)*d,0);
+const hayConteo=()=>DENOS.some(d=>conteo[d]>0);
+const iniciales=n=>n.split(' ').slice(0,2).map(w=>w[0]).join('');
+
+const ICO={
+  till:'<path d="M5 9h14l1 3H4zM6 12v7h12v-7M9 5h6l1 4H8zM9 16h6"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>', check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>', down:'<path d="M6 9l6 6 6-6"/>', lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',
+  warn:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.01"/>', info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/>',
+  up:'<path d="M12 19V5M6 11l6-6 6 6"/>', dn:'<path d="M12 5v14M6 13l6 6 6-6"/>', cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+  hist:'<path d="M4 12a8 8 0 108-8H8M8 2L4 6l4 4"/><path d="M12 8v5l3 2"/>', coin:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5C9.5 8.5 10.5 8 12 8s2.5.6 2.5 1.7-1 1.6-2.5 1.9-2.5.8-2.5 1.9 1 1.7 2.5 1.7 2.5-.5 2.5-1.5"/>'
+};
+const ic=(n,sz)=>`<svg class="ic" viewBox="0 0 24 24"${sz?` style="width:${sz}px;height:${sz}px"`:''}>${ICO[n]}</svg>`;
+
+/* ---------- piezas comunes ---------- */
+function head(tile,title,sub,dark){return `<div class="head"><div class="tile ${dark?'dark':''}">${ic(tile,22)}</div><div class="grow"><h1>${title}</h1><p>${sub}</p></div><button class="x" id="btnX" aria-label="Cerrar">${ic('x',18)}</button></div>`;}
+function modalW(w){ $('#modal').style.width=w; }
+
+// contador de billetes y monedas: solo ayuda a sumar, lo que se guarda sigue siendo el total
+function contadorHTML(){
+  const fila=(d,i)=>{const isB=i<BILLETES.length; const n=conteo[d]||0; return `<div class="cr"><span class="den">${isB?`<span class="note" style="background:${BILLETES[i][1]}">S/</span>`:`<span class="coin">¢</span>`}${d>=1?'S/ '+d:d.toFixed(2)}</span>
+    <span class="step"><button data-d="${d}" data-s="-1" aria-label="Menos">${ic('minus',13)}</button><input type="number" min="0" inputmode="numeric" data-d="${d}" value="${n||''}" placeholder="0" aria-label="Cantidad de ${d}"><button data-d="${d}" data-s="1" aria-label="Más">${ic('plus',13)}</button></span>
+    <span class="sb ${n?'has':''}">${money(n*d)}</span></div>`};
+  return `<div class="count"><div style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:.06em;text-transform:uppercase;padding:8px 0 2px">Billetes</div>${BILLETES.map((b,i)=>fila(b[0],i)).join('')}
+    <div style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:.06em;text-transform:uppercase;padding:10px 0 2px">Monedas</div>${MONEDAS.map((m,i)=>fila(m,BILLETES.length+i)).join('')}
+    <div class="countfoot"><span>Total contado <b style="font-family:var(--f-head);font-size:16px;margin-left:6px">${money(totalConteo())}</b></span><button id="cLimpiar">Limpiar</button></div></div>`;
+}
+function bindContador(onChange){
+  $$('.count .step button').forEach(b=>b.onclick=()=>{const d=+b.dataset.d; conteo[d]=Math.max(0,(conteo[d]||0)+(+b.dataset.s)); sync(); onChange();});
+  $$('.count .step input').forEach(i=>i.oninput=()=>{const d=+i.dataset.d; conteo[d]=Math.max(0,Math.floor(num(i.value))); const pos=i.selectionStart; sync(); onChange(true); });
+  const l=$('#cLimpiar'); if(l) l.onclick=()=>{conteo={}; mode='tipeado'; monto=''; onChange();};
+}
+function sync(){ mode='conteo'; monto=totalConteo()?String(Math.round(totalConteo()*100)/100):''; }
+
+/* ---------- 1) Abrir turno ---------- */
+function renderApertura(){
+  modalW('min(460px,100%)');
+  const ult=ULTIMO_CIERRE;
+  $('#modal').innerHTML=head('till','Abrir turno','Elige quién atiende y con cuánto efectivo empieza la caja.')+`
+  <div class="body"><div class="field"><label class="l"><span>¿Quién abre la caja?</span></label>
+    <div class="cajeros" id="cajeros">${CAJEROS.map(c=>`<button class="cj ${c.id===cajero?'on':''}" data-id="${c.id}"><span class="av ${c.r==='Cajero'?'':'b'}">${iniciales(c.n)}</span><span><span class="nm">${c.n}</span><span class="rl">${c.r}</span></span><span class="chk">${c.id===cajero?ic('check',12):''}</span></button>`).join('')}</div>
+    <button class="addlink" id="addCajero">${ic('plus',14)} Agregar a alguien que no está en la lista</button></div>
+  <div class="field"><label class="l"><span>Efectivo con el que empieza la caja</span><em>fondo inicial</em></label>
+    <div class="amount"><span class="cur">S/</span><input type="${mode==='conteo'?'text':'number'}" id="iMonto" inputmode="decimal" min="0" step="0.50" placeholder="0.00" value="${monto}" ${mode==='conteo'?'readonly':''} aria-label="Monto inicial"></div>
+    <div class="quick" id="qk">${[0,50,100,200].map(v=>`<button class="qb ${monto!==''&&num(monto)===v&&mode!=='conteo'?'on':''}" data-v="${v}">${v===0?'Sin fondo':'S/ '+v}</button>`).join('')}<button class="qb last ${monto!==''&&num(monto)===ult.monto&&mode!=='conteo'?'on':''}" data-v="${ult.monto}">Lo que quedó al cerrar <small>${money(ult.monto)} · ${ult.cuando}</small></button></div>
+    <button class="toggle ${conteoOpen?'open':''}" id="tgConteo">${ic('coin',15)} Contar billetes y monedas ${ic('down',14)}</button>
+    ${conteoOpen?contadorHTML():''}
+    ${mode==='conteo'?`<p style="margin:8px 0 0;font-size:11.5px;color:var(--mut)">El monto se calcula con tu conteo. <a href="#" id="manual" style="color:var(--p-dark);font-weight:700;text-decoration:none">Escribirlo a mano</a></p>`:''}</div></div>
+  <div class="foot"><button class="btn gho" id="fCan">Cancelar</button><span class="sp"></span><span class="need" id="need"></span><button class="btn pri" id="fOk">${ic('check',16)} Abrir turno</button></div>`;
+  $('#btnX').onclick=$('#fCan').onclick=()=>toast('Se cerraría el módulo.');
+  $$('#cajeros .cj').forEach(b=>b.onclick=()=>{cajero=b.dataset.id; renderApertura();});
+  $('#addCajero').onclick=()=>toast('Abriría «Agregar cajero» (solo Administrador).');
+  const im=$('#iMonto'); im.oninput=()=>{monto=im.value; mode='tipeado'; updApertura();};
+  $$('#qk .qb').forEach(b=>b.onclick=()=>{monto=String(b.dataset.v); mode='tipeado'; conteo={}; renderApertura();});
+  $('#tgConteo').onclick=()=>{conteoOpen=!conteoOpen; renderApertura();};
+  const mn=$('#manual'); if(mn) mn.onclick=e=>{e.preventDefault(); mode='tipeado'; renderApertura(); $('#iMonto').focus();};
+  if(conteoOpen) bindContador(foco=>{ const a=document.activeElement; const d=a&&a.dataset&&a.dataset.d; renderApertura(); if(foco&&d){const el=$(`.count input[data-d="${d}"]`); if(el){el.focus(); el.setSelectionRange(el.value.length,el.value.length);}} });
+  $('#fOk').onclick=abrir; updApertura();
+}
+function updApertura(){
+  const ok=monto!==''&&num(monto)>=0; $('#fOk').disabled=!ok;
+  $('#need').textContent=ok?`${CAJEROS.find(c=>c.id===cajero).n} · empieza con ${money(num(monto))}`:'Escribe con cuánto efectivo empieza la caja';
+  $$('#qk .qb').forEach(b=>b.classList.toggle('on',monto!==''&&mode!=='conteo'&&num(monto)===+b.dataset.v));
+}
+function abrir(){ const c=CAJEROS.find(x=>x.id===cajero); toast(`Turno abierto: ${c.n} · ${money(num(monto))}`); }
+
+/* ---------- 2) Cajas abiertas ---------- */
+function renderCajas(){
+  modalW('min(500px,100%)');
+  const lista=[{n:'Luis Torres',tu:true,desde:'hoy 08:02',ini:100,old:false},{n:'María Quispe',tu:false,desde:'hoy 09:15',ini:50,old:false}];
+  if(old()) lista.push({n:'Diana Ramírez',tu:false,desde:'17/10 18:40',ini:80,old:true,hace:'hace 3 días'});
+  $('#modal').innerHTML=head('till',lista.length===1?'Ya hay una caja abierta':`Ya hay ${lista.length} cajas abiertas`,'Elige con cuál vas a trabajar en este dispositivo, o abre una caja nueva y separada.')+`
+  <div class="body"><div class="cajas">${lista.map((c,i)=>`<div class="caja ${c.old?'old':''}"><span class="av ${i%2?'b':''}">${iniciales(c.n)}</span><div class="grow"><div class="nm">${c.n}${c.tu?' <span class="you">· tú</span>':''}</div><div class="mt">Desde ${c.desde} · ${money(c.ini)} de fondo inicial</div>
+    ${c.old?`<div class="alert warn" style="margin:10px 0 0">${ic('warn',15)}<span>Abierta ${c.hace}. Si sigues con ella, el cierre sumará las ventas de todos esos días. Conviene cerrarla.</span></div>`:''}
+    <div class="acts"><button class="btn pri sm" data-a="usar">Usar esta caja</button>${c.old?`<button class="btn amber sm" data-a="cerrar">Cerrar esta caja</button>`:''}</div></div></div>`).join('')}</div></div>
+  <div class="foot"><button class="btn sec blk" id="nueva">${ic('plus',16)} Abrir otra caja</button></div>`;
+  $('#btnX').onclick=()=>toast('Se cerraría el aviso.');
+  $$('[data-a="usar"]').forEach(b=>b.onclick=()=>toast('Trabajarías con esa caja en este dispositivo.'));
+  $$('[data-a="cerrar"]').forEach(b=>b.onclick=()=>{scr='cierre'; setTab(); render();});
+  $('#nueva').onclick=()=>{scr='apertura'; setTab(); render();};
+}
+
+/* ---------- 3) Cerrar turno ---------- */
+function renderCierre(){
+  modalW('min(780px,100%)');
+  const esp=esperado(), tot=TURNO.inicio+TURNO.efectivo; const otros=TURNO.desglose.reduce((a,d)=>a+d[1],0);
+  const antiguo=old();
+  $('#modal').innerHTML=head('lock','Cerrar turno',`Caja de ${TURNO.cajero} · abierta ${antiguo?'el 17/10 a las 18:40 (hace 3 días)':'hoy a las 08:02 (hace 7 h 40 min)'}`,true)+`
+  <div class="body">${antiguo?`<div class="alert warn">${ic('warn',15)}<span>Esta caja lleva abierta 3 días: el arqueo suma las ventas de todos esos días. Cuenta con cuidado y ciérrala hoy.</span></div>`:''}
+  <div class="two"><div>
+    <div class="recibo"><div class="meta"><span class="tag gray">${TURNO.ventas} ventas</span><span class="tag gray">${money(TURNO.efectivo+otros)} vendido</span></div>
+      <div class="rr"><span>Fondo inicial</span><b>${money(TURNO.inicio)}</b></div>
+      <div class="rr"><span>+ Ventas en efectivo</span><b>${money(TURNO.efectivo)}</b></div>
+      <div class="rr tot"><span>Deberías tener</span><b>${money(esp)}</b></div>
+      <div class="otros"><div class="t">Otros medios de pago — no es efectivo. Cruza estos montos con tu app de Yape o tu POS de tarjeta.</div>${TURNO.desglose.map(d=>`<div class="rr"><span><i class="dot" style="background:${d[2]}"></i>${d[0]}</span><b>${money(d[1])}</b></div>`).join('')}</div>
+    </div></div>
+  <div class="panel"><h2>Cuenta tu efectivo</h2><p class="sub">Cuenta todo el dinero que tienes físicamente en la caja.</p>
+    <div class="amount"><span class="cur">S/</span><input type="${mode==='conteo'?'text':'number'}" id="iMonto" inputmode="decimal" min="0" step="0.50" placeholder="0.00" value="${monto}" ${mode==='conteo'?'readonly':''} aria-label="Efectivo contado"></div>
+    <button class="toggle ${conteoOpen?'open':''}" id="tgConteo">${ic('coin',15)} Contar billetes y monedas ${ic('down',14)}</button>
+    ${conteoOpen?contadorHTML():''}
+    ${mode==='conteo'?`<p style="margin:8px 0 0;font-size:11.5px;color:var(--mut)">El monto se calcula con tu conteo. <a href="#" id="manual" style="color:var(--p-dark);font-weight:700;text-decoration:none">Escribirlo a mano</a></p>`:''}
+    <div id="res"></div></div></div></div>
+  <div class="foot"><button class="btn gho" id="fCan">Cancelar</button><span class="sp"></span><span class="need" id="need"></span><button class="btn ink" id="fOk">${ic('lock',16)} Cerrar turno</button></div>`;
+  $('#btnX').onclick=$('#fCan').onclick=()=>toast('Se cerraría el módulo.');
+  const im=$('#iMonto'); im.oninput=()=>{monto=im.value; mode='tipeado'; updCierre();};
+  $('#tgConteo').onclick=()=>{conteoOpen=!conteoOpen; renderCierre();};
+  const mn=$('#manual'); if(mn) mn.onclick=e=>{e.preventDefault(); mode='tipeado'; renderCierre(); $('#iMonto').focus();};
+  if(conteoOpen) bindContador(foco=>{ const a=document.activeElement; const d=a&&a.dataset&&a.dataset.d; renderCierre(); if(foco&&d){const el=$(`.count input[data-d="${d}"]`); if(el){el.focus(); el.setSelectionRange(el.value.length,el.value.length);}} });
+  $('#fOk').onclick=cerrar; updCierre();
+}
+function diff(){ return Math.round((num(monto)-esperado())*100)/100; }
+function updCierre(){
+  const vacio=monto==='';
+  const d=diff(); let cls='none', ico='coin', t='Escribe lo que contaste', s='Te diré si cuadra con lo que debería haber.';
+  if(!vacio){
+    if(d===0){cls='ok';ico='check';t='Cuadra perfecto';s='Lo que contaste es justo lo que debería haber.';}
+    else if(d>0){cls='up';ico='up';t=`Sobran ${money(d)}`;s='Hay más efectivo del esperado. Revisa si diste de menos en algún vuelto o si falta registrar una venta.';}
+    else {cls='down';ico='dn';t=`Faltan ${money(-d)}`;s='Hay menos efectivo del esperado. Vuelve a contar los billetes y revisa los vueltos antes de cerrar.';}
+  }
+  $('#res').innerHTML=`<div class="result ${cls}"><span class="ico">${ic(ico,20)}</span><div><b>${t}</b><small>${s}</small></div></div>`;
+  $('#fOk').disabled=vacio;
+  $('#need').textContent=vacio?'Escribe lo que contaste para cerrar':'';
+}
+function cerrar(){
+  const d=diff();
+  if(d!==0){
+    const o=$('#ov'); o.hidden=false;
+    o.innerHTML=`<div class="dlg"><div class="ico">${ic('warn',22)}</div><h3>${d>0?`Sobran ${money(d)}`:`Faltan ${money(-d)}`}: ¿cerrar igual?</h3><p>Debería haber ${money(esperado())} y contaste ${money(num(monto))}. Al cerrar, la diferencia queda registrada en el historial de cierres.</p><div class="acts"><button class="btn sec" id="dNo">Volver a contar</button><button class="btn ink" id="dOk">Cerrar de todos modos</button></div></div>`;
+    $('#dNo').onclick=()=>{o.hidden=true}; $('#dOk').onclick=()=>{o.hidden=true; irResumen();}; return;
+  }
+  irResumen();
+}
+function irResumen(){ scr='resumen'; setTab(); render(); }
+
+/* ---------- 4) Resumen del turno ---------- */
+function renderResumen(){
+  modalW('min(460px,100%)');
+  const esp=esperado(), real=monto===''?esp-20:num(monto), d=Math.round((real-esp)*100)/100;
+  const cls=d===0?'ok':d>0?'up':'down';
+  const t=d===0?'Turno cerrado: cuadra perfecto':d>0?`Turno cerrado: sobran ${money(d)}`:`Turno cerrado: faltan ${money(-d)}`;
+  $('#modal').innerHTML=head('check','Resumen del turno',`Caja de ${TURNO.cajero} · cerrada hoy a las 15:42`)+`
+  <div class="body"><div class="fin"><div class="big ${cls}">${ic(d===0?'check':d>0?'up':'dn',38)}</div><h2>${t}</h2><p>${d===0?'Lo contado coincide con lo esperado.':'La diferencia quedó registrada en el historial de cierres.'}</p></div>
+    <div class="recibo" style="margin-top:6px"><div class="rr"><span>Fondo inicial</span><b>${money(TURNO.inicio)}</b></div><div class="rr"><span>+ Efectivo recibido</span><b>${money(TURNO.efectivo)}</b></div>
+      <div class="rr"><span>= Debería haber</span><b>${money(esp)}</b></div><div class="rr"><span>Tú contaste</span><b>${money(real)}</b></div>
+      <div class="rr tot"><span>Diferencia</span><b style="color:${d===0?'var(--ok)':d>0?'var(--blue)':'var(--bad)'}">${d===0?'S/ 0.00':(d>0?'+':'−')+money(Math.abs(d))}</b></div>
+      <div class="otros"><div class="t">Otros medios de pago (informativo)</div>${TURNO.desglose.map(x=>`<div class="rr"><span><i class="dot" style="background:${x[2]}"></i>${x[0]}</span><b>${money(x[1])}</b></div>`).join('')}</div></div></div>
+  <div class="foot"><button class="btn sec" id="hist">${ic('hist',16)} Ver historial de cierres</button><span class="sp"></span><button class="btn pri" id="listo">Listo</button></div>`;
+  $('#btnX').onclick=$('#listo').onclick=()=>toast('Se cerraría el resumen.');
+  $('#hist').onclick=()=>toast('Abriría el historial de cierres.');
+}
+
+/* ---------- control ---------- */
+function render(){ $('#ov').hidden=true; ({apertura:renderApertura,cajas:renderCajas,cierre:renderCierre,resumen:renderResumen})[scr](); }
+function setTab(){ $$('#tgScr button').forEach(b=>b.classList.toggle('on',b.dataset.v===scr)); }
+let tT; function toast(m){const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('on'),2400);}
+$$('#tgScr button').forEach(b=>b.onclick=()=>{scr=b.dataset.v; if(scr==='apertura'||scr==='cierre'){monto='';conteo={};mode='tipeado';conteoOpen=false;} setTab(); render();});
+$$('#tgView button').forEach(b=>b.onclick=()=>{$$('#tgView button').forEach(x=>x.classList.toggle('on',x===b)); $('#stage').classList.toggle('mobile',b.dataset.v==='mobile'); render();});
+$('#chkOld').onchange=render;
+$('#btnReset').onclick=()=>{scr='apertura'; cajero='c2'; monto=''; conteo={}; conteoOpen=false; mode='tipeado'; $('#chkOld').checked=false; setTab(); render();};
+render();
+</script>
+</body>
+</html>

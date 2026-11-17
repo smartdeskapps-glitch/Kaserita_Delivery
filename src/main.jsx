@@ -24,13 +24,16 @@ const sbClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // (71 KB) en cada visita aunque nadie pidiera nada.
 // Solo suena si el cliente tiene la pestaña abierta; para cuando la tiene
 // cerrada ya existe el push (ver activarNotificaciones/enviar-notificacion-pedido-listo).
-let audioAvisoPedidoListo = null;
+let contextoAudio = null;
 function prepararAvisoPedidoListo() {
-  if (!audioAvisoPedidoListo) {
-    audioAvisoPedidoListo = new Audio("https://cdn.pixabay.com/audio/2025/01/11/audio_5e34842448.mp3");
-    audioAvisoPedidoListo.preload = "auto";
+  // El timbre se genera en el dispositivo (antes se descargaba un mp3 de un sitio externo). El
+  // contexto de audio se crea al confirmar el pedido, que es un toque del cliente: así el
+  // navegador permite sonar después, cuando el pedido pase a "listo".
+  if (!contextoAudio) {
+    const Contexto = window.AudioContext || window.webkitAudioContext;
+    if (Contexto) contextoAudio = new Contexto();
   }
-  return audioAvisoPedidoListo;
+  return contextoAudio;
 }
 // Si el sistema devolvió un texto claro en español se muestra; si es técnico (en inglés o de la
 // base de datos) se cambia por el aviso de siempre y el detalle queda solo en la consola.
@@ -44,9 +47,23 @@ function mensajeAmable(err, porDefecto) {
 }
 function sonarAvisoPedidoListo() {
   try {
-    const audio = prepararAvisoPedidoListo();
-    audio.currentTime = 0;
-    audio.play().catch((err) => console.warn("No se pudo reproducir el aviso sonoro:", err.message));
+    const ctx = prepararAvisoPedidoListo();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    // Dos notas cortas y suaves (si, mi): un "ding-dong" de aviso.
+    [[987.77, 0], [1318.51, 0.18]].forEach(([frecuencia, retraso]) => {
+      const inicio = ctx.currentTime + retraso;
+      const oscilador = ctx.createOscillator();
+      const volumen = ctx.createGain();
+      oscilador.type = "sine";
+      oscilador.frequency.value = frecuencia;
+      volumen.gain.setValueAtTime(0.0001, inicio);
+      volumen.gain.exponentialRampToValueAtTime(0.25, inicio + 0.02);
+      volumen.gain.exponentialRampToValueAtTime(0.0001, inicio + 0.6);
+      oscilador.connect(volumen).connect(ctx.destination);
+      oscilador.start(inicio);
+      oscilador.stop(inicio + 0.65);
+    });
   } catch (err) {
     console.warn("No se pudo reproducir el aviso sonoro:", err.message);
   }
@@ -3156,16 +3173,6 @@ function App() {
     setCompletarPerfilGoogle(null);
     setVistaMisPedidos(false);
   };
-
-  useEffect(() => {
-    // Limpieza oportunista: de paso en cada visita, borra pedidos sin usar
-    // de más de 2 horas (de cualquier bodega, no solo esta). No hace falta
-    // ningún cron aparte -- se apoya en el tráfico normal del sitio. Se
-    // ignora el resultado a propósito: si falla, simplemente se borra en
-    // otra visita.
-    const dosHorasAtras = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
-    sbClient.from("pedidos_delivery").delete().eq("usado", false).lt("creado_en", dosHorasAtras).then(() => {});
-  }, []);
 
   // Productos, combos y barbería se piden al mismo tiempo que la bodega (antes
   // esperaban a que la bodega respondiera: dos viajes seguidos al servidor, que en

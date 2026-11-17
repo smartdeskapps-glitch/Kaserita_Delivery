@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Maqueta buscador del POS</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#f4f2f8;color:#1c1830;font-family:'Inter',system-ui,sans-serif;padding:32px 20px 60px}
+  h1{font-size:20px;margin:0 0 4px;letter-spacing:-.01em}
+  .sub{margin:0 0 26px;color:#6b6585;font-size:14px;max-width:72ch;line-height:1.5}
+  .bloque{margin-bottom:26px}
+  .etq{font-size:13px;font-weight:600;color:#4d04b0;margin:0 0 8px;display:flex;gap:8px;align-items:center}
+  .etq small{font-weight:500;color:#8a84a3}
+  .panel{background:#fff;border-radius:18px;padding:14px;box-shadow:0 1px 0 #ece9f4,0 10px 30px -18px rgba(60,4,150,.25)}
+  .fila{display:flex;align-items:center;gap:10px}
+  .cont{display:flex;align-items:baseline;gap:6px;flex:none;margin-right:6px}
+  .cont b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+  .cont span{font-size:12px;font-weight:600;color:#9a94b3}
+
+  /* ===== Buscador ===== */
+  .bus{position:relative;flex:1;min-width:0;display:flex;align-items:center;gap:10px;height:50px;padding:0 8px 0 18px;
+    background:#fff;border:1px solid #e4dff0;border-radius:999px;
+    box-shadow:0 1px 2px rgba(40,10,100,.04),0 8px 22px -14px rgba(60,4,150,.28);
+    transition:border-color .2s,box-shadow .2s}
+  .bus.foco{border-color:#6105dc;box-shadow:0 0 0 4px rgba(97,5,220,.1),0 10px 26px -12px rgba(97,5,220,.4)}
+  .bus svg{flex:none}
+  .lupa{width:19px;height:19px;color:#8f89a8}
+  .bus.foco .lupa{color:#6105dc}
+  .txt{flex:1;min-width:0;font-size:15px;color:#9a94b3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .txt.val{color:#1c1830;font-weight:500}
+  .cur{display:inline-block;width:1.5px;height:18px;background:#6105dc;vertical-align:-3px;margin-left:1px;animation:parp 1.1s steps(1) infinite}
+  @keyframes parp{50%{opacity:0}}
+  .lector{display:flex;align-items:center;gap:7px;flex:none;font-size:12px;font-weight:600;color:#1f7a4d;background:#eaf8f0;border-radius:999px;padding:6px 11px 6px 9px}
+  .lector i{width:7px;height:7px;border-radius:50%;background:#22b573;box-shadow:0 0 0 0 rgba(34,181,115,.5);animation:pulso 2s infinite}
+  @keyframes pulso{70%{box-shadow:0 0 0 7px rgba(34,181,115,0)}100%{box-shadow:0 0 0 0 rgba(34,181,115,0)}}
+  .res{flex:none;font-size:12px;font-weight:700;color:#4d04b0;background:#f1e9fe;border-radius:999px;padding:6px 11px}
+  .limpiar{flex:none;width:30px;height:30px;border-radius:50%;border:0;background:#f3f1f8;color:#6b6585;display:grid;place-items:center;cursor:pointer}
+  .limpiar svg{width:14px;height:14px}
+  .cam{flex:none;display:flex;align-items:center;gap:8px;height:36px;padding:0 15px 0 12px;border:0;border-radius:999px;cursor:pointer;
+    font:600 13px 'Inter',sans-serif;color:#fff;background:linear-gradient(135deg,#7a2cf0,#5503c4);box-shadow:0 6px 16px -8px rgba(97,5,220,.7)}
+  .cam svg{width:17px;height:17px}
+  .cam.suave{background:#f4eefe;color:#5503c4;box-shadow:none}
+  .sec{flex:none;width:50px;height:50px;border-radius:50%;background:#fff;border:1px solid #e4dff0;color:#4b4565;display:grid;place-items:center;position:relative;
+    box-shadow:0 1px 2px rgba(40,10,100,.04),0 8px 22px -14px rgba(60,4,150,.28)}
+  .sec svg{width:20px;height:20px}
+  .sec em{position:absolute;top:-3px;right:-3px;min-width:19px;height:19px;border-radius:99px;background:#e5484d;color:#fff;font:700 11px 'Inter',sans-serif;display:grid;place-items:center;padding:0 5px;font-style:normal;border:2px solid #fff}
+
+  /* sugerencias al escribir */
+  .sug{margin:8px 0 0 0;background:#fff;border:1px solid #ece9f4;border-radius:18px;box-shadow:0 18px 40px -18px rgba(40,10,100,.35);padding:6px;max-width:640px}
+  .sug .it{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:12px}
+  .sug .it:first-child{background:#f7f2ff}
+  .sug .ft{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#efe6ff,#fbeef7);display:grid;place-items:center;font-size:18px}
+  .sug .nm{flex:1;min-width:0;font-size:14px;font-weight:600}
+  .sug .nm small{display:block;font-size:12px;font-weight:500;color:#8a84a3}
+  .sug .pr{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+  .sug .st{font-size:11px;font-weight:600;color:#b4690e;background:#fff3e0;border-radius:99px;padding:3px 8px;margin-right:2px}
+  .sug mark{background:none;color:#6105dc;font-weight:800}
+  .sug .pie{font-size:12px;color:#8a84a3;padding:8px 10px 4px;display:flex;justify-content:space-between}
+  kbd{font:600 11px 'Inter',sans-serif;background:#f3f1f8;border:1px solid #e4dff0;border-bottom-width:2px;border-radius:6px;padding:1px 6px;color:#4b4565}
+
+  /* celular */
+  .cel{width:340px;max-width:100%;background:#f9f8fb;border-radius:30px;border:7px solid #1c1830;padding:16px 12px 14px;box-shadow:0 18px 44px -18px rgba(60,4,150,.5)}
+  .cel .bus{height:46px;padding-left:15px}
+  .cel .txt{font-size:14px}
+  .cel .sec{width:46px;height:46px}
+  .celfila{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+  .cel .cam{width:34px;height:34px;padding:0;justify-content:center}
+  .cel .sug{max-width:none}
+</style>
+</head>
+<body>
+
+<h1>Buscador del punto de venta</h1>
+<p class="sub">Mismo lenguaje premium de Fiados y Combos: una sola pastilla más alta y con aire, la cámara como acción propia (porque es lo que más usas), y al escribir aparecen los resultados con el texto coincidente resaltado.</p>
+
+<div class="bloque">
+  <p class="etq">Reposo <small>lo que ves al entrar a vender</small></p>
+  <div class="panel"><div class="fila">
+    <div class="cont"><b>128</b><span>Productos</span></div>
+    <div class="bus">
+      <svg class="lupa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span class="txt">Busca por nombre o escanea un código</span>
+      <button class="cam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg>Escanear</button>
+    </div>
+    <div class="sec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 7H4c0-1 2-2 2-7Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><em>2</em></div>
+  </div></div>
+</div>
+
+<div class="bloque">
+  <p class="etq">Escribiendo <small>borde violeta, resultados y botón para limpiar</small></p>
+  <div class="panel"><div class="fila">
+    <div class="cont"><b>6</b><span>Productos</span></div>
+    <div class="bus foco">
+      <svg class="lupa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span class="txt val">coca<span class="cur"></span></span>
+      <span class="res">6 resultados</span>
+      <button class="limpiar" aria-label="Limpiar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <button class="cam suave"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg>Escanear</button>
+    </div>
+    <div class="sec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 7H4c0-1 2-2 2-7Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><em>2</em></div>
+  </div>
+  <div class="sug">
+    <div class="it"><div class="ft">🥤</div><div class="nm"><mark>Coca</mark> Cola 500 ml<small>Bebidas · 7750001234567</small></div><span class="pr">S/ 3.50</span></div>
+    <div class="it"><div class="ft">🥤</div><div class="nm"><mark>Coca</mark> Cola 1.5 L<small>Bebidas · 7750001234574</small></div><span class="st">Quedan 3</span><span class="pr">S/ 7.00</span></div>
+    <div class="it"><div class="ft">🥤</div><div class="nm"><mark>Coca</mark> Cola Zero 500 ml<small>Bebidas · 7750001234581</small></div><span class="pr">S/ 3.50</span></div>
+    <div class="pie"><span>Toca uno para agregarlo al carrito</span><span><kbd>Enter</kbd> agrega el primero</span></div>
+  </div>
+  </div>
+</div>
+
+<div class="bloque">
+  <p class="etq">En el celular <small>la cámara pasa a ser un botón redondo dentro de la pastilla</small></p>
+  <div class="celfila">
+    <div class="cel">
+      <div class="fila">
+        <div class="bus">
+          <svg class="lupa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <span class="txt">Busca o escanea</span>
+          <button class="cam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg></button>
+        </div>
+        <div class="sec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 7H4c0-1 2-2 2-7Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><em>2</em></div>
+      </div>
+    </div>
+    <div class="cel">
+      <div class="fila">
+        <div class="bus foco">
+          <svg class="lupa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <span class="txt val">coca<span class="cur"></span></span>
+          <button class="limpiar" aria-label="Limpiar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+          <button class="cam suave"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg></button>
+        </div>
+        <div class="sec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 7H4c0-1 2-2 2-7Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><em>2</em></div>
+      </div>
+      <div class="sug">
+        <div class="it"><div class="ft">🥤</div><div class="nm"><mark>Coca</mark> Cola 500 ml<small>Bebidas</small></div><span class="pr">S/ 3.50</span></div>
+        <div class="it"><div class="ft">🥤</div><div class="nm"><mark>Coca</mark> Cola 1.5 L<small>Bebidas</small></div><span class="pr">S/ 7.00</span></div>
+        <div class="pie"><span>6 resultados</span><span>Ver todos</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

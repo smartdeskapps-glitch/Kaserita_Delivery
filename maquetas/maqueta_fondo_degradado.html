@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Fondo degradado del POS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --p:#6105dc; --p2:#4d04b0; --lil:#f4eefe; --ink:#1c1830;
+  --int:1;            /* intensidad del aura 0.4 - 1.6 */
+  --vel:1;            /* 0 = quieto */
+}
+*{box-sizing:border-box;margin:0}
+body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:#eee;overflow:hidden}
+
+/* ───────── Barra de la maqueta ───────── */
+.mq{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:50;display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;
+  padding:8px 10px;border-radius:22px;background:rgba(20,14,40,.82);backdrop-filter:blur(14px);box-shadow:0 12px 40px rgba(20,10,60,.35);max-width:calc(100vw - 24px)}
+.mq button{border:0;cursor:pointer;font:600 12.5px Inter;padding:8px 13px;border-radius:14px;background:transparent;color:#cfc6ec;transition:.15s}
+.mq button:hover{background:rgba(255,255,255,.1);color:#fff}
+.mq button.on{background:#fff;color:var(--p2)}
+.mq .sep{width:1px;height:22px;background:rgba(255,255,255,.18);margin:0 4px}
+.mq label{color:#cfc6ec;font:600 12px Inter;display:flex;align-items:center;gap:7px}
+.mq input[type=range]{width:90px;accent-color:#b794f6}
+.mq .tg.on{background:#b794f6;color:#1c1830}
+
+/* ───────── Pantalla POS ───────── */
+.pos{position:relative;display:flex;height:100vh;overflow:hidden;background:#F8F6FD;isolation:isolate}
+.pos>.main{flex:1;min-width:0;display:flex;flex-direction:column;padding:0 14px 14px 14px}
+.pos>.cart{width:min(440px,32vw);padding:14px 14px 14px 0;display:flex;flex-direction:column}
+
+/* capas de fondo */
+.bg{position:absolute;inset:0;z-index:-3;pointer-events:none;overflow:hidden}
+.bg *{position:absolute;pointer-events:none}
+.grano{position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.42;mix-blend-mode:soft-light;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ── 0 · Actual ── */
+.v0 .m{border-radius:50%;filter:blur(46px)}
+.v0 .m1{width:60%;aspect-ratio:1;left:-6%;top:-16%;background:radial-gradient(circle,#C2C1EC 0%,rgba(194,193,236,0) 68%)}
+.v0 .m2{width:52%;aspect-ratio:1;right:-10%;top:-4%;background:radial-gradient(circle,#AEBBF6 0%,rgba(174,187,246,0) 68%)}
+.v0 .m3{width:58%;aspect-ratio:1;left:20%;bottom:-26%;opacity:.55;background:radial-gradient(circle,#8E62E3 0%,rgba(142,98,227,0) 70%)}
+.v0 .grid{inset:0;background-image:linear-gradient(rgba(97,5,220,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(97,5,220,.05) 1px,transparent 1px);background-size:34px 34px;
+  -webkit-mask-image:radial-gradient(ellipse at 20% 0%,#000 0%,transparent 72%);mask-image:radial-gradient(ellipse at 20% 0%,#000 0%,transparent 72%)}
+
+
+/* ── Noche: degradado oscuro con luz lavanda abajo (referencia del cliente) ── */
+.v1,.v2{background:#06031a}
+.v1 .base{inset:0;background:linear-gradient(180deg,#05020f 0%,#0d0730 34%,#1d1260 62%,#3a2a9c 84%,#7a62e0 100%)}
+.v2 .base{inset:0;background:linear-gradient(180deg,#0e0634 0%,#1c0f5c 34%,#3320a0 62%,#5a3fd0 84%,#9a7cf2 100%)}
+.v1 .sombra,.v2 .sombra{inset:0;background:radial-gradient(ellipse 70% 60% at 100% 6%,rgba(0,0,0,.78) 0%,rgba(0,0,0,0) 70%)}
+.v2 .sombra{opacity:.6}
+.v1 .luzarr,.v2 .luzarr{inset:0;background:radial-gradient(ellipse 55% 42% at 6% -4%,rgba(120,90,255,.55) 0%,rgba(120,90,255,0) 70%);opacity:var(--int)}
+.v1 .luz,.v2 .luz{left:-10%;right:-10%;bottom:-34%;height:70%;border-radius:50%;filter:blur(50px);opacity:calc(.95*var(--int));
+  background:radial-gradient(ellipse at 50% 50%,#f1e8ff 0%,#c4a8ff 26%,rgba(140,108,240,.55) 52%,rgba(110,82,214,0) 72%);animation:resp calc(11s/var(--vel)) ease-in-out infinite alternate}
+.v1 .luz2,.v2 .luz2{left:20%;width:60%;bottom:-6%;height:40%;border-radius:50%;filter:blur(44px);opacity:calc(.7*var(--int));
+  background:radial-gradient(ellipse,#8a6cf0 0%,rgba(110,82,214,0) 68%);animation:resp calc(15s/var(--vel)) ease-in-out infinite alternate-reverse}
+.v1 .losa,.v2 .losa{top:-12%;height:140%;border-radius:70px 0 0 0;transform:skewX(-19deg);
+  background:linear-gradient(180deg,rgba(255,255,255,.035) 0%,rgba(160,130,255,.10) 70%,rgba(190,160,255,.18) 100%)}
+.v1 .losa.a,.v2 .losa.a{left:34%;width:30%}
+.v1 .losa.b,.v2 .losa.b{left:70%;width:36%;opacity:.8}
+.v1 .linea,.v2 .linea{background:rgba(255,255,255,.2)}
+.v1 .linea.v,.v2 .linea.v{top:0;bottom:0;width:1px}
+.v1 .linea.h,.v2 .linea.h{left:0;right:0;height:1px}
+.v1 .linea.v1l,.v2 .linea.v1l{left:2.6%}.v1 .linea.v2l,.v2 .linea.v2l{left:78%}
+.v1 .linea.h1l,.v2 .linea.h1l{top:42%}.v1 .linea.h2l,.v2 .linea.h2l{top:57%}
+.v1 .grano,.v2 .grano{mix-blend-mode:overlay;opacity:.55}
+@keyframes resp{from{transform:scale(1)}to{transform:scale(1.12) translate(2%,-3%)}}
+/* la cabecera queda sobre el fondo: texto claro en las noches (solo cambia el color del texto) */
+.v1 .logo,.v2 .logo,.v1 .tienda b,.v2 .tienda b{color:#fff}
+.v1 .tienda span,.v2 .tienda span{color:#c9bdf5}.v1 .tienda,.v2 .tienda{border-left-color:rgba(255,255,255,.3)}
+
+/* mostrar solo las capas de la variante activa */
+.bg [class*=l-]{display:none}
+.v1 .l-1,.v2 .l-1,.v0 .l-0{display:block}
+
+/* ───────── Contenido (réplica del POS) ───────── */
+.top{display:flex;align-items:center;gap:14px;padding:14px 6px 12px}
+.logo{display:flex;align-items:center;gap:8px;font:800 19px 'Plus Jakarta Sans'}
+.logo i{width:30px;height:30px;border-radius:10px;background:linear-gradient(135deg,#7c2cf5,#a855f7);display:grid;place-items:center;color:#fff;font:800 17px 'Plus Jakarta Sans';font-style:normal}
+.tienda{border-left:1px solid #cdbff0;padding-left:12px;line-height:1.15}
+.tienda b{font:700 14.5px Inter}.tienda span{font-size:12px;color:#8a80a8;display:block}
+.top .sp{flex:1}
+.btn-turno{border:0;padding:11px 20px;border-radius:999px;background:#fff;color:#4d04b0;font:600 13px Inter;box-shadow:0 0 0 2.5px rgba(124,58,237,.35),0 6px 18px rgba(97,5,220,.18)}
+.burger{width:40px;height:40px;border-radius:14px;background:rgba(255,255,255,.9);display:grid;place-items:center;box-shadow:0 2px 8px rgba(97,5,220,.1)}
+.tabs{display:flex;gap:8px;align-items:flex-end;padding-left:2px}
+.tab{padding:11px 20px;border-radius:18px 18px 0 0;background:#fff;font:700 12.5px Inter}
+.tab.c{margin-bottom:3px;border-radius:18px;background:rgba(255,255,255,.85);color:var(--p);font-weight:700}
+
+.panel{background:#fff;border-radius:0 24px 24px 24px;flex:1;min-height:0;padding:16px 16px 0;overflow:hidden;position:relative}
+.busq{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.busq h2{font:800 28px 'Plus Jakarta Sans'}.busq h2 small{font:600 12px Inter;color:#8a80a8;margin-left:4px}
+.busq .in{flex:1;height:42px;border-radius:999px;border:1px solid #e6dff5;display:flex;align-items:center;padding:0 18px;color:#9a91b6;font-size:14px}
+.busq .rd{width:42px;height:42px;border-radius:50%;border:1px solid #e6dff5}
+.grid-p{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px}
+.card{background:#f4eefe;border-radius:26px;padding:9px}
+.card .img{height:150px;border-radius:20px;background:#fff;display:grid;place-items:center;font-size:64px}
+.card .cat{font-size:10.5px;color:#8a80a8;margin:11px 5px 2px}
+.card .nom{font:600 14px Inter;margin:0 5px;min-height:38px}
+.card .pie{display:flex;justify-content:space-between;align-items:baseline;margin:8px 5px 4px}
+.card .pie b{font:800 22px 'Plus Jakarta Sans'}.card .pie b small{font:500 12px Inter;color:#8a80a8}
+.card .pie span{font-size:11.5px;color:#6c6488}
+.card .pie span::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;margin-right:6px}
+
+.cart-h{display:flex;justify-content:space-between;align-items:flex-end}
+.cart-h .t{background:#fff;padding:13px 26px;border-radius:18px 18px 0 0;font:700 14.5px Inter}
+.cart-h .e{margin-bottom:6px;background:rgba(255,255,255,.9);padding:7px 14px;border-radius:999px;font:600 12px Inter;color:#b45309}
+.cart-b{background:#fff;flex:1;border-radius:0 24px 24px 24px;padding:18px;display:flex;flex-direction:column}
+.cart-b .it{font-size:13px;color:#8a80a8}
+.cart-b .vacio{flex:1;display:grid;place-items:center;text-align:center;font-size:12px;color:#8a80a8}
+.cart-b .vacio b{display:block;color:#5b5278;font-size:12.5px;margin:6px 0 2px}
+.tot{background:#f4eefe;border-radius:22px;padding:14px 16px}
+.tot .r{display:flex;justify-content:space-between;font-size:13px;color:#8a80a8;padding-bottom:10px;border-bottom:1px solid #e6dff5}
+.tot .g{display:flex;justify-content:space-between;align-items:baseline;padding-top:10px;font:700 13px Inter;color:var(--p2)}
+.tot .g b{font:800 32px 'Plus Jakarta Sans';color:var(--ink)}
+.cobrar{margin-top:12px;height:50px;border-radius:18px;background:#e7e5ec;color:#8f8ba0;display:grid;place-items:center;font:600 14px Inter}
+
+/* ── Paneles de cristal (opcional) ── */
+.cristal .panel,.cristal .cart-b{background:rgba(255,255,255,.62);backdrop-filter:blur(22px) saturate(1.5);-webkit-backdrop-filter:blur(22px) saturate(1.5);box-shadow:0 10px 40px rgba(97,5,220,.12),inset 0 0 0 1px rgba(255,255,255,.75)}
+.cristal .tab,.cristal .cart-h .t{background:rgba(255,255,255,.62);backdrop-filter:blur(22px) saturate(1.5);-webkit-backdrop-filter:blur(22px) saturate(1.5)}
+.cristal .card{background:rgba(244,238,254,.55)}
+.cristal .card .img{background:rgba(255,255,255,.8)}
+
+.solo .main,.solo .cart{opacity:0;pointer-events:none}
+/* ── Titular de la variante ── */
+.nombre{position:fixed;left:14px;bottom:14px;max-width:260px;white-space:normal!important;line-height:1.35;border-radius:16px!important;z-index:50;padding:8px 16px;border-radius:999px;background:rgba(20,14,40,.82);color:#fff;font:600 12.5px Inter;backdrop-filter:blur(10px);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.bg *{animation:none!important}}
+@media (max-width:1100px){.grid-p{grid-template-columns:repeat(3,minmax(0,1fr))}.pos>.cart{display:none}}
+</style>
+</head>
+<body>
+
+<div class="nombre" id="nombre">Actual · aurora violeta</div>
+
+<div class="pos v0" id="pos">
+  <div class="bg" aria-hidden="true">
+    <!-- 0 · actual -->
+    <i class="m m1 l-0"></i><i class="m m2 l-0"></i><i class="m m3 l-0"></i><i class="grid l-0"></i>
+    <!-- 1 y 2 · noche -->
+    <i class="base l-1"></i><i class="sombra l-1"></i><i class="luzarr l-1"></i><i class="luz l-1"></i><i class="luz2 l-1"></i>
+    <i class="losa a l-1"></i><i class="losa b l-1"></i>
+    <i class="linea v v1l l-1"></i><i class="linea v v2l l-1"></i><i class="linea h h1l l-1"></i><i class="linea h h2l l-1"></i>
+  </div>
+  <div class="grano"></div>
+
+  <div class="main">
+    <div class="top">
+      <div class="logo"><i>K</i>Kaserita</div>
+      <div class="tienda"><b>Bodega Demo</b><span>Dueño Demo</span></div>
+      <div class="sp"></div>
+      <button class="btn-turno">Abrir Turno →</button>
+      <div class="burger">☰</div>
+    </div>
+    <div class="tabs"><div class="tab">TODOS ⌄</div><div class="tab c">🎁 Combos 3</div></div>
+    <div class="panel">
+      <div class="busq"><h2>25<small>Productos</small></h2><div class="in">Escanear código o buscar producto...</div><div class="rd"></div><div class="rd"></div></div>
+      <div class="grid-p" id="grid"></div>
+    </div>
+  </div>
+
+  <div class="cart">
+    <div class="cart-h"><div class="t">Carrito</div><div class="e">En espera 0</div></div>
+    <div class="cart-b">
+      <div class="it">0 ítems</div>
+      <div class="vacio"><div><div style="font-size:34px;opacity:.4">🧺</div><b>Carrito vacío</b>Toca un producto o escanea su código de barras.</div></div>
+      <div class="tot"><div class="r"><span>Subtotal</span><span>S/ 0.00</span></div><div class="g"><span>Total</span><b>S/ 0.00</b></div></div>
+      <div class="cobrar">⚠ Abre un turno para cobrar</div>
+    </div>
+  </div>
+</div>
+
+<div class="mq" id="mq">
+  <button data-v="0" class="on">Actual</button>
+  <button data-v="1">1 · Noche</button>
+  <button data-v="2">2 · Noche violeta</button>
+  <span class="sep"></span>
+  <label>Intensidad <input type="range" id="int" min="40" max="160" value="100"></label>
+  <button class="tg" id="tgMov">Movimiento</button>
+  <button class="tg" id="tgCri">Paneles de cristal</button>
+  <button class="tg" id="tgSolo">Ver solo el fondo</button>
+</div>
+
+<script>
+const prod=[['🫒','Abarrotes','Aceite Primor 1L','11.50','23'],['💧','Bebidas y Snacks','Agua Cristalina sin gas 500ml','1.50','38'],['🥤','Aguas','Agua San Luis 625ml','2.00','44'],['🍚','Abarrotes','Arroz Costeño 5kg','23.50','34'],['🍬','Abarrotes','Azúcar Rubia Casa Grande 1kg','4.80','18'],
+ ['🍺','Cervezas','Cerveza Pilsen Callao 620ml','8.50','16'],['🥤','Gaseosas','Coca Cola 500ml','3.50','43'],['🍻','Cervezas','Corona botella pack x 6','35.00','4'],['🥫','Cervezas','Cusqueña dorada lata 355','5.50','21'],['🧼','Limpieza del Hogar','Detergente Ariel 850g','15.50','12']];
+document.getElementById('grid').innerHTML=prod.map(p=>`<div class="card"><div class="img">${p[0]}</div><div class="cat">${p[1]}</div><div class="nom">${p[2]}</div><div class="pie"><b><small>S/</small>${p[3]}</b><span>${p[4]} disp.</span></div></div>`).join('');
+
+const pos=document.getElementById('pos'),nombre=document.getElementById('nombre');
+const nombres=['Actual · aurora violeta','1 · Noche — negro profundo a luz lavanda, como tu referencia','2 · Noche violeta — mismo estilo, más violeta y menos negro'];
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-v]').forEach(x=>x.classList.toggle('on',x===b));
+  pos.classList.remove('v0','v1','v2');pos.classList.add('v'+b.dataset.v);nombre.textContent=nombres[b.dataset.v];
+});
+document.getElementById('int').oninput=e=>document.documentElement.style.setProperty('--int',e.target.value/100);
+const mov=document.getElementById('tgMov'),cri=document.getElementById('tgCri');
+mov.classList.add('on');
+mov.onclick=()=>{mov.classList.toggle('on');document.documentElement.style.setProperty('--vel',mov.classList.contains('on')?1:.00001)};
+cri.onclick=()=>{cri.classList.toggle('on');pos.classList.toggle('cristal',cri.classList.contains('on'))};
+const solo=document.getElementById('tgSolo');solo.onclick=()=>{solo.classList.toggle('on');pos.classList.toggle('solo',solo.classList.contains('on'))};
+// arranca en la opción 1 para ver el cambio de inmediato
+document.querySelector('[data-v="1"]').click();
+</script>
+</body>
+</html>

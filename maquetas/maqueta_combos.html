@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Combos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --p:#6105dc; --p-dark:#4d04b0; --p-soft:#f4eefe; --p-line:#e4d6fb; --p-ring:rgba(97,5,220,.16);
+  --ink:#1c1830; --mut:#78729a; --line:#ece7f5; --card:#fff;
+  --ok:#059669; --ok-soft:#e8f8f1; --warn:#b45309; --warn-soft:#fff4e0; --bad:#e11d48; --bad-soft:#fff0f3;
+  --yellow:#ffc81a;
+  --f-head:'Plus Jakarta Sans',system-ui,sans-serif; --f-body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{font-family:var(--f-body);color:var(--ink);background:#e9e4f5;-webkit-font-smoothing:antialiased;min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+em{font-style:normal;color:var(--mut);font-weight:500}
+s{color:#b5afcb}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* ---- barra de la maqueta (no es parte del producto) ---- */
+.bar{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;justify-content:space-between;padding:10px 20px;background:#1c1830;color:#fff;font-size:12.5px}
+.bar b{font-family:var(--f-head);font-size:13.5px}
+.bar .grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bar .tog{display:inline-flex;background:rgba(255,255,255,.1);border-radius:999px;padding:3px}
+.bar .tog button{background:none;border:0;color:#d9d2ee;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600}
+.bar .tog button.on{background:#fff;color:#1c1830}
+.bar .reset{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:999px;padding:5px 13px;font-size:12px}
+
+.stage{display:flex;justify-content:center;padding:22px 14px 40px}
+.modal{container-type:inline-size;container-name:m;position:relative;width:min(1000px,100%);height:min(790px,calc(100vh - 110px));min-height:640px;background:linear-gradient(150deg,#f4effc,#f9f8fb 55%,#f5f4f8);border:1px solid #fff;border-radius:28px;box-shadow:0 30px 70px -20px rgba(60,20,120,.35);display:flex;flex-direction:column;overflow:hidden}
+.stage.mobile .modal{width:390px;height:790px;border-radius:34px;border:8px solid #1c1830;box-shadow:0 30px 70px -20px rgba(0,0,0,.5)}
+
+/* ---- cabecera ---- */
+.head{background:#fff;border-bottom:1px solid var(--line);padding:16px 20px;flex-shrink:0;display:flex;align-items:center;gap:14px}
+.head .tile{width:44px;height:44px;border-radius:14px;background:var(--p-soft);color:var(--p);display:grid;place-items:center;font-size:22px;flex-shrink:0}
+.head h1{margin:0;font-family:var(--f-head);font-size:18px;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+.head p{margin:2px 0 0;font-size:12.5px;color:var(--mut)}
+.head .grow{min-width:0;flex:1}
+.x{width:34px;height:34px;border:0;background:none;border-radius:50%;color:var(--mut);display:grid;place-items:center;flex-shrink:0}
+.x:hover{background:#f3f0fa;color:var(--ink)}
+.back{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--mut);font-size:12.5px;font-weight:700;padding:4px 8px 4px 2px;border-radius:8px}
+.back:hover{color:var(--ink);background:#f3f0fa}
+
+.body{flex:1;min-height:0;overflow-y:auto;padding:18px 20px}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--p-soft);color:var(--p-dark);white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)} .tag.warn{background:var(--warn-soft);color:var(--warn)} .tag.bad{background:var(--bad-soft);color:var(--bad)} .tag.gray{background:#f1eef9;color:var(--mut)}
+
+/* ---- lista ---- */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px 14px}
+.stat b{display:block;font-family:var(--f-head);font-size:24px;font-weight:800;line-height:1.1}
+.stat span{font-size:12px;color:var(--mut);font-weight:600}
+.stat.warn b{color:var(--warn)}
+.tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.search{position:relative;flex:1;min-width:180px}
+.search .lupa,.find .lupa{display:grid;place-items:center;width:18px;height:18px}
+.search .lupa{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#b5afcb;font-size:15px;pointer-events:none}
+.search input{width:100%;height:42px;border:1.5px solid #e6e0f2;background:#fff;border-radius:14px;padding:0 14px 0 38px;font-size:14px;outline:0}
+.search input:focus{border-color:var(--p);box-shadow:0 0 0 4px var(--p-ring)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.chip:hover{border-color:var(--p-line);background:var(--p-soft)}
+.chip.on{border-color:var(--p);background:var(--p-soft);color:var(--p-dark);box-shadow:0 0 0 3px var(--p-ring)}
+.chip .n{font-size:10.5px;background:#f1eef9;color:var(--mut);border-radius:99px;padding:1px 7px}
+.chip.on .n{background:var(--p);color:#fff}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.cc{background:#fff;border:1px solid var(--line);border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:10px;transition:box-shadow .15s}
+.cc:hover{box-shadow:0 14px 30px -18px rgba(60,20,120,.4)}
+.cc.off{background:#fbfaff}
+.cc.off .cc-main{opacity:.62}
+.cc-top{display:flex;align-items:flex-start;gap:12px}
+.stackpic{display:flex;flex-shrink:0}
+.stackpic span{width:40px;height:40px;border-radius:13px;background:linear-gradient(160deg,#f4eefe,#fff);border:2px solid #fff;box-shadow:0 0 0 1px var(--line);display:grid;place-items:center;font-size:20px;margin-left:-12px}
+.stackpic span:first-child{margin-left:0}
+.stackpic .more{background:var(--p);color:#fff;font-size:12px;font-weight:800;font-family:var(--f-head)}
+.cc h3{margin:0;font-family:var(--f-head);font-size:16px;font-weight:800;line-height:1.25;letter-spacing:-.01em}
+.cc .its{font-size:12px;color:var(--mut);line-height:1.45;margin-top:2px}
+.cc-price{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.cc-price strong{font-family:var(--f-head);font-size:24px;font-weight:800;color:var(--p-dark);letter-spacing:-.02em}
+.cc-price s{font-size:12.5px;font-weight:600}
+.cc-tags{display:flex;gap:6px;flex-wrap:wrap}
+.cc-note{font-size:12px;line-height:1.4;border-radius:12px;padding:8px 10px;display:flex;gap:7px;align-items:flex-start}
+.cc-note.bad{background:var(--bad-soft);color:var(--bad)} .cc-note.info{background:var(--p-soft);color:var(--p-dark)}
+.cc-note svg{margin-top:2px}
+.cc-foot{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+.sw-mini{display:flex;align-items:center;gap:9px;border:0;background:none;padding:0;font-size:12.5px;font-weight:700}
+.knob{width:38px;height:22px;border-radius:999px;background:#d8d2e8;position:relative;transition:background .2s;flex-shrink:0}
+.knob::after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.sw-mini.on .knob{background:var(--p)} .sw-mini.on .knob::after{transform:translateX(16px)}
+.icb{width:34px;height:34px;border:0;background:none;border-radius:10px;color:var(--mut);display:grid;place-items:center;font-size:15px}
+.icb:hover{background:var(--p-soft);color:var(--p-dark)}
+.icb.del:hover{background:var(--bad-soft);color:var(--bad)}
+.sp{flex:1}
+.empty{margin:30px auto;text-align:center;max-width:340px;color:var(--mut);font-size:13.5px;line-height:1.5}
+.empty .big{width:72px;height:72px;border-radius:24px;background:var(--p-soft);color:var(--p);display:grid;place-items:center;font-size:32px;margin:0 auto 12px}
+.empty b{display:block;color:var(--ink);font-family:var(--f-head);font-size:16px;margin-bottom:3px}
+
+/* ---- editor ---- */
+.edit{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:20px;align-items:start}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;margin-bottom:16px}
+.panel h2{margin:0 0 3px;font-family:var(--f-head);font-size:16px;font-weight:800;letter-spacing:-.01em}
+.panel .sub{margin:0 0 16px;font-size:12.5px;color:var(--mut)}
+.field{margin-bottom:14px;position:relative}
+.field:last-child{margin-bottom:0}
+label.l{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:600;margin-bottom:6px}
+label.l b{color:var(--bad)}
+input[type=text],input[type=number]{width:100%;height:44px;border:1.5px solid #e6e0f2;background:#fbfaff;border-radius:14px;padding:0 14px;font-size:14px;outline:0;transition:all .15s}
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input:focus{border-color:var(--p);background:#fff;box-shadow:0 0 0 4px var(--p-ring)}
+input.err{border-color:var(--bad);background:var(--bad-soft)}
+input::placeholder{color:#b5afcb}
+.hint{margin:6px 0 0;font-size:11.5px;color:var(--mut)}
+.hint.bad{color:var(--bad)}
+
+/* productos del combo */
+.find{position:relative}
+.find .lupa{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#b5afcb;font-size:16px;pointer-events:none}
+.find input{padding-left:40px;height:48px;border-radius:16px}
+.drop{margin-top:8px;border:1.5px solid var(--p-line);border-radius:16px;background:#fff;overflow:hidden;box-shadow:0 18px 34px -20px rgba(60,20,120,.45)}
+.opt{display:flex;align-items:center;gap:11px;width:100%;border:0;background:#fff;text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}
+.opt:last-child{border-bottom:0}
+.opt:hover,.opt.hi{background:#fcfaff}
+.pic{width:38px;height:38px;border-radius:12px;background:linear-gradient(160deg,#f4eefe,#fff);border:1px solid var(--line);display:grid;place-items:center;font-size:19px;flex-shrink:0}
+.opt .nm{font-size:13px;font-weight:700;display:block;line-height:1.25}
+.opt .mt{font-size:11.5px;color:var(--mut);display:block;margin-top:1px}
+.opt .grow{flex:1;min-width:0}
+.opt .add{font-size:12px;font-weight:700;color:var(--p-dark);display:flex;align-items:center;gap:4px}
+.items{margin-top:12px;display:grid;gap:8px}
+.it{display:flex;align-items:center;gap:11px;border:1.5px solid var(--line);border-radius:16px;padding:9px 10px 9px 12px;background:#fff}
+.it.low{border-color:#f3c98b;background:#fffaf1}
+.it .grow{flex:1;min-width:0}
+.it .nm{font-size:13px;font-weight:700;line-height:1.25;display:block}
+.it .mt{font-size:11.5px;color:var(--mut);display:block;margin-top:2px}
+.step{display:flex;align-items:center;background:#f1eef9;border-radius:12px}
+.step button{width:32px;height:34px;border:0;background:none;border-radius:12px;color:var(--p-dark);font-size:14px;display:grid;place-items:center}
+.step button:hover{background:#e6def7}
+.step b{min-width:26px;text-align:center;font-size:14px;font-weight:800}
+.it .lt{font-family:var(--f-head);font-weight:800;font-size:14px;min-width:64px;text-align:right}
+.noitems{border:2px dashed #e1d8f3;border-radius:18px;padding:22px;text-align:center;color:var(--mut);font-size:13px;margin-top:12px}
+
+/* precio */
+.price-box{display:flex;align-items:baseline;gap:10px;border:2px solid #e6e0f2;border-radius:20px;background:#fbfaff;padding:12px 18px;transition:all .15s}
+.price-box:focus-within{border-color:var(--p);background:#fff;box-shadow:0 0 0 5px var(--p-ring)}
+.price-box.err{border-color:var(--bad);background:var(--bad-soft)}
+.price-box .cur{font-family:var(--f-head);font-weight:800;font-size:22px;color:#b5afcb}
+.price-box input{border:0;background:none;height:auto;padding:0;font-family:var(--f-head);font-weight:800;font-size:38px;letter-spacing:-.02em;box-shadow:none!important;width:100%;min-width:0}
+.price-box .cmp{font-size:12px;color:var(--mut);white-space:nowrap;font-weight:600}
+.quick{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px;align-items:center}
+.quick .lbl{font-size:12px;color:var(--mut);font-weight:600;margin-right:2px}
+.qb{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:6px 12px;font-size:12.5px;font-weight:700;transition:all .15s}
+.qb:hover{border-color:var(--p-line);background:var(--p-soft);color:var(--p-dark)}
+.qb.on{border-color:var(--p);background:var(--p-soft);color:var(--p-dark)}
+.meter{margin-top:16px;border:1px solid var(--line);border-radius:18px;padding:14px 16px;background:#fcfaff}
+.bar2{display:flex;height:14px;border-radius:99px;overflow:hidden;background:#ece7f5}
+.bar2 i{display:block;height:100%;transition:width .25s}
+.bar2 .c{background:#b9b0d6} .bar2 .g{background:var(--ok)} .bar2 .g.low{background:#e0a030} .bar2 .g.neg{background:var(--bad)}
+.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.legend div span{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--mut);font-weight:600}
+.legend div span::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--dot,#b9b0d6)}
+.legend div b{display:block;font-family:var(--f-head);font-size:15px;font-weight:800;margin-top:2px}
+.alert{display:flex;gap:9px;align-items:flex-start;border-radius:14px;padding:10px 12px;font-size:12px;line-height:1.45;margin-top:12px}
+.alert.warn{background:var(--warn-soft);color:var(--warn)} .alert.bad{background:var(--bad-soft);color:var(--bad)} .alert.ok{background:var(--ok-soft);color:var(--ok)} .alert.info{background:var(--p-soft);color:var(--p-dark)}
+.alert svg{margin-top:2px}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:12px 14px;cursor:pointer;width:100%;text-align:left;transition:all .15s}
+.sw strong{font-size:13.5px;display:block}
+.sw small{color:var(--mut);font-size:12px;line-height:1.4;display:block;margin-top:2px}
+.sw.on{border-color:var(--p);background:#fcfaff}
+.sw .knob{width:42px;height:24px}
+.sw .knob::after{width:18px;height:18px}
+.sw.on .knob{background:var(--p)} .sw.on .knob::after{transform:translateX(18px)}
+
+/* vista previa */
+.side{position:sticky;top:0}
+.pv-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin:0 0 8px}
+.pv{background:#fff;border:1px solid var(--line);border-radius:22px;padding:14px;box-shadow:0 14px 32px -16px rgba(60,20,120,.3)}
+.pv .pics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.pv .pics span{aspect-ratio:1;border-radius:14px;background:linear-gradient(160deg,#f4eefe,#fff);border:1px solid var(--line);display:grid;place-items:center;font-size:26px;position:relative}
+.pv .pics span em{position:absolute;right:4px;bottom:3px;background:var(--p);color:#fff;border-radius:99px;font-size:10px;font-weight:800;padding:1px 6px}
+.pv .badge{display:inline-block;background:var(--yellow);color:var(--ink);font-size:10.5px;font-weight:800;border-radius:999px;padding:3px 9px}
+.pv h4{margin:8px 0 2px;font-size:15px;font-weight:800;line-height:1.25;font-family:var(--f-head)}
+.pv p{margin:0;font-size:12px;color:var(--mut);line-height:1.4}
+.pv ul{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:4px;font-size:12px}
+.pv li{display:flex;gap:6px;color:var(--ink)} .pv li b{color:var(--p-dark);min-width:22px}
+.pv .pp{display:flex;align-items:baseline;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+.pv .pp strong{font-family:var(--f-head);font-size:24px;font-weight:800}
+.pv .pp s{font-size:12px;margin-right:6px;font-weight:600}
+.pv .btn-fake{margin-top:10px;height:36px;border-radius:12px;background:var(--p);color:#fff;font-weight:700;font-size:12.5px;display:grid;place-items:center}
+.pv .btn-fake.off{background:#d9d2ea}
+.cap{margin-top:12px;border-radius:16px;padding:12px 14px;font-size:12.5px;line-height:1.45;display:flex;gap:9px;align-items:flex-start}
+.cap.ok{background:var(--ok-soft);color:var(--ok)} .cap.bad{background:var(--bad-soft);color:var(--bad)} .cap.gray{background:#f1eef9;color:var(--mut)}
+.cap b{font-family:var(--f-head);font-size:15px}
+
+/* pie */
+.foot{flex-shrink:0;background:#fff;border-top:1px solid var(--line);padding:12px 20px;display:flex;gap:10px;align-items:center;box-shadow:0 -8px 24px -14px rgba(40,10,90,.18)}
+.btn{height:46px;border-radius:14px;border:0;padding:0 20px;font-weight:700;font-size:13.5px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;white-space:nowrap}
+.btn.pri{background:var(--p);color:#fff;box-shadow:0 8px 18px -8px rgba(97,5,220,.6)}
+.btn.pri:hover{background:var(--p-dark)}
+.btn.pri:disabled{background:#d9d2ea;box-shadow:none;cursor:not-allowed}
+.btn.sec{background:var(--p-soft);color:var(--p-dark)} .btn.sec:hover{background:#ece0fd}
+.btn.gho{background:none;color:var(--mut)} .btn.gho:hover{background:#f3f0fa;color:var(--ink)}
+.btn.sm{height:40px;padding:0 16px;font-size:13px}
+.need{font-size:12px;color:var(--mut);display:flex;align-items:center;gap:6px}
+.need.dirty{color:var(--p-dark);font-weight:600}
+
+/* confirmaciones */
+.ov{position:absolute;inset:0;z-index:60;background:rgba(20,10,40,.55);backdrop-filter:blur(4px);display:grid;place-items:center;padding:20px}
+.dlg{background:#fff;border-radius:24px;padding:22px;max-width:380px;width:100%;box-shadow:0 30px 60px -20px rgba(0,0,0,.5)}
+.dlg .ico{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;font-size:22px;margin-bottom:12px;background:var(--bad-soft);color:var(--bad)}
+.dlg h3{margin:0 0 6px;font-family:var(--f-head);font-size:18px;font-weight:800}
+.dlg p{margin:0 0 18px;font-size:13px;color:var(--mut);line-height:1.5}
+.dlg .acts{display:flex;gap:8px;justify-content:flex-end}
+.dlg .btn{height:42px}
+.btn.red{background:var(--bad);color:#fff} .btn.red:hover{background:#be123c}
+.toast{position:absolute;left:50%;bottom:84px;transform:translate(-50%,20px);background:#1c1830;color:#fff;padding:10px 16px;border-radius:14px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:70;max-width:88%;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ---- adaptable al ancho del modal (celular) ---- */
+@container m (max-width:760px){
+  .body{padding:14px}
+  .head{padding:12px 14px;gap:10px}.head .tile{width:38px;height:38px;font-size:19px}.head h1{font-size:16px}.head p{display:none}
+  .stats{gap:8px}.stat{padding:10px 11px}.stat b{font-size:20px}.stat span{font-size:11px}
+  .cards{grid-template-columns:minmax(0,1fr)}
+  .edit{grid-template-columns:minmax(0,1fr)}
+  .side{position:static;order:-1}
+  .side .pv-label,.side .pv{display:none}
+  .panel{padding:16px;border-radius:20px}
+  .price-box input{font-size:32px}
+  .price-box .cmp{display:none}
+  .foot{padding:10px 14px;gap:6px}
+  .btn{padding:0 16px;height:44px}
+  .need{display:none}
+  .it{flex-wrap:wrap;row-gap:8px}
+  .it .grow{flex:1 1 calc(100% - 60px)}
+  .it .step{margin-left:49px}
+  .it .lt{flex:1;min-width:0}
+  .legend{gap:6px}
+  .btn .lg{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="grp"><b>Maqueta · Combos</b><span style="opacity:.7">propuesta de rediseño, no es el módulo real</span></div>
+  <div class="grp">
+    <span>Negocio</span>
+    <div class="tog" id="tgMode"><button data-v="bodega" class="on">Bodega</button><button data-v="barberia">Barbería</button></div>
+    <span>Vista</span>
+    <div class="tog" id="tgView"><button data-v="desk" class="on">Escritorio</button><button data-v="mobile">Celular</button></div>
+    <button class="reset" id="btnReset">Reiniciar</button>
+  </div>
+</div>
+
+<div class="stage" id="stage">
+  <div class="modal" id="modal">
+    <div class="head" id="head"></div>
+    <div class="body" id="body"></div>
+    <div class="foot" id="foot" hidden></div>
+    <div class="toast" id="toast"></div>
+    <div class="ov" id="ov" hidden></div>
+  </div>
+</div>
+
+<script>
+/* ---------- datos de ejemplo ---------- */
+const PRODS = {
+  bodega: [
+    {id:'p1', n:'Pan francés (bolsa x10)', pv:3.5, pc:2.4, stock:40, emo:'🥖'},
+    {id:'p2', n:'Leche Gloria Evaporada 400g', pv:4.8, pc:3.9, stock:24, emo:'🥛'},
+    {id:'p3', n:'Huevos San Fernando x30', pv:16.5, pc:13.8, stock:7, emo:'🥚'},
+    {id:'p4', n:'Café Altomayo 50g', pv:6.9, pc:5.1, stock:12, emo:'☕'},
+    {id:'p5', n:'Azúcar rubia 1kg', pv:4.2, pc:3.4, stock:18, emo:'🍬'},
+    {id:'p6', n:'Detergente Ariel 800g', pv:15.9, pc:12.3, stock:9, emo:'🧴'},
+    {id:'p7', n:'Lejía Clorox 1L', pv:6.5, pc:4.9, stock:0, emo:'🧽'},
+    {id:'p8', n:'Papel higiénico Elite x4', pv:7.9, pc:6.1, stock:15, emo:'🧻'},
+    {id:'p9', n:'Gaseosa Inca Kola 1.5L', pv:7.5, pc:6.2, stock:4, emo:'🥤'},
+    {id:'p10', n:'Galleta Soda Field', pv:1.5, pc:1.1, stock:36, emo:'🍪'}
+  ],
+  barberia: [
+    {id:'r1', n:'Corte fade', pv:20, pc:0, stock:null, emo:'✂️', serv:true},
+    {id:'r2', n:'Perfilado de barba', pv:12, pc:0, stock:null, emo:'🧔', serv:true},
+    {id:'r3', n:'Aplicación de tinte', pv:35, pc:0, stock:null, emo:'🎨', serv:true},
+    {id:'r4', n:'Pomada mate 100g', pv:25, pc:15, stock:11, emo:'🧴'},
+    {id:'r5', n:'Cera para barba 60g', pv:22, pc:12, stock:3, emo:'🧼'},
+    {id:'r6', n:'Shampoo anticaspa', pv:18, pc:10, stock:0, emo:'🚿'}
+  ]
+};
+const SEED = {
+  bodega: [
+    {id:'c1', nombre:'Combo Desayuno', desc:'Pan, leche y café para empezar el día.', precio:15.9, activo:true, items:[{pid:'p1',q:1},{pid:'p2',q:2},{pid:'p4',q:1}]},
+    {id:'c2', nombre:'Combo Huevos y Pan', desc:'', precio:18.5, activo:true, items:[{pid:'p3',q:1},{pid:'p1',q:1}]},
+    {id:'c3', nombre:'Combo Limpieza', desc:'Para la limpieza de la semana.', precio:26, activo:true, items:[{pid:'p6',q:1},{pid:'p7',q:2},{pid:'p8',q:1}]},
+    {id:'c4', nombre:'Combo Cumpleaños', desc:'Gaseosas y galletas.', precio:9, activo:false, items:[{pid:'p9',q:1},{pid:'p10',q:3}]}
+  ],
+  barberia: [
+    {id:'c1', nombre:'Corte + Barba', desc:'El clásico de los sábados.', precio:28, activo:true, items:[{pid:'r1',q:1},{pid:'r2',q:1}]},
+    {id:'c2', nombre:'Corte + Pomada', desc:'Sales listo y con producto para la semana.', precio:38, activo:true, items:[{pid:'r1',q:1},{pid:'r4',q:1}]},
+    {id:'c3', nombre:'Cambio de look', desc:'Corte, tinte y barba.', precio:60, activo:false, items:[{pid:'r1',q:1},{pid:'r3',q:1},{pid:'r2',q:1}]}
+  ]
+};
+
+/* ---------- estado ---------- */
+let mode='bodega', combos, view='list', filtro='todos', q='', form=null, formOrig='', sq='', hi=0;
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=v=>'S/ '+(Number(v)||0).toFixed(2);
+const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:0};
+const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const clone=o=>JSON.parse(JSON.stringify(o));
+const isB=()=>mode==='barberia';
+const prod=id=>PRODS[mode].find(p=>p.id===id);
+const MARGEN_BAJO=10;
+
+const ICO={
+  gift:'<path d="M3.5 9h17v4h-17zM5 13h14v7H5zM12 9v11M12 9c-1.5-4-6-4.5-6-2s4 2 6 2zM12 9c1.5-4 6-4.5 6-2s-4 2-6 2z"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>', check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  back:'<path d="M15 5l-7 7 7 7"/>', search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+  trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12h10l1-12M9 7V4h6v3"/>', pen:'<path d="M4 20l4-1 10.5-10.5a2 2 0 00-3-3L5 16l-1 4z"/>',
+  copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/>',
+  warn:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.01"/>', info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/>',
+  box:'<path d="M3.5 8l8.5-4.5L20.5 8v8.5L12 21l-8.5-4.5z"/><path d="M3.5 8L12 12.5 20.5 8M12 12.5V21"/>', pause:'<path d="M9 5v14M15 5v14"/>'
+};
+const ic=(n,sz)=>`<svg class="ic" viewBox="0 0 24 24"${sz?` style="width:${sz}px;height:${sz}px"`:''}>${ICO[n]}</svg>`;
+
+/* ---------- cálculos ---------- */
+const sumaNormal=items=>items.reduce((a,i)=>a+(prod(i.pid)?.pv||0)*i.q,0);
+const sumaCosto=items=>items.reduce((a,i)=>a+(prod(i.pid)?.pc||0)*i.q,0);
+// cuántos combos se pueden armar con el stock de hoy; servicios (sin stock) no limitan
+function capacidad(items){
+  let n=Infinity, faltan=[];
+  items.forEach(i=>{const p=prod(i.pid); if(!p||p.stock===null) return; const k=Math.floor(p.stock/i.q); if(k<n) n=k; if(k<1) faltan.push(p.n);});
+  return {max:n===Infinity?null:n, faltan};
+}
+function margen(precio,costo){const g=precio-costo;return {g, pct:precio>0?g/precio*100:0, bajo:precio>0&&g/precio*100<MARGEN_BAJO, perdida:precio>0&&precio<costo};}
+const pct0=v=>Math.round(v);
+const estado=c=>{const cap=capacidad(c.items); if(!c.activo) return 'pausado'; if(cap.max===0) return 'sinstock'; return 'venta';};
+
+/* ---------- cabecera ---------- */
+function renderHead(){
+  if(view==='list'){
+    $('#head').innerHTML=`<div class="tile">${ic('gift',22)}</div><div class="grow"><h1>Combos</h1><p>Paquetes de varios ${isB()?'servicios y productos':'productos'} a un precio especial. Al venderse, descuentan el stock de cada ${isB()?'producto':'producto'} que incluyen.</p></div>
+      <button class="btn pri sm" id="btnNuevo">${ic('plus',15)} Nuevo combo</button><button class="x" id="btnX" aria-label="Cerrar">${ic('x',18)}</button>`;
+    $('#btnNuevo').onclick=()=>abrirEditor(null);
+    $('#btnX').onclick=()=>toast('Se cerraría el módulo.');
+  } else {
+    $('#head').innerHTML=`<button class="back" id="btnBack">${ic('back',14)} Combos</button><div class="grow"><h1>${form.id?esc(form.nombre.trim()||'Combo sin nombre'):'Nuevo combo'}</h1><p>${form.id?'Edita lo que incluye y su precio.':'Elige qué incluye y ponle un precio especial.'}</p></div>
+      <button class="x" id="btnX" aria-label="Cerrar">${ic('x',18)}</button>`;
+    $('#btnBack').onclick=salirEditor; $('#btnX').onclick=salirEditor;
+  }
+}
+
+/* ---------- lista ---------- */
+function renderList(){
+  view='list'; form=null; renderHead(); $('#foot').hidden=true;
+  const all=combos, nVenta=all.filter(c=>estado(c)==='venta').length, nSin=all.filter(c=>estado(c)==='sinstock').length, nPaus=all.filter(c=>estado(c)==='pausado').length;
+  const fl=all.filter(c=>(filtro==='todos'||estado(c)===filtro)&&(!q||norm(c.nombre).includes(norm(q))));
+  $('#body').innerHTML=`
+    <div class="stats"><div class="stat"><b>${nVenta}</b><span>En venta ahora</span></div><div class="stat ${nSin?'warn':''}"><b>${nSin}</b><span>Sin stock</span></div><div class="stat"><b>${nPaus}</b><span>Pausados</span></div></div>
+    <div class="tools"><div class="search"><span class="lupa">${ic('search',15)}</span><input type="text" id="qList" placeholder="Buscar combo…" value="${esc(q)}" autocomplete="off"></div>
+      <div class="chips" id="chips">${[['todos','Todos',all.length],['venta','En venta',nVenta],['sinstock','Sin stock',nSin],['pausado','Pausados',nPaus]].map(([k,t,n])=>`<button class="chip ${filtro===k?'on':''}" data-f="${k}">${t} <span class="n">${n}</span></button>`).join('')}</div></div>
+    <div class="cards" id="cards">${fl.map(card).join('')}</div>
+    ${all.length===0?`<div class="empty"><div class="big">${ic('gift',32)}</div><b>Todavía no tienes combos</b>Junta varios ${isB()?'servicios y productos':'productos'} en un paquete a precio especial. Toca «Nuevo combo» para crear el primero.</div>`:fl.length===0?`<div class="empty"><b>Ningún combo coincide</b>Prueba con otro filtro o con otra palabra.</div>`:''}`;
+  $('#qList').oninput=e=>{q=e.target.value; const pos=e.target.selectionStart; renderList(); const i=$('#qList'); i.focus(); i.setSelectionRange(pos,pos);};
+  $$('#chips .chip').forEach(b=>b.onclick=()=>{filtro=b.dataset.f; renderList();});
+  $$('.cc').forEach(el=>{const id=el.dataset.id;
+    el.querySelector('.sw-mini').onclick=()=>alternar(id);
+    el.querySelector('[data-a="edit"]').onclick=()=>abrirEditor(id);
+    el.querySelector('[data-a="dup"]').onclick=()=>duplicar(id);
+    el.querySelector('[data-a="del"]').onclick=()=>eliminar(id);});
+}
+function card(c){
+  const sum=sumaNormal(c.items), cost=sumaCosto(c.items), cap=capacidad(c.items), est=estado(c), m=margen(c.precio,cost);
+  const ahorro=sum>0?(1-c.precio/sum)*100:0;
+  const shown=c.items.slice(0,3), extra=c.items.length-3;
+  const itemsTxt=c.items.map(i=>`${i.q>1?i.q+'× ':''}${esc(prod(i.pid)?.n||'(eliminado)')}`).join(' · ');
+  let tags='';
+  if(cost>0) tags+=m.perdida?`<span class="tag bad">Pérdida ${money(-m.g)}</span>`:`<span class="tag ${m.bajo?'warn':'ok'}">Ganas ${money(m.g)} · ${m.pct.toFixed(m.pct<10?1:0)}%</span>`;
+  if(ahorro>0.5) tags+=`<span class="tag">Cliente ahorra ${pct0(ahorro)}%</span>`;
+  let note='';
+  if(est==='sinstock') note=`<div class="cc-note bad">${ic('warn',14)}<span>Pausado por falta de stock: ${esc(cap.faltan.join(', '))}. Se enciende solo al reponer.</span></div>`;
+  else if(est==='venta'&&cap.max!==null) note=`<div class="cc-note info">${ic('box',14)}<span>Con tu stock puedes vender hasta <b>${cap.max}</b> combo${cap.max>1?'s':''}.</span></div>`;
+  const on=c.activo&&est!=='sinstock';
+  return `<div class="cc ${on?'':'off'}" data-id="${c.id}">
+    <div class="cc-main" style="display:flex;flex-direction:column;gap:10px">
+      <div class="cc-top"><div class="stackpic">${shown.map(i=>`<span>${prod(i.pid)?.emo||'📦'}</span>`).join('')}${extra>0?`<span class="more">+${extra}</span>`:''}</div>
+        <div style="min-width:0"><h3>${esc(c.nombre)}</h3><div class="its">${itemsTxt}</div></div></div>
+      <div class="cc-price"><strong>${money(c.precio)}</strong>${sum>c.precio+0.005?`<s>${money(sum)}</s>`:''}</div>
+      ${tags?`<div class="cc-tags">${tags}</div>`:''}
+    </div>
+    ${note}
+    <div class="cc-foot"><button class="sw-mini ${on?'on':''}" role="switch" aria-checked="${on}"><span class="knob"></span><span>${on?'En venta':est==='sinstock'?'Pausado por stock':'Pausado'}</span></button><span class="sp"></span>
+      <button class="icb" data-a="dup" title="Duplicar" aria-label="Duplicar">${ic('copy',16)}</button>
+      <button class="icb" data-a="edit" title="Editar" aria-label="Editar">${ic('pen',16)}</button>
+      <button class="icb del" data-a="del" title="Eliminar" aria-label="Eliminar">${ic('trash',16)}</button></div>
+  </div>`;
+}
+function alternar(id){const c=combos.find(x=>x.id===id); if(c.activo&&estado(c)==='sinstock'){toast('Se enciende solo cuando repongas el stock.');return;} c.activo=!c.activo; renderList(); toast(c.activo?`«${c.nombre}» está en venta`:`«${c.nombre}» quedó pausado`);}
+function duplicar(id){const c=clone(combos.find(x=>x.id===id)); c.id=null; c.nombre=c.nombre+' (copia)'; c.activo=false; abrirEditor(null,c);}
+function eliminar(id){
+  const c=combos.find(x=>x.id===id);
+  dialog({ico:'trash',t:'¿Eliminar este combo?',p:`Se borra «${esc(c.nombre)}». No afecta el stock ni las ventas ya hechas con él.`,ok:'Sí, eliminar',red:true,fn:()=>{combos=combos.filter(x=>x.id!==id); renderList(); toast('Combo eliminado');}});
+}
+
+/* ---------- editor ---------- */
+function abrirEditor(id,base){
+  view='edit'; sq=''; hi=0;
+  if(id) form=clone(combos.find(x=>x.id===id)), form.tocado=true;
+  else form=base?Object.assign(clone(base),{tocado:true}):{id:null,nombre:'',desc:'',precio:'',activo:true,items:[],tocado:false};
+  form.precio=form.precio===''?'':num(form.precio).toFixed(2);
+  formOrig=base?'':JSON.stringify(strip(form));
+  renderEdit();
+}
+const strip=f=>({id:f.id,nombre:f.nombre,desc:f.desc,precio:String(f.precio),activo:f.activo,items:f.items});
+const dirty=()=>JSON.stringify(strip(form))!==formOrig;
+function errores(){
+  const e=[]; if(!form.nombre.trim()) e.push('Ponle un nombre'); if(form.items.length===0) e.push('Agrega al menos un producto'); if(!(num(form.precio)>0)) e.push('Pon el precio del combo'); return e;
+}
+function renderEdit(){
+  renderHead();
+  $('#body').innerHTML=`<div class="edit"><div>
+    <div class="panel"><h2>Datos del combo</h2><p class="sub">Cómo se llama y cómo lo verán tus clientes.</p>
+      <div class="field"><label class="l"><span>Nombre del combo <b>*</b></span></label><input type="text" id="fNom" placeholder="${isB()?'Ej: Corte + Barba':'Ej: Combo Desayuno'}" value="${esc(form.nombre)}" autocomplete="off"></div>
+      <div class="field"><label class="l"><span>Descripción</span><em>opcional</em></label><input type="text" id="fDesc" placeholder="${isB()?'Ej: El clásico de los sábados':'Ej: Pan, leche y café para empezar el día'}" value="${esc(form.desc)}" autocomplete="off"></div></div>
+    <div class="panel"><h2>Qué incluye</h2><p class="sub">Busca ${isB()?'servicios o productos':'productos'} y ajusta cuántos lleva cada uno.</p>
+      <div class="find"><span class="lupa">${ic('search',16)}</span><input type="text" id="fSq" placeholder="Buscar para agregar…" autocomplete="off" value="${esc(sq)}"><div id="drop"></div></div>
+      <div id="items"></div></div>
+    <div class="panel" id="pPrecio"></div>
+    <div class="panel" style="margin-bottom:0"><button class="sw ${form.activo?'on':''}" id="swAct" role="switch" aria-checked="${form.activo}"><span><strong>En venta</strong><small>${form.activo?'Aparece en la caja para vender. Se pausa solo si falta stock y se enciende al reponer.':'Pausado: no aparece en la caja.'}</small></span><span class="knob"></span></button></div>
+  </div><div class="side" id="side"></div></div>`;
+  $('#foot').hidden=false;
+  $('#fNom').oninput=e=>{form.nombre=e.target.value; upd(false);}; $('#fDesc').oninput=e=>{form.desc=e.target.value; upd(false);};
+  const fs=$('#fSq'); fs.oninput=e=>{sq=e.target.value; hi=0; renderDrop();}; fs.onkeydown=teclas; fs.onfocus=()=>renderDrop();
+  $('#swAct').onclick=()=>{form.activo=!form.activo; const b=$('#swAct'); b.classList.toggle('on',form.activo); b.setAttribute('aria-checked',form.activo); b.querySelector('small').textContent=form.activo?'Aparece en la caja para vender. Se pausa solo si falta stock y se enciende al reponer.':'Pausado: no aparece en la caja.'; upd(false);};
+  renderItems(); renderPrecio(); renderSide(); renderFoot(); renderDrop();
+}
+function resultados(){
+  const t=norm(sq.trim()); let L=PRODS[mode];
+  if(t) L=L.filter(p=>norm(p.n).includes(t)); else return [];
+  return L.slice(0,6);
+}
+function renderDrop(){
+  const box=$('#drop'); if(!box) return; const L=resultados();
+  if(!sq.trim()){box.innerHTML=''; return;}
+  box.innerHTML=`<div class="drop">${L.length?L.map((p,i)=>{const ya=form.items.find(x=>x.pid===p.id);return `<button class="opt ${i===hi?'hi':''}" data-id="${p.id}"><span class="pic">${p.emo}</span><span class="grow"><span class="nm">${esc(p.n)}</span><span class="mt">${money(p.pv)}${p.serv?' · servicio':p.stock===0?' · sin stock':' · '+p.stock+' en stock'}</span></span><span class="add">${ya?`Ya lleva ${ya.q} · sumar otro`:'Agregar'} ${ic('plus',13)}</span></button>`}).join(''):`<div style="padding:14px;font-size:13px;color:var(--mut)">No encontré «${esc(sq)}». Prueba con otro nombre.</div>`}</div>`;
+  $$('#drop .opt').forEach(b=>b.onclick=()=>agregar(b.dataset.id));
+}
+function teclas(e){
+  const L=resultados();
+  if(e.key==='ArrowDown'){e.preventDefault();hi=Math.min(hi+1,L.length-1);renderDrop();}
+  else if(e.key==='ArrowUp'){e.preventDefault();hi=Math.max(hi-1,0);renderDrop();}
+  else if(e.key==='Enter'){e.preventDefault(); if(L[hi]) agregar(L[hi].id);}
+  else if(e.key==='Escape'){sq='';$('#fSq').value='';renderDrop();}
+}
+function agregar(id){
+  const it=form.items.find(x=>x.pid===id); if(it) it.q++; else form.items.push({pid:id,q:1});
+  autoPrecio(); sq=''; const fs=$('#fSq'); fs.value=''; renderDrop(); upd(true); fs.focus();
+}
+// mientras el precio no se toque a mano, sigue a la suma de los productos
+function autoPrecio(){ if(!form.tocado){const s=sumaNormal(form.items); form.precio=s>0?s.toFixed(2):'';} }
+function renderItems(){
+  const box=$('#items');
+  if(!form.items.length){box.innerHTML=`<div class="noitems"><b style="display:block;color:var(--ink);margin-bottom:2px">Aún no agregaste ${isB()?'nada':'productos'}</b>Escribe arriba para buscar y añadir ${isB()?'servicios o productos':'productos'}.</div>`; return;}
+  box.innerHTML=`<div class="items">${form.items.map((i,k)=>{const p=prod(i.pid); const low=p.stock!==null&&p.stock<i.q; const falta=p.stock!==null&&p.stock<1;
+    return `<div class="it ${low?'low':''}" data-k="${k}"><span class="pic">${p.emo}</span><span class="grow"><span class="nm">${esc(p.n)}</span><span class="mt">${money(p.pv)} c/u${p.serv?' · servicio':` · ${p.stock} en stock`}${falta?' · <b style="color:var(--bad)">sin stock</b>':low?` · <b style="color:var(--warn)">solo alcanza para ${p.stock}</b>`:''}</span></span>
+    <div class="step"><button data-d="-1" aria-label="Menos">${ic('minus',14)}</button><b>${i.q}</b><button data-d="1" aria-label="Más">${ic('plus',14)}</button></div>
+    <span class="lt">${money(p.pv*i.q)}</span><button class="icb del" data-r="1" aria-label="Quitar" title="Quitar">${ic('x',15)}</button></div>`}).join('')}</div>`;
+  $$('#items .it').forEach(el=>{const k=+el.dataset.k;
+    $$('.step button',el).forEach(b=>b.onclick=()=>{form.items[k].q=Math.max(1,form.items[k].q+(+b.dataset.d)); autoPrecio(); upd(true);});
+    el.querySelector('[data-r]').onclick=()=>{form.items.splice(k,1); autoPrecio(); upd(true);};});
+}
+function renderPrecio(){
+  const sum=sumaNormal(form.items), cost=sumaCosto(form.items), pr=num(form.precio), m=margen(pr,cost);
+  const ahorro=sum>0&&pr>0?(1-pr/sum)*100:null;
+  const quick=[5,10,15].map(p=>({k:'-'+p+'%',v:sum*(1-p/100)}));
+  const redondos=[]; if(sum>0){const a=Math.floor(sum*0.9)+0.9, b=Math.floor(sum*0.95)+0.9; [b,a].forEach(v=>{if(v>0&&v<sum&&!redondos.includes(v)) redondos.push(v)});}
+  let meter='';
+  if(sum>0){
+    if(cost>0&&pr>0){
+      const tot=Math.max(pr,cost), wc=Math.min(100,cost/tot*100), wg=Math.max(0,(pr-cost)/tot*100);
+      meter=`<div class="meter"><div class="bar2"><i class="c" style="width:${wc}%"></i><i class="g ${m.perdida?'neg':m.bajo?'low':''}" style="width:${m.perdida?100-wc:wg}%"></i></div>
+        <div class="legend"><div style="--dot:#b9b0d6"><span>Te cuesta</span><b>${money(cost)}</b></div><div style="--dot:${m.perdida?'var(--bad)':m.bajo?'#e0a030':'var(--ok)'}"><span>${m.perdida?'Pierdes':'Ganas'}</span><b style="color:${m.perdida?'var(--bad)':m.bajo?'var(--warn)':'var(--ok)'}">${money(Math.abs(m.g))}</b></div><div style="--dot:var(--p)"><span>Margen</span><b>${m.pct.toFixed(m.pct<10?1:0)}%</b></div></div>
+        ${m.perdida?`<div class="alert bad">${ic('warn',15)}<span>El precio (${money(pr)}) es menor que lo que te cuestan estos productos (${money(cost)}). Estarías vendiendo a pérdida.</span></div>`:m.bajo?`<div class="alert warn">${ic('warn',15)}<span>Margen muy bajo. Revisa el precio para no trabajar casi gratis.</span></div>`:`<div class="alert ok">${ic('check',15)}<span>Buen margen: ganas ${money(m.g)} por cada combo que vendas.</span></div>`}</div>`;
+    } else if(pr>0){
+      meter=`<div class="alert info">${ic('info',15)}<span>${isB()?'Los servicios no tienen costo cargado, así que no puedo calcular tu ganancia.':'Estos productos no tienen costo cargado, así que no puedo calcular tu ganancia.'}</span></div>`;
+    }
+  }
+  $('#pPrecio').innerHTML=`<h2>Precio del combo</h2><p class="sub">Si lo dejas sin tocar, es la suma de lo que incluye. Bájalo para dar un descuento.</p>
+    <div class="price-box ${form.items.length&&!(pr>0)?'':''}"><span class="cur">S/</span><input type="number" id="fPrecio" inputmode="decimal" min="0" step="0.10" placeholder="0.00" value="${esc(form.precio)}" aria-label="Precio del combo">${sum>0?`<span class="cmp">${ahorro!==null&&ahorro>0.5?`<s>${money(sum)}</s> · `:''}suma ${money(sum)}</span>`:''}</div>
+    ${sum>0?`<div class="quick"><span class="lbl">Descuento rápido</span><button class="qb ${Math.abs(pr-sum)<0.005?'on':''}" data-v="${sum.toFixed(2)}">Sin descuento</button>${quick.map(q=>`<button class="qb ${Math.abs(pr-q.v)<0.005?'on':''}" data-v="${q.v.toFixed(2)}">${q.k}</button>`).join('')}</div>
+    ${redondos.length?`<div class="quick" style="margin-top:0"><span class="lbl">Precio redondo</span>${redondos.map(v=>`<button class="qb ${Math.abs(pr-v)<0.005?'on':''}" data-v="${v.toFixed(2)}">${money(v)}</button>`).join('')}</div>`:''}
+    ${ahorro!==null&&ahorro>0.5?`<p class="hint">Tu cliente ahorra <b>${money(sum-pr)}</b> (${pct0(ahorro)}%).</p>`:pr>sum+0.005?`<p class="hint">El combo sale más caro que comprar por separado (${money(sum)}).</p>`:''}`:''}
+    ${meter}`;
+  const inp=$('#fPrecio'); inp.oninput=e=>{form.precio=e.target.value; form.tocado=true; updSolo();};
+  $$('#pPrecio .qb').forEach(b=>b.onclick=()=>{form.precio=b.dataset.v; form.tocado=true; renderPrecio(); renderSide(); renderFoot(); renderHead();});
+}
+function renderSide(){
+  const sum=sumaNormal(form.items), pr=num(form.precio), cap=capacidad(form.items), ahorro=sum>0&&pr>0?(1-pr/sum)*100:0;
+  const pics=form.items.slice(0,3).map(i=>`<span>${prod(i.pid).emo}${i.q>1?`<em>×${i.q}</em>`:''}</span>`).join('');
+  let capHtml='';
+  if(form.items.length){
+    if(cap.max===null) capHtml=`<div class="cap gray">${ic('info',16)}<span>Solo incluye servicios: siempre está disponible.</span></div>`;
+    else if(cap.max===0) capHtml=`<div class="cap bad">${ic('warn',16)}<span>Hoy no se puede vender: falta stock de <b style="font-size:13px">${esc(cap.faltan.join(', '))}</b>.</span></div>`;
+    else capHtml=`<div class="cap ok">${ic('box',16)}<span>Con tu stock de hoy puedes armar <b>${cap.max}</b> combo${cap.max>1?'s':''}.</span></div>`;
+  }
+  $('#side').innerHTML=`<p class="pv-label">Así lo verá el cajero</p><div class="pv">
+    ${form.items.length?`<div class="pics">${pics}</div>`:`<div class="pics"><span style="opacity:.4">${ic('gift',26)}</span></div>`}
+    ${ahorro>0.5?`<span class="badge">Ahorras ${pct0(ahorro)}%</span>`:''}
+    <h4>${esc(form.nombre.trim()||'Nombre del combo')}</h4>${form.desc.trim()?`<p>${esc(form.desc.trim())}</p>`:''}
+    ${form.items.length?`<ul>${form.items.map(i=>`<li><b>${i.q}×</b><span>${esc(prod(i.pid).n)}</span></li>`).join('')}</ul>`:''}
+    <div class="pp"><span>${ahorro>0.5?`<s>${money(sum)}</s>`:''}<strong>${money(pr)}</strong></span></div>
+    <div class="btn-fake ${form.activo?'':'off'}">${form.activo?'Agregar al carrito':'Pausado'}</div></div>${capHtml}`;
+}
+function renderFoot(){
+  const er=errores(), d=dirty();
+  $('#foot').innerHTML=`<button class="btn gho" id="fCan">Cancelar</button><span class="sp"></span>
+    <span class="need ${er.length?'':'dirty'}">${er.length?esc(er.join(' · ')):(d?'Hay cambios sin guardar':'Todo en orden')}</span>
+    <button class="btn pri" id="fOk" ${er.length||(!d&&form.id)?'disabled':''}>${ic('check',16)}<span>${form.id?'Guardar<span class="lg"> cambios</span>':'Guardar<span class="lg"> combo</span>'}</span></button>`;
+  $('#fCan').onclick=salirEditor; $('#fOk').onclick=guardar;
+}
+// refrescos: todo (con items) o solo lo que depende del precio / nombre
+function upd(items){ if(items) renderItems(); renderPrecio(); renderSide(); renderFoot(); renderHead(); }
+function updSolo(){ // al escribir el precio no se vuelve a dibujar el campo (se perdería el foco)
+  const keep=$('#fPrecio'); const val=keep.value; const pos=keep.selectionStart;
+  renderPrecio(); const n=$('#fPrecio'); n.value=val; n.focus(); try{n.setSelectionRange(pos,pos)}catch(e){}
+  renderSide(); renderFoot(); renderHead();
+}
+function salirEditor(){
+  if(dirty()||(!form.id&&(form.items.length||form.nombre.trim()))){
+    dialog({ico:'warn',t:'Tienes cambios sin guardar',p:'Si sales ahora, se pierden.',ok:'Salir sin guardar',red:true,fn:()=>renderList()}); return;
+  }
+  renderList();
+}
+function guardar(){
+  const er=errores(); if(er.length) return;
+  const c={id:form.id||('c'+(Date.now()%100000)),nombre:form.nombre.trim(),desc:form.desc.trim(),precio:num(form.precio),activo:form.activo,items:clone(form.items)};
+  const i=combos.findIndex(x=>x.id===form.id); if(form.id&&i>=0) combos[i]=c; else combos.unshift(c);
+  renderList(); toast(`Combo «${c.nombre}» guardado`);
+}
+
+/* ---------- diálogo y aviso ---------- */
+function dialog({ico,t,p,ok,red,fn}){
+  const o=$('#ov'); o.hidden=false;
+  o.innerHTML=`<div class="dlg"><div class="ico">${ic(ico,22)}</div><h3>${t}</h3><p>${p}</p><div class="acts"><button class="btn sec" id="dNo">Cancelar</button><button class="btn ${red?'red':'pri'}" id="dOk">${ok}</button></div></div>`;
+  $('#dNo').onclick=()=>{o.hidden=true}; $('#dOk').onclick=()=>{o.hidden=true; fn();};
+}
+let tT; function toast(m){const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('on'),2200);}
+
+/* ---------- barra de la maqueta ---------- */
+function reset(){combos=clone(SEED[mode]); view='list'; filtro='todos'; q=''; form=null; renderList();}
+$$('#tgMode button').forEach(b=>b.onclick=()=>{mode=b.dataset.v; $$('#tgMode button').forEach(x=>x.classList.toggle('on',x===b)); reset();});
+$$('#tgView button').forEach(b=>b.onclick=()=>{$$('#tgView button').forEach(x=>x.classList.toggle('on',x===b)); $('#stage').classList.toggle('mobile',b.dataset.v==='mobile');});
+$('#btnReset').onclick=reset;
+reset();
+</script>
+</body>
+</html>

@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta · Entrada de mercadería</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --p:#6105dc; --p-dark:#4d04b0; --p-soft:#f4eefe; --p-line:#e4d6fb; --p-ring:rgba(97,5,220,.16);
+  --ink:#1c1830; --mut:#78729a; --line:#ece7f5; --card:#fff;
+  --ok:#059669; --ok-soft:#e8f8f1; --warn:#b45309; --warn-soft:#fff4e0; --bad:#e11d48; --bad-soft:#fff0f3;
+  --yellow:#ffc81a;
+  --f-head:'Plus Jakarta Sans',system-ui,sans-serif; --f-body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{font-family:var(--f-body);color:var(--ink);background:#e9e4f5;-webkit-font-smoothing:antialiased;min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+em{font-style:normal;color:var(--mut);font-weight:500}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* ---- barra de la maqueta (no es parte del producto) ---- */
+.bar{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;justify-content:space-between;padding:10px 20px;background:#1c1830;color:#fff;font-size:12.5px}
+.bar b{font-family:var(--f-head);font-size:13.5px}
+.bar .grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bar .tog{display:inline-flex;background:rgba(255,255,255,.1);border-radius:999px;padding:3px}
+.bar .tog button{background:none;border:0;color:#d9d2ee;padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600}
+.bar .tog button.on{background:#fff;color:#1c1830}
+.bar .reset{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:999px;padding:5px 13px;font-size:12px}
+
+.stage{display:flex;justify-content:center;padding:22px 14px 40px}
+.modal{container-type:inline-size;container-name:m;position:relative;width:min(1000px,100%);height:min(790px,calc(100vh - 110px));min-height:640px;background:linear-gradient(150deg,#f4effc,#f9f8fb 55%,#f5f4f8);border:1px solid #fff;border-radius:28px;box-shadow:0 30px 70px -20px rgba(60,20,120,.35);display:flex;flex-direction:column;overflow:hidden}
+.stage.mobile .modal{width:390px;height:790px;border-radius:34px;border:8px solid #1c1830;box-shadow:0 30px 70px -20px rgba(0,0,0,.5)}
+
+/* ---- cabecera ---- */
+.head{background:#fff;border-bottom:1px solid var(--line);padding:16px 20px;flex-shrink:0;display:flex;align-items:center;gap:14px}
+.head .tile{width:44px;height:44px;border-radius:14px;background:var(--p-soft);color:var(--p);display:grid;place-items:center;font-size:22px;flex-shrink:0}
+.head h1{margin:0;font-family:var(--f-head);font-size:18px;font-weight:800;letter-spacing:-.01em}
+.head p{margin:2px 0 0;font-size:12.5px;color:var(--mut)}
+.x{margin-left:auto;width:34px;height:34px;border:0;background:none;border-radius:50%;color:var(--mut);display:grid;place-items:center;flex-shrink:0}
+.x:hover{background:#f3f0fa;color:var(--ink)}
+
+/* ---- cuerpo: agregar (izquierda) + la entrada (derecha) ---- */
+.body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:18px;padding:18px 20px}
+.col{min-height:0;min-width:0;display:flex;flex-direction:column}
+.panel{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:0 1px 0 rgba(28,24,48,.03);display:flex;flex-direction:column;min-height:0}
+.panel.fill{flex:1}
+.panel h2{margin:0 0 2px;font-family:var(--f-head);font-size:16px;font-weight:800;letter-spacing:-.01em}
+.panel .sub{margin:0 0 14px;font-size:12.5px;color:var(--mut)}
+.scroll{flex:1;min-height:0;overflow-y:auto;margin:0 -6px;padding:0 6px}
+
+/* búsqueda */
+.search{position:relative}
+.search .lupa{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#b5afcb;font-size:17px;pointer-events:none}
+.search input{width:100%;height:50px;border:1.5px solid #e6e0f2;background:#fbfaff;border-radius:16px;padding:0 118px 0 44px;font-size:15px;outline:0;transition:all .15s}
+.search input:focus{border-color:var(--p);background:#fff;box-shadow:0 0 0 4px var(--p-ring)}
+.search input::placeholder{color:#b5afcb}
+.btn-scan{position:absolute;right:6px;top:6px;bottom:6px;border:1px solid var(--p-line);background:var(--p-soft);color:var(--p-dark);border-radius:11px;padding:0 13px;font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+.btn-scan:hover{background:#ece0fd}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 10px}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.chip:hover{border-color:var(--p-line);background:var(--p-soft)}
+.chip.on{border-color:var(--p);background:var(--p-soft);color:var(--p-dark);box-shadow:0 0 0 3px var(--p-ring)}
+.chip .n{font-size:10.5px;background:var(--warn-soft);color:var(--warn);border-radius:99px;padding:1px 7px}
+.chip.on .n{background:var(--p);color:#fff}
+
+.res{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.row{display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:9px 12px;text-align:left;width:100%;transition:all .15s}
+.row:hover,.row:focus-visible{border-color:var(--p-line);background:#fcfaff;outline:0}
+.row.hi{border-color:var(--p);box-shadow:0 0 0 3px var(--p-ring)}
+.pic{width:42px;height:42px;border-radius:13px;background:linear-gradient(160deg,#f4eefe,#fff);border:1px solid var(--line);display:grid;place-items:center;font-size:21px;flex-shrink:0}
+.row .nm{font-size:13.5px;font-weight:700;line-height:1.25;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .mt{font-size:11.5px;color:var(--mut);display:block;margin-top:2px}
+.row .grow{min-width:0;flex:1}
+.row mark{background:#fff0b3;color:inherit;border-radius:3px;padding:0 1px}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--p-soft);color:var(--p-dark);white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)} .tag.warn{background:var(--warn-soft);color:var(--warn)} .tag.bad{background:var(--bad-soft);color:var(--bad)}
+.row.new{border-style:dashed;border-color:var(--p-line);background:#fcfaff}
+.row.new .pic{background:var(--p);color:#fff;border:0}
+.jump{display:none;align-items:center;gap:8px;width:100%;border:1.5px solid var(--p-line);background:var(--p-soft);color:var(--p-dark);border-radius:14px;padding:10px 14px;font-size:12.5px;font-weight:700;margin-bottom:12px;text-align:left}
+.jump span{flex:1}
+.none{padding:26px 10px;text-align:center;color:var(--mut);font-size:13px}
+
+/* compositor de la línea */
+.back{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--mut);font-size:12.5px;font-weight:700;padding:4px 8px 4px 2px;border-radius:8px;margin-bottom:10px;align-self:flex-start}
+.back:hover{color:var(--ink);background:#f3f0fa}
+.prod{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.prod .pic{width:54px;height:54px;font-size:26px;border-radius:16px}
+.prod h3{margin:0;font-family:var(--f-head);font-size:16.5px;font-weight:800;line-height:1.2}
+.prod .mt{font-size:12px;color:var(--mut);margin-top:3px;display:block}
+.field{margin-bottom:14px}
+label.l{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:600;margin-bottom:6px}
+label.l b{color:var(--bad)}
+input[type=text],input[type=number]{width:100%;height:44px;border:1.5px solid #e6e0f2;background:#fbfaff;border-radius:14px;padding:0 14px;font-size:14px;outline:0;transition:all .15s}
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input:focus{border-color:var(--p);background:#fff;box-shadow:0 0 0 4px var(--p-ring)}
+input.err{border-color:var(--bad);background:var(--bad-soft)}
+input::placeholder{color:#b5afcb}
+select{width:100%;height:44px;border:1.5px solid #e6e0f2;background:#fbfaff;border-radius:14px;padding:0 12px;font-size:14px;outline:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:#f1eef9;border-radius:14px;padding:4px;gap:4px}
+.seg button{border:0;background:none;border-radius:11px;padding:9px 8px;font-size:13px;font-weight:700;color:var(--mut);text-align:center}
+.seg button small{display:block;font-weight:500;font-size:11px;opacity:.85;margin-top:1px}
+.seg button.on{background:#fff;color:var(--p-dark);box-shadow:0 2px 8px -2px rgba(40,10,90,.2)}
+.qty{display:flex;align-items:center;gap:8px}
+.stepbtn{width:44px;height:44px;border-radius:13px;border:1.5px solid var(--line);background:#fff;display:grid;place-items:center;color:var(--p-dark);font-size:16px;flex-shrink:0}
+.stepbtn:hover{background:var(--p-soft);border-color:var(--p-line)}
+.qty input{text-align:center;font-weight:700;font-size:16px}
+.money{position:relative}
+.money span{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:700;color:#b5afcb;font-size:13px}
+.money input{padding-left:36px;font-weight:700;font-size:16px}
+.hint{margin:6px 0 0;font-size:11.5px;color:var(--mut);min-height:16px}
+.hint.bad{color:var(--bad)}
+
+.eff{border:1px solid var(--line);border-radius:18px;background:#fcfaff;padding:4px 14px;margin:2px 0 14px}
+.eff .r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;font-size:12.5px;border-bottom:1px dashed var(--p-line)}
+.eff .r:last-child{border-bottom:0}
+.eff .r span:first-child{color:var(--mut);font-weight:600}
+.eff .r b{font-weight:700;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.eff .r b i{font-style:normal;color:#b5afcb;font-weight:600}
+.delta{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px}
+.delta.up{background:var(--warn-soft);color:var(--warn)} .delta.down{background:var(--ok-soft);color:var(--ok)} .delta.same{background:#f1eef9;color:var(--mut)}
+.alert{display:flex;gap:9px;align-items:flex-start;border-radius:14px;padding:10px 12px;font-size:12px;line-height:1.45;margin-bottom:14px}
+.alert.warn{background:var(--warn-soft);color:var(--warn)} .alert.bad{background:var(--bad-soft);color:var(--bad)} .alert.info{background:var(--p-soft);color:var(--p-dark)}
+.alert svg{margin-top:2px}
+.sticky{margin-top:auto;padding-top:6px}
+
+/* la entrada */
+.prov{margin-bottom:14px}
+.prov .chips{margin:8px 0 0}
+.prov .chip{padding:4px 11px;font-size:12px}
+.hr{height:1px;background:var(--line);margin:2px 0 12px}
+.lines{display:grid;gap:8px}
+.line{border:1.5px solid var(--line);border-radius:16px;padding:10px 12px;background:#fff}
+.line.flag{border-color:#f3c98b;background:#fffaf1}
+.line.bad{border-color:#f5b4c0;background:var(--bad-soft)}
+.line .top{display:flex;align-items:center;gap:10px}
+.line .pic{width:34px;height:34px;font-size:17px;border-radius:11px}
+.line .nm{font-size:13px;font-weight:700;flex:1;min-width:0;line-height:1.25}
+.line .rm{border:0;background:none;width:30px;height:30px;border-radius:9px;color:#b5afcb;display:grid;place-items:center;flex-shrink:0}
+.line .rm:hover{background:var(--bad-soft);color:var(--bad)}
+.line .ed{display:grid;grid-template-columns:78px minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:9px}
+.line .ed .cell{position:relative}
+.line .ed input{height:36px;border-radius:11px;font-size:13px;font-weight:700;text-align:center;padding:0 8px}
+.line .ed .cell.m input{text-align:left;padding-left:28px}
+.line .ed .cell.m span{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11.5px;font-weight:700;color:#b5afcb}
+.line .ed .cell u{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:10.5px;text-decoration:none;color:var(--mut);font-weight:600;pointer-events:none}
+.line .ed .cell.q input{padding-right:30px}
+.line .lsub{font-family:var(--f-head);font-weight:800;font-size:14px;white-space:nowrap}
+.line .meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--mut)}
+.line .meta b{color:var(--ink)}
+.empty{margin:auto;text-align:center;padding:22px 14px;color:var(--mut);font-size:13px;line-height:1.5}
+.empty .big{width:62px;height:62px;border-radius:20px;background:var(--p-soft);color:var(--p);display:grid;place-items:center;font-size:28px;margin:0 auto 10px}
+.empty b{display:block;color:var(--ink);font-family:var(--f-head);font-size:15px;margin-bottom:3px}
+.total{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);flex-shrink:0}
+.total .a{display:flex;justify-content:space-between;align-items:baseline}
+.total .a span{font-size:12.5px;color:var(--mut);font-weight:600}
+.total .a strong{font-family:var(--f-head);font-weight:800;font-size:28px;color:var(--p-dark);letter-spacing:-.02em}
+.total .b{font-size:11.5px;color:var(--mut);margin-top:2px}
+
+/* pie */
+.foot{flex-shrink:0;background:#fff;border-top:1px solid var(--line);padding:12px 20px;display:flex;gap:10px;align-items:center;box-shadow:0 -8px 24px -14px rgba(40,10,90,.18)}
+.foot .sp{flex:1}
+.btn{height:46px;border-radius:14px;border:0;padding:0 20px;font-weight:700;font-size:13.5px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .15s}
+.btn.pri{background:var(--p);color:#fff;box-shadow:0 8px 18px -8px rgba(97,5,220,.6)}
+.btn.pri:hover{background:var(--p-dark)}
+.btn.pri:disabled{background:#d9d2ea;box-shadow:none;cursor:not-allowed}
+.btn.sec{background:var(--p-soft);color:var(--p-dark)} .btn.sec:hover{background:#ece0fd}
+.btn.gho{background:none;color:var(--mut)} .btn.gho:hover{background:#f3f0fa;color:var(--ink)}
+.btn.blk{width:100%}
+.need{font-size:12px;color:var(--mut);display:flex;align-items:center;gap:6px}
+.need.dirty{color:var(--p-dark);font-weight:600}
+
+/* confirmación y aviso */
+.ov{position:absolute;inset:0;z-index:60;background:rgba(20,10,40,.55);backdrop-filter:blur(4px);display:grid;place-items:center;padding:20px}
+.dlg{background:#fff;border-radius:24px;padding:22px;max-width:380px;width:100%;box-shadow:0 30px 60px -20px rgba(0,0,0,.5)}
+.dlg .ico{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;font-size:22px;margin-bottom:12px;background:var(--bad-soft);color:var(--bad)}
+.dlg h3{margin:0 0 6px;font-family:var(--f-head);font-size:18px;font-weight:800}
+.dlg p{margin:0 0 18px;font-size:13px;color:var(--mut);line-height:1.5}
+.dlg .acts{display:flex;gap:8px;justify-content:flex-end}
+.dlg .btn{height:42px}
+.btn.red{background:var(--bad);color:#fff} .btn.red:hover{background:#be123c}
+.toast{position:absolute;left:50%;bottom:84px;transform:translate(-50%,20px);background:#1c1830;color:#fff;padding:10px 16px;border-radius:14px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:70;max-width:88%;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* pantalla final */
+.fin{flex:1;overflow-y:auto;display:grid;place-items:center;padding:26px}
+.fin .box{text-align:center;max-width:430px;width:100%}
+.fin .big{width:84px;height:84px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:grid;place-items:center;margin:0 auto 14px;font-size:38px}
+.fin h2{font-family:var(--f-head);font-size:22px;font-weight:800;margin:0 0 4px}
+.fin p{margin:0 auto 16px;color:var(--mut);font-size:13.5px;line-height:1.5}
+.fin .sum{background:#fff;border:1px solid var(--line);border-radius:20px;padding:6px 16px;text-align:left;margin-bottom:18px}
+.fin .sum .r{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.fin .sum .r:last-child{border-bottom:0}
+.fin .sum .r span{color:var(--mut)} .fin .sum .r b{text-align:right}
+.fin .acts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+
+/* ---- adaptable al ancho del modal (celular) ---- */
+@container m (max-width:760px){
+  .body{grid-template-columns:1fr;overflow-y:auto;padding:14px;gap:14px;display:flex;flex-direction:column}
+  .col{min-height:auto;flex-shrink:0}
+  .panel,.panel.fill{flex:none}
+  .scroll{overflow:visible;margin:0;padding:0}
+  .res.limit{max-height:none}
+  .head{padding:12px 14px;gap:10px}.head .tile{width:38px;height:38px;font-size:19px}.head h1{font-size:16px}.head p{display:none}
+  .panel{padding:16px;border-radius:20px}
+  .body{overflow-x:hidden}
+  .prov{grid-template-columns:1fr}
+  .lg{display:none}
+  .jump{display:flex}
+  .foot{padding:10px 14px;gap:6px}
+  .btn{padding:0 14px;height:44px}
+  .need{display:none}
+  .two{grid-template-columns:1fr 1fr}
+  .total .a strong{font-size:24px}
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="grp"><b>Maqueta · Entrada de mercadería</b><span style="opacity:.7">propuesta de rediseño, no es el módulo real</span></div>
+  <div class="grp">
+    <span>Vista</span>
+    <div class="tog" id="tgView"><button data-v="desk" class="on">Escritorio</button><button data-v="mobile">Celular</button></div>
+    <button class="reset" id="btnDemo">Cargar un ejemplo</button>
+    <button class="reset" id="btnReset">Reiniciar</button>
+  </div>
+</div>
+
+<div class="stage" id="stage">
+  <div class="modal" id="modal">
+    <div class="head">
+      <div class="tile" id="hTile"></div>
+      <div style="min-width:0"><h1>Entrada de mercadería</h1><p>Anota lo que te dejó el proveedor. El stock y el costo se actualizan al confirmar.</p></div>
+      <button class="x" id="btnX" aria-label="Cerrar"></button>
+    </div>
+    <div class="body" id="body"></div>
+    <div class="foot" id="foot"></div>
+    <div class="toast" id="toast"></div>
+    <div class="ov" id="ov" hidden></div>
+  </div>
+</div>
+
+<script>
+/* ---------- datos de ejemplo (bodega) ---------- */
+const CATS = ['Abarrotes','Lácteos','Panadería','Bebidas','Limpieza','Verduras','Snacks'];
+const EMO = {Abarrotes:'🛒',Lácteos:'🥛',Panadería:'🥖',Bebidas:'🥤',Limpieza:'🧴',Verduras:'🥑',Snacks:'🍫'};
+const PROVS = ['Distribuidora Andina','Alicorp','Backus','Gloria S.A.'];
+const SEED = [
+  {id:'p1', nombre:'Leche Gloria Evaporada 400g', cat:'Lácteos',   pv:4.80, pc:3.90, unidad:'UND', stock:3,   uds:24},
+  {id:'p2', nombre:'Aceite Primor 1L',            cat:'Abarrotes', pv:12.50,pc:9.80, unidad:'UND', stock:23,  uds:12},
+  {id:'p3', nombre:'Arroz Costeño 5kg',           cat:'Abarrotes', pv:23.00,pc:19.50,unidad:'UND', stock:0,   uds:1},
+  {id:'p4', nombre:'Gaseosa Inca Kola 1.5L',      cat:'Bebidas',   pv:7.50, pc:6.20, unidad:'UND', stock:4,   uds:6},
+  {id:'p5', nombre:'Azúcar rubia',                cat:'Abarrotes', pv:4.20, pc:3.40, unidad:'KG',  stock:18.5,uds:1},
+  {id:'p6', nombre:'Palta Hass',                  cat:'Verduras',  pv:12.90,pc:9.50, unidad:'KG',  stock:12.5,uds:1},
+  {id:'p7', nombre:'Detergente Ariel 800g',       cat:'Limpieza',  pv:15.90,pc:12.30,unidad:'UND', stock:9,   uds:12},
+  {id:'p8', nombre:'Galleta Soda Field',          cat:'Snacks',    pv:1.50, pc:1.10, unidad:'UND', stock:2,   uds:36},
+  {id:'p9', nombre:'Pan de molde Bimbo',          cat:'Panadería', pv:9.90, pc:7.80, unidad:'UND', stock:6,   uds:1},
+  {id:'p10',nombre:'Agua San Luis 625ml',         cat:'Bebidas',   pv:1.80, pc:1.20, unidad:'UND', stock:31,  uds:15}
+];
+const BAJO = 5;   // por reponer: stock en 5 o menos
+
+/* ---------- estado ---------- */
+let prods, st;
+function reset(){
+  prods = JSON.parse(JSON.stringify(SEED));
+  st = {view:'form', prov:'', doc:'', lines:[], sel:null, q:'', filtro:'todos', hi:0, creando:null, tipo:'UNIDAD', qty:'', cost:'', last:null};
+}
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const esc = t => String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money = v => 'S/ ' + (Number(v)||0).toFixed(2);
+const num = v => { const n = parseFloat(String(v).replace(',','.')); return isFinite(n) ? n : 0; };
+const fmtQ = (v,u) => (u==='KG' ? (Math.round(v*100)/100) : Math.round(v*100)/100) + (u==='KG' ? ' kg' : '');
+const emoji = c => EMO[c] || '📦';
+const prod = id => prods.find(p => p.id === id);
+const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const porReponer = () => prods.filter(p => p.stock <= BAJO);
+
+const ICO = {
+  search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>', scan:'<path d="M4 8V5a1 1 0 011-1h3M16 4h3a1 1 0 011 1v3M20 16v3a1 1 0 01-1 1h-3M8 20H5a1 1 0 01-1-1v-3M8 8v8M12 8v8M16 8v8"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>', check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12h10l1-12M9 7V4h6v3"/>', back:'<path d="M15 5l-7 7 7 7"/>',
+  truck:'<path d="M2 6h11v10H2zM13 9h4.5L21 12.5V16h-8"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',
+  warn:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.01"/>', info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/>',
+  up:'<path d="M12 19V5M6 11l6-6 6 6"/>', down:'<path d="M12 5v14M6 13l6 6 6-6"/>', box:'<path d="M3.5 8l8.5-4.5L20.5 8v8.5L12 21l-8.5-4.5z"/><path d="M3.5 8L12 12.5 20.5 8M12 12.5V21"/>'
+};
+const ic = (n,sz) => `<svg class="ic" viewBox="0 0 24 24"${sz?` style="width:${sz}px;height:${sz}px"`:''}>${ICO[n]}</svg>`;
+
+/* ---------- cálculos ---------- */
+// Una línea guarda lo que el usuario escribe: cantidad y costo "por pack" o "por unidad".
+// El stock siempre sube en unidades sueltas y el costo se guarda por unidad.
+function calcLinea(p, esPack, qty, costIn){
+  const f = esPack ? (p.uds||1) : 1;
+  const unidadesStock = qty * f;
+  const costoUnit = f ? costIn / f : costIn;
+  const subtotal = qty * costIn;
+  const delta = (p.pc > 0 && !p.nuevo) ? (costoUnit - p.pc) / p.pc : null;
+  const margen = p.pv > 0 ? (p.pv - costoUnit) / p.pv : null;
+  return {f, unidadesStock, costoUnit, subtotal, delta, margen, nuevoStock: p.stock + unidadesStock};
+}
+const lineaOk = l => l.qty > 0 && l.cost > 0;
+const totalEntrada = () => st.lines.reduce((a,l)=>a + calcLinea(prod(l.pid), l.esPack, l.qty, l.cost).subtotal, 0);
+const unidadesEntrada = () => st.lines.reduce((a,l)=>a + calcLinea(prod(l.pid), l.esPack, l.qty, l.cost).unidadesStock, 0);
+
+function deltaTag(d){
+  if (d === null) return '<span class="delta same">costo nuevo</span>';
+  const pct = Math.round(d*100);
+  if (Math.abs(d) < 0.005) return '<span class="delta same">igual que antes</span>';
+  return d > 0 ? `<span class="delta up">${ic('up',11)} ${pct}%</span>` : `<span class="delta down">${ic('down',11)} ${Math.abs(pct)}%</span>`;
+}
+function avisosCosto(p, c){
+  const out = [];
+  if (c.margen !== null && c.costoUnit >= p.pv) out.push(['bad', `El costo (${money(c.costoUnit)}) es igual o mayor que el precio de venta (${money(p.pv)}). Vas a vender a pérdida.`]);
+  else if (c.delta !== null && c.delta >= 0.10) out.push(['warn', `El costo subió ${Math.round(c.delta*100)}%. Revisa si quieres actualizar el precio de venta.`]);
+  return out;
+}
+
+/* ---------- pantalla principal ---------- */
+function render(){
+  $('#hTile').innerHTML = ic('truck',22);
+  $('#btnX').innerHTML = ic('x',18);
+  if (st.view === 'done') return renderDone();
+  $('#body').innerHTML = `
+    <div class="col add"><div class="panel fill" id="pAdd"></div></div>
+    <div class="col entry"><div class="panel fill" id="pEntry"></div></div>`;
+  renderAdd(); renderEntry(); renderFoot();
+}
+
+/* ----- izquierda: buscar / elegir / cargar cantidad ----- */
+function renderAdd(){
+  const el = $('#pAdd');
+  if (st.creando) return renderCrear(el);
+  if (st.sel) return renderComposer(el);
+  const n = porReponer().length;
+  el.innerHTML = `
+    <h2>Agregar productos</h2><p class="sub">Busca por nombre o escanea el código de barras.</p>
+    ${st.lines.length ? `<button class="jump" id="btnJump"><span>${st.lines.length} producto${st.lines.length>1?'s':''} · ${money(totalEntrada())}</span>Ver la entrada ${ic('down',14)}</button>` : ''}
+    <div class="search">${`<span class="lupa">${ic('search',18)}</span>`}<input type="text" id="q" placeholder="Ej: leche, arroz, 775…" autocomplete="off" value="${esc(st.q)}"><button class="btn-scan" id="btnScan">${ic('scan',15)} Escanear</button></div>
+    <div class="chips" id="chips">
+      <button class="chip ${st.filtro==='todos'?'on':''}" data-f="todos">Todos</button>
+      <button class="chip ${st.filtro==='bajo'?'on':''}" data-f="bajo">Por reponer <span class="n">${n}</span></button>
+    </div>
+    <div class="scroll"><div class="res" id="res"></div></div>`;
+  renderResultados();
+  const q = $('#q');
+  q.oninput = () => { st.q = q.value; st.hi = 0; renderResultados(); };
+  q.onkeydown = e => teclasBusqueda(e);
+  const bj = $('#btnJump'); if (bj) bj.onclick = () => $('#pEntry').scrollIntoView({behavior:'smooth',block:'start'});
+  $('#btnScan').onclick = () => { // en la app real abre la cámara; aquí simula leer un código
+    const p = prods[Math.floor(Math.random()*prods.length)]; elegir(p.id); toast('Código leído: ' + p.nombre);
+  };
+  $$('#chips .chip').forEach(b => b.onclick = () => { st.filtro = b.dataset.f; st.hi = 0; renderAdd(); });
+  if (!st.noFocus) q.focus(); st.noFocus = false;
+}
+function listaFiltrada(){
+  const q = norm(st.q.trim());
+  let L = prods.slice();
+  if (st.filtro === 'bajo') L = L.filter(p => p.stock <= BAJO);
+  if (q) L = L.filter(p => norm(p.nombre).includes(q) || norm(p.cat).includes(q));
+  else L.sort((a,b) => (a.stock <= BAJO ? 0 : 1) - (b.stock <= BAJO ? 0 : 1) || a.stock - b.stock || a.nombre.localeCompare(b.nombre));
+  return L;
+}
+function hilite(txt, q){
+  if (!q) return esc(txt);
+  const i = norm(txt).indexOf(norm(q)); if (i < 0) return esc(txt);
+  return esc(txt.slice(0,i)) + '<mark>' + esc(txt.slice(i, i+q.length)) + '</mark>' + esc(txt.slice(i+q.length));
+}
+function renderResultados(){
+  const q = st.q.trim(), L = listaFiltrada();
+  const stockTag = p => p.stock <= 0 ? '<span class="tag bad">Sin stock</span>' : p.stock <= BAJO ? `<span class="tag warn">Quedan ${fmtQ(p.stock,p.unidad)}</span>` : '';
+  let h = L.map((p,i) => `<button class="row ${i===st.hi?'hi':''}" data-id="${p.id}">
+      <span class="pic">${emoji(p.cat)}</span>
+      <span class="grow"><span class="nm">${hilite(p.nombre,q)}</span><span class="mt">${fmtQ(p.stock,p.unidad)} en stock · último costo ${money(p.pc)}${p.unidad==='KG'?' /kg':''}</span></span>
+      ${stockTag(p)}</button>`).join('');
+  if (q) h += `<button class="row new" id="rowNew"><span class="pic">${ic('plus',20)}</span><span class="grow"><span class="nm">Crear «${esc(q)}» como producto nuevo</span><span class="mt">Lo creas aquí mismo y sigues con la entrada</span></span></button>`;
+  if (!L.length && !q) h = `<div class="none">No hay productos por reponer. 🎉</div>`;
+  $('#res').innerHTML = h;
+  $$('#res .row[data-id]').forEach(b => b.onclick = () => elegir(b.dataset.id));
+  const rn = $('#rowNew'); if (rn) rn.onclick = () => abrirCrear(q);
+}
+function teclasBusqueda(e){
+  const L = listaFiltrada();
+  if (e.key === 'ArrowDown'){ e.preventDefault(); st.hi = Math.min(st.hi+1, L.length-1); renderResultados(); }
+  else if (e.key === 'ArrowUp'){ e.preventDefault(); st.hi = Math.max(st.hi-1, 0); renderResultados(); }
+  else if (e.key === 'Enter'){ e.preventDefault(); if (L[st.hi]) elegir(L[st.hi].id); else if (st.q.trim()) abrirCrear(st.q.trim()); }
+}
+function elegir(id){
+  const p = prod(id); st.sel = id; st.tipo = 'UNIDAD'; st.qty = ''; st.cost = p.pc > 0 ? String(p.pc) : '';
+  st.q = ''; renderAdd(); setTimeout(()=>{ const i = $('#iQty'); if (i) i.focus(); }, 0);
+}
+
+/* ----- compositor: cantidad y costo de un producto ----- */
+function renderComposer(el){
+  const p = prod(st.sel), tieneP = (p.uds||1) > 1;
+  el.innerHTML = `
+    <button class="back" id="btnBack">${ic('back',14)} Elegir otro producto</button>
+    <div class="prod"><span class="pic">${emoji(p.cat)}</span><div><h3>${esc(p.nombre)}</h3><span class="mt">${p.cat} · ${fmtQ(p.stock,p.unidad)} en stock · precio de venta ${money(p.pv)}</span></div></div>
+    <div class="scroll">
+    ${tieneP ? `<div class="field"><label class="l"><span>¿Cómo te llegó?</span></label>
+      <div class="seg" id="segTipo"><button data-t="UNIDAD" class="${st.tipo==='UNIDAD'?'on':''}">Unidades sueltas</button><button data-t="PACK" class="${st.tipo==='PACK'?'on':''}">Packs o cajas<small>de ${p.uds} unidades</small></button></div></div>` : ''}
+    <div class="two">
+      <div class="field"><label class="l"><span id="lQty"></span></label>
+        <div class="qty"><button class="stepbtn" id="qMinus" aria-label="Menos">${ic('minus',16)}</button><input type="number" id="iQty" inputmode="decimal" min="0" step="${p.unidad==='KG'?'0.1':'1'}" placeholder="0" value="${esc(st.qty)}"><button class="stepbtn" id="qPlus" aria-label="Más">${ic('plus',16)}</button></div></div>
+      <div class="field"><label class="l"><span id="lCost"></span></label>
+        <div class="money"><span>S/</span><input type="number" id="iCost" inputmode="decimal" step="0.01" min="0" placeholder="0.00" value="${esc(st.cost)}"></div></div>
+    </div>
+    <div id="alertas"></div>
+    <div class="eff" id="eff"></div>
+    </div>
+    <div class="sticky"><button class="btn pri blk" id="btnAdd" disabled>${ic('plus',16)} Añadir a la entrada</button><p class="hint" style="text-align:center;margin-top:8px">Enter también lo añade</p></div>`;
+  const iq = $('#iQty'), ic2 = $('#iCost');
+  iq.oninput = () => { st.qty = iq.value; info(); };
+  ic2.oninput = () => { st.cost = ic2.value; info(); };
+  const onEnter = e => { if (e.key === 'Enter'){ e.preventDefault(); anadir(); } };
+  iq.onkeydown = onEnter; ic2.onkeydown = onEnter;
+  $('#qMinus').onclick = () => { st.qty = String(Math.max(0, num(st.qty) - 1)); iq.value = st.qty; info(); };
+  $('#qPlus').onclick = () => { st.qty = String(Math.round((num(st.qty) + 1)*100)/100); iq.value = st.qty; info(); };
+  $('#btnBack').onclick = () => { st.sel = null; renderAdd(); };
+  $('#btnAdd').onclick = anadir;
+  const sg = $('#segTipo');
+  if (sg) $$('#segTipo button').forEach(b => b.onclick = () => {
+    const antes = st.tipo; st.tipo = b.dataset.t; if (antes === st.tipo) return;
+    // el costo que se muestra cambia de "por unidad" a "por pack" y al revés
+    const c = num(st.cost); if (c > 0) st.cost = String(Math.round((st.tipo==='PACK' ? c*p.uds : c/p.uds)*100)/100);
+    renderAdd();
+  });
+  info();
+}
+function info(){
+  const p = prod(st.sel); if (!p) return;
+  const esPack = st.tipo === 'PACK' && (p.uds||1) > 1;
+  const qty = num(st.qty), cost = num(st.cost);
+  $('#lQty').innerHTML = esPack ? 'Cantidad de packs <b>*</b>' : (p.unidad==='KG' ? 'Kilos recibidos <b>*</b>' : 'Cantidad <b>*</b>');
+  $('#lCost').innerHTML = esPack ? 'Costo por pack <b>*</b>' : (p.unidad==='KG' ? 'Costo por kilo <b>*</b>' : 'Costo por unidad <b>*</b>');
+  const c = calcLinea(p, esPack, qty, cost), listo = qty > 0 && cost > 0;
+  const rows = [];
+  if (esPack && qty > 0) rows.push(`<div class="r"><span>Equivale a</span><b>${qty} × ${p.uds} = ${fmtQ(c.unidadesStock,p.unidad)} und</b></div>`);
+  rows.push(`<div class="r"><span>Stock</span><b>${fmtQ(p.stock,p.unidad)} <i>→</i> ${listo||qty>0 ? fmtQ(c.nuevoStock,p.unidad) : '—'}</b></div>`);
+  rows.push(`<div class="r"><span>Costo${esPack?' por unidad':''}</span><b>${(p.pc>0&&!p.nuevo)?`<i style="text-decoration:line-through">${money(p.pc)}</i>`:''} ${cost>0?money(c.costoUnit):'—'} ${cost>0?deltaTag(c.delta):''}</b></div>`);
+  if (cost > 0 && c.margen !== null) rows.push(`<div class="r"><span>Ganancia al vender a ${money(p.pv)}</span><b>${money(p.pv - c.costoUnit)} <span class="delta ${c.margen<0.1?'up':'down'}" style="${c.margen>=0.1?'background:var(--ok-soft);color:var(--ok)':''}">${Math.round(c.margen*100)}%</span></b></div>`);
+  rows.push(`<div class="r"><span>Subtotal</span><b style="font-family:var(--f-head);font-size:15px">${money(c.subtotal)}</b></div>`);
+  $('#eff').innerHTML = rows.join('');
+  $('#alertas').innerHTML = cost > 0 ? avisosCosto(p, c).map(([t,m]) => `<div class="alert ${t}">${ic('warn',15)}<span>${m}</span></div>`).join('') : '';
+  $('#btnAdd').disabled = !listo;
+}
+function anadir(){
+  const p = prod(st.sel), esPack = st.tipo === 'PACK' && (p.uds||1) > 1;
+  const qty = num(st.qty), cost = num(st.cost);
+  if (!(qty > 0) || !(cost > 0)){ toast('Escribe la cantidad y el costo.'); return; }
+  const igual = st.lines.find(l => l.pid === p.id && l.esPack === esPack && l.cost === cost);
+  if (igual) igual.qty = Math.round((igual.qty + qty)*100)/100; else st.lines.push({pid:p.id, esPack, qty, cost});
+  st.last = p.id; st.sel = null; st.q = ''; st.filtro = st.filtro;
+  toast(`${p.nombre} añadido`);
+  renderAdd(); renderEntry(); renderFoot();
+}
+
+/* ----- crear un producto nuevo sin salir ----- */
+function abrirCrear(nombre){ st.creando = {nombre, cat:'Abarrotes', unidad:'UND', pc:'', pv:'', err:{}}; renderAdd(); setTimeout(()=>{ const i = $('#cNom'); if (i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length);} },0); }
+function renderCrear(el){
+  const c = st.creando;
+  el.innerHTML = `
+    <button class="back" id="btnBack">${ic('back',14)} Volver a la búsqueda</button>
+    <h2>Producto nuevo</h2><p class="sub">Solo lo esencial para seguir con la entrada. El código y los demás datos los completas luego en «Editar producto».</p>
+    <div class="scroll">
+    <div class="field"><label class="l"><span>Nombre <b>*</b></span></label><input type="text" id="cNom" value="${esc(c.nombre)}" class="${c.err.nombre?'err':''}"><p class="hint bad">${c.err.nombre||''}</p></div>
+    <div class="two">
+      <div class="field"><label class="l"><span>Categoría</span></label><select id="cCat">${CATS.map(x=>`<option ${x===c.cat?'selected':''}>${x}</option>`).join('')}</select></div>
+      <div class="field"><label class="l"><span>Se vende por</span></label><div class="seg" id="cUni"><button data-u="UND" class="${c.unidad==='UND'?'on':''}">Unidad</button><button data-u="KG" class="${c.unidad==='KG'?'on':''}">Peso (kg)</button></div></div>
+    </div>
+    <div class="two">
+      <div class="field"><label class="l"><span>Costo</span><em>${c.unidad==='KG'?'por kilo':'por unidad'}</em></label><div class="money"><span>S/</span><input type="number" id="cPc" step="0.01" min="0" placeholder="0.00" value="${esc(c.pc)}"></div></div>
+      <div class="field"><label class="l"><span>Precio de venta <b>*</b></span></label><div class="money"><span>S/</span><input type="number" id="cPv" step="0.01" min="0" placeholder="0.00" value="${esc(c.pv)}" class="${c.err.pv?'err':''}"></div><p class="hint bad">${c.err.pv||''}</p></div>
+    </div>
+    <div id="cMarg"></div>
+    </div>
+    <div class="sticky"><button class="btn pri blk" id="btnCrear">${ic('check',16)} Crear y usar en la entrada</button></div>`;
+  $('#cNom').oninput = e => { c.nombre = e.target.value; };
+  $('#cCat').onchange = e => { c.cat = e.target.value; };
+  $('#cPc').oninput = e => { c.pc = e.target.value; margenNuevo(); };
+  $('#cPv').oninput = e => { c.pv = e.target.value; margenNuevo(); };
+  $$('#cUni button').forEach(b => b.onclick = () => { c.unidad = b.dataset.u; renderAdd(); });
+  $('#btnBack').onclick = () => { st.creando = null; renderAdd(); };
+  $('#btnCrear').onclick = crear;
+  margenNuevo();
+}
+function margenNuevo(){
+  const c = st.creando, pc = num(c.pc), pv = num(c.pv), el = $('#cMarg'); if (!el) return;
+  el.innerHTML = (pc > 0 && pv > 0) ? (pv > pc ? `<div class="alert info">${ic('info',15)}<span>Ganas ${money(pv-pc)} por cada ${c.unidad==='KG'?'kilo':'unidad'} (${Math.round((pv-pc)/pv*100)}%).</span></div>` : `<div class="alert bad">${ic('warn',15)}<span>El precio de venta es menor o igual al costo.</span></div>`) : '';
+}
+function crear(){
+  const c = st.creando; c.err = {};
+  if (c.nombre.trim().length < 2) c.err.nombre = 'Escribe el nombre del producto';
+  if (!(num(c.pv) > 0)) c.err.pv = 'Pon el precio de venta';
+  if (Object.keys(c.err).length){ renderAdd(); return; }
+  const id = 'n' + (prods.length + 1);
+  prods.push({id, nombre:c.nombre.trim(), cat:c.cat, pv:num(c.pv), pc:num(c.pc), unidad:c.unidad, stock:0, uds:1, nuevo:true});
+  st.creando = null; toast(`«${c.nombre.trim()}» creado`); elegir(id);
+}
+
+/* ----- derecha: la entrada (proveedor, líneas, total) ----- */
+function renderEntry(){
+  const el = $('#pEntry'); if (!el) return;
+  const nL = st.lines.length;
+  const sugeridos = PROVS.filter(x => norm(x).includes(norm(st.prov)) && norm(x) !== norm(st.prov));
+  el.innerHTML = `
+    <h2>La entrada</h2><p class="sub">${nL ? `${nL} producto${nL>1?'s':''} para recibir` : 'Aquí verás lo que vas anotando.'}</p>
+    <div class="two prov">
+      <div><label class="l"><span>Proveedor</span><em>opcional</em></label><input type="text" id="iProv" placeholder="Ej: Distribuidora Andina" value="${esc(st.prov)}" autocomplete="off"></div>
+      <div><label class="l"><span>N° factura o guía</span><em>opcional</em></label><input type="text" id="iDoc" placeholder="F001-0234" value="${esc(st.doc)}" autocomplete="off"></div>
+    </div>
+    <div class="chips" id="provChips" style="margin:-4px 0 12px">${sugeridos.slice(0,3).map(x=>`<button class="chip" data-p="${esc(x)}" style="padding:4px 11px;font-size:12px">${esc(x)}</button>`).join('')}</div>
+    <div class="hr"></div>
+    <div class="scroll" id="lineScroll">${nL ? `<div class="lines">${st.lines.map(lineaHTML).join('')}</div>` : `<div class="empty"><div class="big">${ic('box',28)}</div><b>Todavía no hay productos</b>Busca uno a la izquierda, pon cuánto llegó y a qué costo.</div>`}</div>
+    <div class="total"><div class="a"><span>Total de la compra</span><strong>${money(totalEntrada())}</strong></div>
+      <div class="b">${nL ? `${nL} producto${nL>1?'s':''} · ${fmtQ(unidadesEntrada(),'UND').replace(' kg','')} unidades en total` : 'S/ 0.00 hasta que añadas productos'}</div></div>`;
+  const ip = $('#iProv'), idoc = $('#iDoc');
+  ip.oninput = () => { st.prov = ip.value; renderProvChips(); };
+  idoc.oninput = () => { st.doc = idoc.value; };
+  $$('#provChips .chip').forEach(b => b.onclick = () => { st.prov = b.dataset.p; renderEntry(); });
+  $$('#pEntry .line').forEach(li => {
+    const i = +li.dataset.i, L = st.lines[i];
+    const q = li.querySelector('.in-q'), c = li.querySelector('.in-c');
+    q.onchange = () => { L.qty = Math.max(0, num(q.value)); renderEntry(); renderFoot(); };
+    c.onchange = () => { L.cost = Math.max(0, num(c.value)); renderEntry(); renderFoot(); };
+    li.querySelector('.rm').onclick = () => quitar(i);
+  });
+  if (st.last){ const li = $$('#pEntry .line').pop(); if (li) li.scrollIntoView({block:'nearest'}); st.last = null; }
+}
+function renderProvChips(){
+  const sugeridos = PROVS.filter(x => norm(x).includes(norm(st.prov)) && norm(x) !== norm(st.prov));
+  const box = $('#provChips'); if (!box) return;
+  box.innerHTML = sugeridos.slice(0,3).map(x=>`<button class="chip" data-p="${esc(x)}" style="padding:4px 11px;font-size:12px">${esc(x)}</button>`).join('');
+  $$('#provChips .chip').forEach(b => b.onclick = () => { st.prov = b.dataset.p; renderEntry(); });
+}
+function lineaHTML(l,i){
+  const p = prod(l.pid), c = calcLinea(p, l.esPack, l.qty, l.cost), av = avisosCosto(p, c);
+  const invalida = !lineaOk(l);
+  const cls = invalida || av.some(a=>a[0]==='bad') ? 'bad' : av.length ? 'flag' : '';
+  const uq = l.esPack ? 'packs' : (p.unidad==='KG' ? 'kg' : 'und');
+  return `<div class="line ${cls}" data-i="${i}">
+    <div class="top"><span class="pic">${emoji(p.cat)}</span><span class="nm">${esc(p.nombre)}</span><button class="rm" title="Quitar esta línea" aria-label="Quitar">${ic('trash',16)}</button></div>
+    <div class="ed">
+      <div class="cell q"><input type="number" class="in-q" min="0" step="${p.unidad==='KG'?'0.1':'1'}" value="${l.qty}" aria-label="Cantidad"><u>${uq}</u></div>
+      <div class="cell m"><span>S/</span><input type="number" class="in-c" min="0" step="0.01" value="${l.cost}" aria-label="Costo ${l.esPack?'por pack':'por unidad'}"><u>${l.esPack?'x pack':(p.unidad==='KG'?'x kg':'x und')}</u></div>
+      <span class="lsub">${money(c.subtotal)}</span>
+    </div>
+    <div class="meta">${l.esPack ? `<span>= <b>${fmtQ(c.unidadesStock,p.unidad)}${p.unidad==='KG'?'':' und'}</b></span><span>·</span>` : ''}<span>Stock <b>${fmtQ(p.stock,p.unidad)}</b> → <b>${fmtQ(c.nuevoStock,p.unidad)}</b></span>${l.cost>0?deltaTag(c.delta):''}</div>
+    ${invalida ? `<div class="meta" style="color:var(--bad);font-weight:600">Pon una cantidad y un costo mayores a 0.</div>` : av.map(([t,m])=>`<div class="meta" style="color:${t==='bad'?'var(--bad)':'var(--warn)'};font-weight:600;align-items:flex-start">${ic('warn',13)}<span>${m}</span></div>`).join('')}
+  </div>`;
+}
+function quitar(i){
+  const L = st.lines.splice(i,1)[0]; const p = prod(L.pid);
+  renderEntry(); renderFoot();
+  toast(`Quitaste ${p.nombre}`);
+}
+
+/* ----- pie y confirmaciones ----- */
+function renderFoot(){
+  const nL = st.lines.length, bad = st.lines.some(l => !lineaOk(l));
+  const sucio = nL > 0 || st.prov || st.doc;
+  $('#foot').innerHTML = `
+    <button class="btn gho" id="fCerrar">Cancelar</button>
+    <span class="sp"></span>
+    <span class="need ${nL?'dirty':''}" id="fNeed">${nL ? `${nL} producto${nL>1?'s':''} · ${money(totalEntrada())}` : 'Añade al menos un producto para confirmar'}</span>
+    <button class="btn pri" id="fOk" ${(!nL||bad)?'disabled':''}>${ic('check',16)} Confirmar<span class="lg">&nbsp;entrada</span>${nL?'&nbsp;· '+money(totalEntrada()):''}</button>`;
+  $('#fCerrar').onclick = cerrar;
+  $('#fOk').onclick = confirmar;
+  $('#btnX').onclick = cerrar;
+}
+function cerrar(){
+  if (st.view === 'done') return reiniciarVista();
+  const sucio = st.lines.length > 0 || st.prov || st.doc;
+  if (!sucio){ toast('Se cerraría el módulo.'); return; }
+  const o = $('#ov'); o.hidden = false;
+  o.innerHTML = `<div class="dlg"><div class="ico">${ic('warn',22)}</div><h3>¿Descartar esta entrada?</h3><p>Anotaste ${st.lines.length} producto${st.lines.length===1?'':'s'} que todavía no se confirmaron. Si sales ahora, se pierden.</p>
+    <div class="acts"><button class="btn sec" id="dKeep">Seguir con la entrada</button><button class="btn red" id="dDrop">Descartar</button></div></div>`;
+  $('#dKeep').onclick = () => { o.hidden = true; };
+  $('#dDrop').onclick = () => { o.hidden = true; reset(); render(); toast('Entrada descartada'); };
+}
+function confirmar(){
+  if (!st.lines.length) return;
+  const o = $('#ov'); o.hidden = false;
+  const subidas = st.lines.filter(l => { const p = prod(l.pid), c = calcLinea(p,l.esPack,l.qty,l.cost); return c.delta !== null && c.delta >= 0.10; }).length;
+  o.innerHTML = `<div class="dlg"><div class="ico" style="background:var(--p-soft);color:var(--p)">${ic('truck',22)}</div><h3>¿Confirmar la entrada?</h3>
+    <p>Se sumarán <b>${fmtQ(unidadesEntrada(),'UND').replace(' kg','')} unidades</b> al stock de ${st.lines.length} producto${st.lines.length>1?'s':''} y se guardará el costo nuevo. Total de la compra: <b>${money(totalEntrada())}</b>.${subidas?` ${subidas} producto${subidas>1?'s':''} subió de costo más de 10%.`:''}</p>
+    <div class="acts"><button class="btn gho" id="dBack">Revisar</button><button class="btn pri" id="dGo">${ic('check',16)} Sí, confirmar</button></div></div>`;
+  $('#dBack').onclick = () => { o.hidden = true; };
+  $('#dGo').onclick = () => {
+    o.hidden = true;
+    st.resumen = {prov:st.prov.trim(), doc:st.doc.trim(), n:st.lines.length, und:unidadesEntrada(), total:totalEntrada(),
+      subidas, items: st.lines.map(l => { const p = prod(l.pid); return {n:p.nombre, antes:p.stock, desp:calcLinea(p,l.esPack,l.qty,l.cost).nuevoStock, u:p.unidad}; })};
+    // en la app real aquí se guarda la compra y se ajusta el stock de cada producto
+    st.lines.forEach(l => { const p = prod(l.pid), c = calcLinea(p,l.esPack,l.qty,l.cost); p.stock = c.nuevoStock; p.pc = Math.round(c.costoUnit*10000)/10000; });
+    st.view = 'done'; render();
+  };
+}
+function renderDone(){
+  const r = st.resumen;
+  $('#body').innerHTML = `<div class="fin"><div class="box"><div class="big">${ic('check',40)}</div>
+    <h2>Entrada registrada</h2><p>El stock y los costos ya están al día.</p>
+    <div class="sum">
+      <div class="r"><span>Proveedor</span><b>${esc(r.prov || 'Sin proveedor')}</b></div>
+      <div class="r"><span>Comprobante</span><b>${esc(r.doc || 'Se asignó uno automático')}</b></div>
+      <div class="r"><span>Productos</span><b>${r.n} · ${fmtQ(r.und,'UND').replace(' kg','')} unidades</b></div>
+      <div class="r"><span>Total de la compra</span><b style="font-family:var(--f-head);font-size:16px">${money(r.total)}</b></div>
+    </div>
+    <details style="text-align:left;margin-bottom:16px"><summary style="cursor:pointer;font-size:12.5px;font-weight:700;color:var(--p-dark);padding:4px 2px">Ver cómo quedó el stock</summary>
+      <div class="sum" style="margin:8px 0 0">${r.items.map(i=>`<div class="r"><span>${esc(i.n)}</span><b>${fmtQ(i.antes,i.u)} → ${fmtQ(i.desp,i.u)}</b></div>`).join('')}</div></details>
+    <div class="acts"><button class="btn sec" id="bOtra">${ic('plus',16)} Registrar otra entrada</button><button class="btn pri" id="bCerrar">Listo</button></div></div></div>`;
+  $('#foot').innerHTML = '';
+  $('#bOtra').onclick = reiniciarVista;
+  $('#bCerrar').onclick = () => toast('Se cerraría el módulo.');
+  $('#btnX').onclick = () => toast('Se cerraría el módulo.');
+}
+function reiniciarVista(){ const p = prods; reset(); prods = p; render(); }
+
+let tT;
+function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tT); tT = setTimeout(()=>t.classList.remove('on'), 2200); }
+
+/* ---------- barra de la maqueta ---------- */
+$$('#tgView button').forEach(b => b.onclick = () => {
+  $$('#tgView button').forEach(x => x.classList.toggle('on', x === b));
+  $('#stage').classList.toggle('mobile', b.dataset.v === 'mobile');
+});
+$('#btnReset').onclick = () => { reset(); render(); };
+$('#btnDemo').onclick = () => {
+  reset(); st.prov = 'Distribuidora Andina'; st.doc = 'F001-0234';
+  st.lines = [{pid:'p1', esPack:true, qty:4, cost:96}, {pid:'p3', esPack:false, qty:20, cost:21.5}, {pid:'p5', esPack:false, qty:25, cost:3.4}];
+  render();
+};
+reset(); render();
+</script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Maqueta escáner del POS</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#eeebf5;color:#1c1830;font-family:'Inter',system-ui,sans-serif;padding:32px 20px 70px}
+  h1{font-size:20px;margin:0 0 4px;letter-spacing:-.01em}
+  .sub{margin:0 0 26px;color:#6b6585;font-size:14px;max-width:74ch;line-height:1.5}
+  .fila{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+  .col{display:flex;flex-direction:column;gap:10px;flex:none}
+  .etq{font-size:13px;font-weight:600;color:#4d04b0;display:flex;flex-direction:column;gap:2px}
+  .etq small{font-weight:500;color:#8a84a3;font-size:12px}
+
+  /* teléfono */
+  .tel{position:relative;flex:none;width:290px;height:600px;border-radius:36px;border:7px solid #1c1830;overflow:hidden;background:#0c0912;box-shadow:0 22px 50px -20px rgba(60,4,150,.55)}
+  .pc{position:relative;width:760px;max-width:100%;height:470px;border-radius:18px;overflow:hidden;background:#0c0912;box-shadow:0 22px 50px -20px rgba(60,4,150,.55);display:flex}
+
+  /* "cámara": estantería desenfocada */
+  .cam{position:absolute;inset:0;background:
+      radial-gradient(40% 30% at 20% 22%,#5b4a78 0,transparent 70%),
+      radial-gradient(35% 28% at 82% 30%,#7a5f4a 0,transparent 70%),
+      radial-gradient(50% 30% at 50% 78%,#3d4f6b 0,transparent 70%),
+      linear-gradient(160deg,#2b2538,#171320);filter:blur(10px) saturate(1.1);transform:scale(1.15)}
+  .cam::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 14px,transparent 14px 40px)}
+
+  /* visor */
+  .visor{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);width:80%;aspect-ratio:1.55/1;border-radius:26px;box-shadow:0 0 0 9999px rgba(12,9,20,.62);pointer-events:none}
+  .pc .visor{top:50%;width:62%;max-width:360px}
+  .esq{position:absolute;width:40px;height:40px;border:4px solid #fff;transition:border-color .2s;filter:drop-shadow(0 0 8px rgba(160,100,255,.55))}
+  .esq.a{left:-2px;top:-2px;border-right:0;border-bottom:0;border-top-left-radius:24px}
+  .esq.b{right:-2px;top:-2px;border-left:0;border-bottom:0;border-top-right-radius:24px}
+  .esq.c{left:-2px;bottom:-2px;border-right:0;border-top:0;border-bottom-left-radius:24px}
+  .esq.d{right:-2px;bottom:-2px;border-left:0;border-top:0;border-bottom-right-radius:24px}
+  .ok .esq{border-color:#3ddc97;filter:drop-shadow(0 0 10px rgba(61,220,151,.7))}
+  .ok .visor,.visor.ok{background:rgba(61,220,151,.1)}
+  .barras{position:absolute;left:14%;right:14%;top:50%;transform:translateY(-50%);height:46%;opacity:.9}
+  .haz{position:absolute;left:10px;right:10px;top:0;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,#c9a2ff 20%,#fff 50%,#c9a2ff 80%,transparent);box-shadow:0 0 16px 4px rgba(150,80,255,.65);animation:haz 2.2s ease-in-out infinite}
+  .haz::after{content:'';position:absolute;left:0;right:0;top:2px;height:46px;background:linear-gradient(180deg,rgba(150,80,255,.28),transparent)}
+  @keyframes haz{0%,100%{top:8%}50%{top:90%}}
+  .ok .haz{display:none}
+  .guia{position:absolute;left:0;right:0;bottom:-38px;text-align:center;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.85);text-shadow:0 1px 8px rgba(0,0,0,.6)}
+
+  /* barra superior */
+  .top{position:absolute;left:14px;right:14px;top:14px;display:flex;align-items:center;gap:10px;color:#fff;z-index:3}
+  .top .t{flex:1;min-width:0}
+  .top .t b{display:block;font-size:16px;letter-spacing:-.01em}
+  .top .t span{font-size:12px;color:rgba(255,255,255,.7)}
+  .cir{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.14);backdrop-filter:blur(12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);display:grid;place-items:center;color:#fff;flex:none}
+  .cir svg{width:18px;height:18px}
+
+  /* aviso de lectura */
+  .leido{position:absolute;left:50%;top:calc(38% - 120px);transform:translateX(-50%);display:flex;align-items:center;gap:9px;background:#fff;color:#1c1830;border-radius:999px;padding:7px 14px 7px 8px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 12px 30px -10px rgba(0,0,0,.6);animation:pop .5s cubic-bezier(.2,1.4,.3,1) both;z-index:3}
+  .leido i{width:24px;height:24px;border-radius:50%;background:#22b573;display:grid;place-items:center;font-style:normal}
+  .leido i svg{width:14px;height:14px;color:#fff}
+  .leido em{font-style:normal;color:#6105dc;font-variant-numeric:tabular-nums}
+  @keyframes pop{from{transform:translateX(-50%) translateY(10px) scale(.8);opacity:0}}
+
+  /* hoja inferior */
+  .hoja{position:absolute;left:10px;right:10px;bottom:10px;border-radius:28px;z-index:3}
+  .hoja.vidrio{background:rgba(255,255,255,.14);backdrop-filter:blur(20px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);padding:14px 16px;color:#fff;text-align:center;font-size:13.5px;font-weight:500}
+  .hoja.vidrio small{display:block;color:rgba(255,255,255,.65);font-size:12px;margin-top:2px;font-weight:400}
+  .hoja.oscura{background:rgba(20,15,32,.92);backdrop-filter:blur(20px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);padding:8px 14px 14px;color:#fff}
+  .asa{width:36px;height:4px;border-radius:9px;background:rgba(255,255,255,.25);margin:0 auto 10px}
+  .cab{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;color:rgba(255,255,255,.65);margin-bottom:4px}
+  .cab b{color:#fff;font-size:12.5px;background:rgba(255,255,255,.12);border-radius:99px;padding:3px 10px}
+  .it{display:flex;align-items:center;gap:10px;padding:8px 0}
+  .it+.it{border-top:1px solid rgba(255,255,255,.09)}
+  .ft{width:38px;height:38px;border-radius:11px;background:#fff;display:grid;place-items:center;font-size:19px;flex:none}
+  .it:first-of-type .ft{box-shadow:0 0 0 2px #3ddc97}
+  .nm{flex:1;min-width:0;font-size:13.5px;font-weight:600;line-height:1.2}
+  .nm small{display:block;font-size:11.5px;color:rgba(255,255,255,.6);font-weight:500;margin-top:1px}
+  .step{display:flex;align-items:center;background:rgba(255,255,255,.12);border-radius:99px;flex:none}
+  .step button{width:28px;height:28px;border:0;background:none;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+  .step span{min-width:18px;text-align:center;font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums}
+  .sub-t{width:50px;text-align:right;font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;flex:none}
+  .cta{margin-top:8px;width:100%;height:52px;border:0;border-radius:99px;background:#fff;color:#4d04b0;display:flex;justify-content:space-between;align-items:center;padding:0 6px 0 18px;font:700 14px 'Inter',sans-serif;cursor:pointer;white-space:nowrap}
+  .cta span{white-space:nowrap;background:linear-gradient(135deg,#7a2cf0,#5503c4);color:#fff;border-radius:99px;padding:10px 16px;font-size:14px;font-variant-numeric:tabular-nums;box-shadow:0 8px 18px -8px rgba(97,5,220,.8)}
+
+  /* error */
+  .err{position:absolute;inset:0;background:radial-gradient(90% 60% at 50% 0,#2b1a52,#0c0912 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;color:#fff;z-index:2}
+  .err .ic{width:70px;height:70px;border-radius:24px;background:rgba(244,63,94,.16);color:#fb7185;display:grid;place-items:center;margin-bottom:16px;box-shadow:inset 0 0 0 1px rgba(251,113,133,.25)}
+  .err .ic svg{width:30px;height:30px}
+  .err b{font-size:17px;margin-bottom:6px}
+  .err p{margin:0 0 18px;font-size:13.5px;line-height:1.45;color:rgba(255,255,255,.7);max-width:240px}
+  .err .b1{height:46px;padding:0 26px;border-radius:99px;border:0;background:#fff;color:#4d04b0;font:700 14px 'Inter',sans-serif}
+  .err .b2{margin-top:10px;background:none;border:0;color:rgba(255,255,255,.7);font:600 13px 'Inter',sans-serif}
+
+  /* escritorio: cámara + panel lateral */
+  .pc .izq{position:relative;flex:1;min-width:0;overflow:hidden}
+  .pc .der{position:relative;z-index:2;width:280px;background:#fff;color:#1c1830;padding:16px;display:flex;flex-direction:column}
+  .pc .der h3{margin:0;font-size:15px}
+  .pc .der .sb{font-size:12px;color:#8a84a3;margin:2px 0 12px}
+  .pc .der .fila2{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #f0edf6}
+  .pc .der .ft{background:#f5f1fc}
+  .pc .der .nm small{color:#8a84a3}
+  .pc .der .step{background:#f3f1f8}
+  .pc .der .step button{color:#1c1830}
+  .pc .der .cta{background:linear-gradient(135deg,#7a2cf0,#5503c4);color:#fff;margin-top:auto}
+  .pc .der .cta span{white-space:nowrap;background:rgba(255,255,255,.2);box-shadow:none}
+    .sel{display:flex;gap:6px;margin-top:2px}
+  .sel i{font-style:normal;font-size:11.5px;font-weight:600;border-radius:99px;padding:4px 10px;background:rgba(255,255,255,.14);color:#fff}
+</style>
+</head>
+<body>
+
+<h1>Escáner con cámara</h1>
+<p class="sub">Mismo flujo de hoy (apuntar, leer, ir armando la venta), con acabado premium: haz de luz violeta con estela, esquinas que brillan, un aviso que confirma qué producto se leyó, y una hoja inferior más limpia con el total en una pastilla. En computador la cámara comparte pantalla con la venta en curso.</p>
+
+<div class="fila">
+
+  <!-- 1. Esperando -->
+  <div class="col"><div class="etq">1 · Esperando<small>al abrir, sin nada escaneado</small></div>
+    <div class="tel">
+      <div class="cam"></div>
+      <div class="top"><div class="t"><b>Escanear código</b><span>Apunta al código de barras</span></div>
+        <div class="cir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14-4l-2 2M4 13a8 8 0 0 0 14 4l2-2"/><path d="M4 4v5h5M20 20v-5h-5"/></svg></div>
+        <div class="cir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></div></div>
+      <div class="visor"><i class="esq a"></i><i class="esq b"></i><i class="esq c"></i><i class="esq d"></i><svg class="barras" data-barras viewBox="0 0 200 60" preserveAspectRatio="none"></svg><span class="haz"></span><div class="guia">Centra el código dentro del recuadro</div></div>
+      <div class="hoja vidrio">Cada producto que leas se suma a la venta<small>Puedes seguir escaneando uno tras otro</small></div>
+    </div>
+  </div>
+
+  <!-- 2. Leyendo -->
+  <div class="col"><div class="etq">2 · Leído<small>esquinas verdes y aviso con el producto</small></div>
+    <div class="tel ok">
+      <div class="cam"></div>
+      <div class="top"><div class="t"><b>Escanear código</b><span>Apunta al código de barras</span></div>
+        <div class="cir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14-4l-2 2M4 13a8 8 0 0 0 14 4l2-2"/><path d="M4 4v5h5M20 20v-5h-5"/></svg></div>
+        <div class="cir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></div></div>
+      <div class="leido"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i>Coca Cola 500 ml <em>×2</em></div>
+      <div class="visor ok"><i class="esq a"></i><i class="esq b"></i><i class="esq c"></i><i class="esq d"></i><svg class="barras" data-barras viewBox="0 0 200 60" preserveAspectRatio="none"></svg></div>
+      <div class="hoja oscura">
+        <div class="asa"></div>
+        <div class="cab"><span>Escaneado ahora</span><b>1 producto</b></div>
+        <div class="it"><div class="ft">🥤</div><div class="nm">Coca Cola 500 ml<small>S/ 3.50 c/u</small></div><div class="step"><button>−</button><span>2</span><button>+</button></div></div>
+        <button class="cta">Listo · ver venta<span>S/ 7.00</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Con varios -->
+  <div class="col"><div class="etq">3 · Venta en curso<small>los últimos 3, con cantidades y total</small></div>
+    <div class="tel">
+      <div class="cam"></div>
+      <div class="top"><div class="t"><b>Escanear código</b><span>Apunta al código de barras</span></div>
+        <div class="cir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14-4l-2 2M4 13a8 8 0 0 0 14 4l2-2"/><path d="M4 4v5h5M20 20v-5h-5"/></svg></div>
+        <div class="cir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></div></div>
+      <div class="visor" style="top:25%;width:66%"><i class="esq a"></i><i class="esq b"></i><i class="esq c"></i><i class="esq d"></i><span class="haz"></span></div>
+      <div class="hoja oscura">
+        <div class="asa"></div>
+        <div class="cab"><span>Escaneado ahora</span><b>5 productos</b></div>
+        <div class="it"><div class="ft">🥤</div><div class="nm">Coca Cola 500 ml<small>S/ 3.50 c/u</small></div><div class="step"><button>−</button><span>2</span><button>+</button></div></div>
+        <div class="it"><div class="ft">🍪</div><div class="nm">Galleta Soda Field<small>S/ 1.20 c/u</small></div><div class="step"><button>−</button><span>3</span><button>+</button></div></div>
+        <div class="it"><div class="ft">🥛</div><div class="nm">Leche Gloria 400 g<small>S/ 4.90 c/u</small></div><div class="step"><button>−</button><span>1</span><button>+</button></div></div>
+        <button class="cta">Listo · ver venta<span>S/ 15.50</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Sin cámara -->
+  <div class="col"><div class="etq">4 · Sin permiso de cámara<small>explica qué hacer y deja salida</small></div>
+    <div class="tel">
+      <div class="top"><div class="t"><b>Escanear código</b></div>
+        <div class="cir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></div></div>
+      <div class="err">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.5 6H14l1.5 2H18a2 2 0 0 1 2 2v6M6 6.5A2 2 0 0 0 4 8.5V16a2 2 0 0 0 2 2h10"/><circle cx="12" cy="12.5" r="2.6"/></svg></div>
+        <b>No se pudo abrir la cámara</b>
+        <p>Permite el acceso a la cámara en tu navegador y vuelve a intentarlo.</p>
+        <button class="b1">Reintentar</button>
+        <button class="b2">Buscar escribiendo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="col" style="margin-top:34px"><div class="etq">En computador<small>la cámara a la izquierda y la venta en curso a la derecha, sin tapar el catálogo del todo</small></div>
+  <div class="pc ok">
+    <div class="izq">
+      <div class="cam"></div>
+      <div class="top"><div class="t"><b>Escanear código</b><span>Apunta al código de barras</span></div>
+        <div class="cir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14-4l-2 2M4 13a8 8 0 0 0 14 4l2-2"/><path d="M4 4v5h5M20 20v-5h-5"/></svg></div></div>
+      <div class="leido" style="top:56px"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i>Galleta Soda Field <em>×3</em></div>
+      <div class="visor ok"><i class="esq a"></i><i class="esq b"></i><i class="esq c"></i><i class="esq d"></i><svg class="barras" data-barras viewBox="0 0 200 60" preserveAspectRatio="none"></svg></div>
+    </div>
+    <div class="der">
+      <h3>Venta en curso</h3><div class="sb">5 productos</div>
+      <div class="fila2"><div class="ft">🥤</div><div class="nm">Coca Cola 500 ml<small>S/ 3.50</small></div><div class="step"><button>−</button><span>2</span><button>+</button></div></div>
+      <div class="fila2"><div class="ft">🍪</div><div class="nm">Galleta Soda Field<small>S/ 1.20</small></div><div class="step"><button>−</button><span>3</span><button>+</button></div></div>
+      <div class="fila2"><div class="ft">🥛</div><div class="nm">Leche Gloria 400 g<small>S/ 4.90</small></div><div class="step"><button>−</button><span>1</span><button>+</button></div></div>
+      <button class="cta">Listo · ver venta<span>S/ 15.50</span></button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // código de barras ilustrativo
+  const anchos=[2,1,3,1,1,2,3,1,2,1,1,3,2,1,2,2,1,3,1,2,1,1,2,3,1,1,2,1,3,2,1,2];
+  document.querySelectorAll('[data-barras]').forEach(svg=>{
+    let x=4,h='';anchos.forEach((w,i)=>{if(i%2===0)h+=`<rect x="${x}" y="2" width="${w*1.9}" height="56" fill="#fff" opacity=".92"/>`;x+=w*1.9+.4});
+    svg.innerHTML=h;
+  });
+</script>
+</body>
+</html>

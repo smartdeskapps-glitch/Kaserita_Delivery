@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kaserita Barbería - maqueta</title>
+<style>
+  :root{--p:#4d04b0;--pl:#ece0fd;--ink:#1c1917;--mut:#78716c;--line:#e7e5e4;--bg:#fafaf9;--ok:#059669}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.4 system-ui,Segoe UI,sans-serif;color:var(--ink);background:var(--bg)}
+  .top{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line)}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{border:0;background:#fff;padding:8px 14px;font:inherit;cursor:pointer}
+  .seg button.on{background:var(--p);color:#fff}
+  .note{font-size:12px;color:var(--mut)}
+  .app{display:grid;grid-template-columns:210px 1fr 320px;gap:0;min-height:calc(100vh - 56px)}
+  nav{background:#fff;border-right:1px solid var(--line);padding:14px 10px}
+  nav .brand{font-weight:800;color:var(--p);padding:4px 10px 12px}
+  nav a{display:block;padding:9px 10px;border-radius:8px;color:var(--ink);margin-bottom:2px}
+  nav a.act{background:var(--pl);color:var(--p);font-weight:600}
+  nav a.off{display:none}
+  main{padding:16px}
+  h2{margin:0 0 4px;font-size:18px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 14px}
+  .chip{padding:5px 12px;border-radius:99px;background:#fff;border:1px solid var(--line);font-size:13px}
+  .chip.on{background:var(--p);color:#fff;border-color:var(--p)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer}
+  .card:hover{border-color:var(--p)}
+  .card .ic{font-size:26px}
+  .card b{display:block;margin-top:6px}
+  .card .pr{color:var(--p);font-weight:700}
+  .card .tag{font-size:11px;color:var(--mut)}
+  .tag.low{color:#b45309}
+  aside{background:#fff;border-left:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px}
+  .line{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line)}
+  .line small{display:block;color:var(--mut)}
+  label{font-size:12px;color:var(--mut);display:block;margin-bottom:4px}
+  select,button.cta{width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:#fff}
+  button.cta{background:var(--p);color:#fff;border-color:var(--p);font-weight:700;cursor:pointer;margin-top:auto}
+  .tot{display:flex;justify-content:space-between;font-size:18px;font-weight:800}
+  .pay{display:flex;gap:6px}.pay span{flex:1;text-align:center;padding:7px;border:1px solid var(--line);border-radius:8px;font-size:13px}
+  .pay span.on{border-color:var(--p);background:var(--pl);color:var(--p)}
+  .bar{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+  .bar h3{margin:0 0 8px;font-size:14px}
+  .row{display:grid;grid-template-columns:90px 1fr 70px;gap:8px;align-items:center;padding:4px 0;font-size:13px}
+  .trk{height:8px;background:var(--pl);border-radius:6px;overflow:hidden}.trk i{display:block;height:100%;background:var(--p)}
+  .diff{margin:16px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:12px;font-size:13px}
+  .diff ul{margin:6px 0 0;padding-left:18px}
+  @media(max-width:900px){.app{grid-template-columns:1fr}nav{display:flex;gap:4px;overflow:auto;border-right:0;border-bottom:1px solid var(--line)}nav .brand{display:none}nav a{white-space:nowrap}aside{border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="top">
+  <div><b>Maqueta paso 1</b> <span class="note">no es la app real: muestra cómo se vería la cuenta</span></div>
+  <div class="seg" id="seg"><button data-m="bodega">Cuenta bodega (hoy)</button><button data-m="barberia" class="on">Cuenta barbería (nuevo)</button></div>
+</div>
+
+<div class="app">
+  <nav>
+    <div class="brand" id="brand">Kaserita</div>
+    <a class="act" id="n-venta">Nueva venta</a>
+    <a id="n-prod">Productos</a>
+    <a id="n-clientes">Clientes</a>
+    <a id="n-emp">Empleados</a>
+    <a id="n-combos">Combos</a>
+    <a data-b="1">Compras</a>
+    <a data-b="1">Proveedores</a>
+    <a data-b="1">Toma de inventario</a>
+    <a>Caja y turnos</a>
+    <a>Resumen</a>
+    <a id="n-deli">Tienda online</a>
+  </nav>
+
+  <main>
+    <h2 id="h">Servicios y productos</h2>
+    <div class="note" id="sub">Toca un servicio para agregarlo al cobro.</div>
+    <div class="chips" id="chips"></div>
+    <div class="grid" id="grid"></div>
+
+    <div class="bar" id="rep">
+      <h3>Hoy por barbero</h3>
+      <div class="row"><span>Carlos</span><div class="trk"><i style="width:82%"></i></div><b>S/ 164</b></div>
+      <div class="row"><span>Miguel</span><div class="trk"><i style="width:60%"></i></div><b>S/ 120</b></div>
+      <div class="row"><span>Josué</span><div class="trk"><i style="width:35%"></i></div><b>S/ 70</b></div>
+      <div class="note">Este reporte es del paso 2 (comisión). Aquí solo se anota quién hizo cada servicio.</div>
+    </div>
+  </main>
+
+  <aside>
+    <b>Cobro actual</b>
+    <div id="lines"></div>
+    <div id="barberWrap">
+      <label>Barbero que atendió</label>
+      <select id="barber"><option>Carlos</option><option>Miguel</option><option>Josué</option></select>
+    </div>
+    <div class="pay"><span class="on">Efectivo</span><span>Yape</span><span>Plin</span></div>
+    <div class="tot"><span>Total</span><span id="tot">S/ 0.00</span></div>
+    <button class="cta" id="cta">Cobrar</button>
+  </aside>
+</div>
+
+<div class="diff" id="diff"></div>
+
+<script>
+const DATA={
+ barberia:{brand:"Kaserita Barbería",h:"Servicios y productos",sub:"Toca un servicio para agregarlo al cobro.",
+  chips:["Todos","Cortes","Barba","Combos","Productos"],
+  items:[["✂️","Corte clásico",15,"Servicio"],["💈","Corte fade",20,"Servicio"],["🧔","Perfilado de barba",10,"Servicio"],["🧴","Corte + barba",28,"Combo"],["👦","Corte niño",12,"Servicio"],["🎨","Tinte",35,"Servicio"],["🧼","Shampoo anticaspa",18,"Quedan 6"],["🪒","Pomada mate",25,"Quedan 2"]],
+  emp:"Barberos",venta:"Nuevo cobro",prod:"Servicios y productos",showBarber:true,showRep:true,
+  deli:"Reservas y tienda online",cta:"Cobrar servicio"},
+ bodega:{brand:"Kaserita",h:"Productos",sub:"Escanea o busca un producto.",
+  chips:["Todos","Abarrotes","Bebidas","Lácteos","Limpieza"],
+  items:[["🥛","Leche Gloria 400g",4.2,"Quedan 36"],["🍚","Arroz Costeño 5kg",23.5,"Quedan 15"],["🥤","Coca Cola 500ml",3.5,"Quedan 48"],["🍞","Pan francés",0.4,"Quedan 80"],["🧴","Detergente Ariel",15.5,"Quedan 14"],["🥚","Huevos x30",19,"Quedan 8"]],
+  emp:"Empleados",venta:"Nueva venta",prod:"Productos",showBarber:false,showRep:false,
+  deli:"Tienda online",cta:"Cobrar"}
+};
+let mode="barberia", cart=[];
+const $=id=>document.getElementById(id);
+function render(){
+  const d=DATA[mode]; cart=[];
+  $("brand").textContent=d.brand; $("h").textContent=d.h; $("sub").textContent=d.sub;
+  $("n-venta").textContent=d.venta; $("n-prod").textContent=d.prod; $("n-emp").textContent=d.emp; $("n-deli").textContent=d.deli;
+  $("n-combos").style.display=mode==="barberia"?"none":"";
+  document.querySelectorAll("nav a[data-b]").forEach(a=>a.classList.toggle("off",mode==="barberia"));
+  $("chips").innerHTML=d.chips.map((c,i)=>`<span class="chip ${i?"":"on"}">${c}</span>`).join("");
+  $("grid").innerHTML=d.items.map((it,i)=>`<div class="card" data-i="${i}"><div class="ic">${it[0]}</div><b>${it[1]}</b><span class="pr">S/ ${it[2].toFixed(2)}</span><div class="tag ${/Quedan [0-9] *$/.test(it[3])&&parseInt(it[3].split(" ")[1])<=3?"low":""}">${it[3]}</div></div>`).join("");
+  $("barberWrap").style.display=d.showBarber?"":"none"; $("rep").style.display=d.showRep?"":"none";
+  $("cta").textContent=d.cta; lines();
+  $("diff").innerHTML = mode==="barberia"
+   ? `<b>Qué cambia en la cuenta de barbería</b><ul><li>Los servicios son productos <b>sin stock</b> (ya funciona hoy); los productos de venta sí descuentan.</li><li>Cada cobro guarda el <b>barbero</b> que atendió (el empleado ya se guarda hoy en cada venta).</li><li>Se ocultan Compras, Proveedores, Toma de inventario y Combos.</li><li>Las palabras cambian: Empleados pasa a Barberos, Nueva venta a Nuevo cobro.</li><li>La tienda online ofrece Reservar servicio y comprar productos.</li></ul>`
+   : `<b>Cuenta de bodega: queda exactamente como hoy.</b>`;
+}
+function lines(){
+  const d=DATA[mode];
+  $("lines").innerHTML=cart.length?cart.map(i=>`<div class="line"><div>${d.items[i][1]}<small>${d.items[i][3]==="Servicio"||d.items[i][3]==="Combo"?"sin stock":""}</small></div><b>S/ ${d.items[i][2].toFixed(2)}</b></div>`).join(""):`<div class="note" style="padding:10px 0">Aún no agregaste nada.</div>`;
+  $("tot").textContent="S/ "+cart.reduce((s,i)=>s+d.items[i][2],0).toFixed(2);
+}
+$("grid").addEventListener("click",e=>{const c=e.target.closest(".card");if(c){cart.push(+c.dataset.i);lines();}});
+$("seg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;mode=b.dataset.m;document.querySelectorAll("#seg button").forEach(x=>x.classList.toggle("on",x===b));render();});
+render();
+</script>
+</body>
+</html>
