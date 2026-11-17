@@ -1189,6 +1189,14 @@ const TEXTO_MEDIO_PAGO = { efectivo: "Efectivo", yape_plin: "Yape / Plin", tarje
 const PIN_MAPA_HTML =
   '<span class="kpin-halo"></span><svg viewBox="0 0 40 48" width="40" height="48" style="position:relative;filter:drop-shadow(0 6px 5px rgba(77,4,176,.35))"><defs><linearGradient id="kpin-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a3df2"/><stop offset="1" stop-color="#4d04b0"/></linearGradient></defs><path d="M20 46C20 46 36 30 36 18a16 16 0 0 0-32 0c0 12 16 28 16 28Z" fill="url(#kpin-g)"/><circle cx="20" cy="18" r="6.5" fill="#fff"/></svg>';
 
+// Punto exacto del negocio, tal como lo marcó el dueño en el POS (null si no lo marcó).
+function puntoDeTienda(b) {
+  if (!b || b.latitud == null || b.longitud == null) return null;
+  const lat = Number(b.latitud);
+  const lng = Number(b.longitud);
+  return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? { lat, lng } : null;
+}
+
 function enlaceMapa(lat, lng) {
   return `https://www.google.com/maps?q=${lat},${lng}`;
 }
@@ -1196,7 +1204,7 @@ function enlaceMapa(lat, lng) {
 // Mapa con pin movible (MapLibre + OpenFreeMap, estilo "Bright": gratis y sin
 // claves). La librería se carga recién cuando el cliente elige "A domicilio",
 // para no sumarle peso a la vitrina de quien solo retira en tienda.
-function MapaEntrega({ punto, onCambiar, alto = "h-[200px]", redondeo = "rounded-2xl" }) {
+function MapaEntrega({ punto, onCambiar, alto = "h-[200px]", redondeo = "rounded-2xl", soloVer = false }) {
   const contenedorRef = useRef(null);
   const mapaRef = useRef(null);
   const marcadorRef = useRef(null);
@@ -1223,9 +1231,11 @@ function MapaEntrega({ punto, onCambiar, alto = "h-[200px]", redondeo = "rounded
           attributionControl: { compact: true },
         });
         mapa.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-        mapa.on("click", (e) => {
-          onCambiarRef.current({ lat: +e.lngLat.lat.toFixed(6), lng: +e.lngLat.lng.toFixed(6) });
-        });
+        if (!soloVer) {
+          mapa.on("click", (e) => {
+            onCambiarRef.current({ lat: +e.lngLat.lat.toFixed(6), lng: +e.lngLat.lng.toFixed(6) });
+          });
+        }
         mapa.on("error", (e) => {
           // si ni el estilo llega a cargar, se muestra el aviso en vez de un cuadro vacío
           if (!mapa.isStyleLoaded() && /style|fetch|network/i.test(String(e?.error?.message || ""))) setFalloMapa(true);
@@ -1256,10 +1266,10 @@ function MapaEntrega({ punto, onCambiar, alto = "h-[200px]", redondeo = "rounded
     if (!marcadorRef.current) {
       const el = document.createElement("div");
       el.innerHTML = PIN_MAPA_HTML;
-      el.style.cssText = "width:40px;height:48px;cursor:grab";
+      el.style.cssText = `width:40px;height:48px;cursor:${soloVer ? "default" : "grab"}`;
       // tocar el pin no debe contar como tocar el mapa (movería el punto)
       el.addEventListener("click", (e) => e.stopPropagation());
-      const marcador = new maplibregl.Marker({ element: el, anchor: "bottom", draggable: true }).setLngLat(pos).addTo(mapa);
+      const marcador = new maplibregl.Marker({ element: el, anchor: "bottom", draggable: !soloVer }).setLngLat(pos).addTo(mapa);
       marcador.on("dragend", () => {
         const ll = marcador.getLngLat();
         onCambiarRef.current({ lat: +ll.lat.toFixed(6), lng: +ll.lng.toFixed(6) });
@@ -1281,7 +1291,7 @@ function MapaEntrega({ punto, onCambiar, alto = "h-[200px]", redondeo = "rounded
   return (
     <div className={`relative ${alto} ${redondeo} overflow-hidden bg-stone-100`}>
       <div ref={contenedorRef} className="absolute inset-0" style={{ position: "absolute", inset: 0 }}></div>
-      {!punto && listo && (
+      {!punto && listo && !soloVer && (
         <div className="absolute left-2 bottom-6 z-[500] bg-white/95 rounded-full px-3 py-1 text-[11px] text-stone-600 shadow pointer-events-none">
           Toca el mapa para poner el pin
         </div>
@@ -3007,6 +3017,7 @@ function App() {
   const [obteniendoGps, setObteniendoGps] = useState(false);
   const [errorGps, setErrorGps] = useState("");
   const [ubicacionAbierta, setUbicacionAbierta] = useState(false); // pantalla "Confirmar ubicación"
+  const [verTiendaAbierto, setVerTiendaAbierto] = useState(false); // mapa con el punto de la tienda ("Ver ubicación")
   const [pagoAbierto, setPagoAbierto] = useState(false); // opciones de pago desplegadas
   const [entregaListo, setEntregaListo] = useState(false);
   // "Seguir tienda": corazón de la vitrina + si quiere recibir avisos de esta tienda.
@@ -3711,21 +3722,43 @@ function App() {
       return;
     }
     setObteniendoGps(true);
-    navigator.geolocation.getCurrentPosition(
+    // Sigue el GPS unos segundos y se queda con la lectura más precisa: la primera suele ser
+    // aproximada (antena o wifi) y mandaba el pin a otra cuadra. Corta antes si llega a ±15 m.
+    let mejor = Infinity;
+    let activo = true;
+    let id = null;
+    let reloj = null;
+    const parar = () => {
+      if (!activo) return;
+      activo = false;
+      clearTimeout(reloj);
+      if (id !== null) navigator.geolocation.clearWatch(id);
+      setObteniendoGps(false);
+    };
+    id = navigator.geolocation.watchPosition(
       (pos) => {
-        setUbicacionEntrega({ lat: +pos.coords.latitude.toFixed(6), lng: +pos.coords.longitude.toFixed(6) });
-        setObteniendoGps(false);
+        if (!activo) return;
+        const precision = pos.coords.accuracy;
+        if (precision < mejor) {
+          mejor = precision;
+          setUbicacionEntrega({ lat: +pos.coords.latitude.toFixed(6), lng: +pos.coords.longitude.toFixed(6) });
+        }
+        if (precision <= 15) parar();
       },
       (err) => {
-        setObteniendoGps(false);
-        setErrorGps(
-          err.code === 1
-            ? "No diste permiso de ubicación. Puedes marcarla tocando el mapa."
-            : "No pudimos obtener tu ubicación. Márcala tocando el mapa."
-        );
+        if (!activo) return;
+        // Solo el permiso denegado corta ya; los demás errores suelen ser pasajeros mientras el GPS engancha.
+        if (err.code === 1) {
+          setErrorGps("No diste permiso de ubicación. Actívalo en los ajustes del navegador o márcala tocando el mapa.");
+          parar();
+        }
       },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 15000 }
     );
+    reloj = setTimeout(() => {
+      if (mejor === Infinity) setErrorGps("No pudimos encontrar tu ubicación. Revisa que el GPS esté activo o márcala tocando el mapa.");
+      parar();
+    }, 20000);
   };
 
   // "Vaciar" abre un cuadro propio de confirmación (antes era el confirm() del navegador).
@@ -4124,7 +4157,16 @@ function App() {
               </span>
             )}
           </div>
-          {bodega.direccion ? (
+          {puntoDeTienda(bodega) ? (
+            <button
+              type="button"
+              onClick={() => setVerTiendaAbierto(true)}
+              className="text-xs text-stone-400 truncate flex items-center gap-1 hover:text-violet-600"
+            >
+              <i className="fa-solid fa-location-dot text-[10px] shrink-0"></i>
+              <span className="truncate">Ver ubicación</span>
+            </button>
+          ) : bodega.direccion ? (
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bodega.direccion)}`}
               target="_blank"
@@ -4614,7 +4656,11 @@ function App() {
                           <span className="block text-sm font-bold text-[#1c1830] leading-snug">{bodega.nombre}</span>
                           {bodega.direccion && <span className="block text-xs text-[#78729a] line-clamp-2">{bodega.direccion}</span>}
                         </span>
-                        {bodega.direccion && (
+                        {puntoDeTienda(bodega) ? (
+                          <button type="button" onClick={() => setVerTiendaAbierto(true)} className="text-[12.5px] font-bold text-[#6105dc] shrink-0">
+                            Ver ubicación
+                          </button>
+                        ) : bodega.direccion ? (
                           <a
                             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bodega.direccion)}`}
                             target="_blank"
@@ -4623,7 +4669,7 @@ function App() {
                           >
                             Ver mapa
                           </a>
-                        )}
+                        ) : null}
                       </div>
                     )}
 
@@ -4891,6 +4937,31 @@ function App() {
                   Continuar con Google
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {verTiendaAbierto && puntoDeTienda(bodega) && (
+        <div className="fixed inset-0 z-50 bg-stone-900/45 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4" onClick={() => setVerTiendaAbierto(false)}>
+          <div className="bg-white w-full max-w-md rounded-t-[28px] sm:rounded-[28px] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 px-5 pt-4 pb-3">
+              <h2 className="flex-1 min-w-0 truncate text-[17px] font-bold text-[#1c1830]">{bodega.nombre}</h2>
+              <button type="button" aria-label="Cerrar" onClick={() => setVerTiendaAbierto(false)} className="w-9 h-9 rounded-full grid place-items-center text-[#78729a] hover:bg-[#f4eefe] shrink-0">
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <MapaEntrega punto={puntoDeTienda(bodega)} soloVer alto="h-[340px]" redondeo="rounded-none" />
+            <div className="px-5 py-3.5">
+              <a
+                href={enlaceMapa(puntoDeTienda(bodega).lat, puntoDeTienda(bodega).lng)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-12 rounded-full flex items-center justify-center gap-2 text-sm font-bold text-[#6105dc] bg-[#f4eefe] transition active:scale-[0.97]"
+              >
+                <i className="fa-solid fa-route text-xs"></i>
+                Cómo llegar
+              </a>
             </div>
           </div>
         </div>
