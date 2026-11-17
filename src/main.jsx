@@ -2909,6 +2909,9 @@ function App() {
   const [carritoAbierto, setCarritoAbierto] = useState(false);
   const [confirmarVaciarAbierto, setConfirmarVaciarAbierto] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  // Candado síncrono: el botón se deshabilita recién al volver a dibujar, y dos toques seguidos
+  // alcanzan a enviar dos pedidos (cada uno con su propio código corto).
+  const enviandoRef = useRef(false);
   const [error, setError] = useState("");
   const [pedidoConfirmado, setPedidoConfirmado] = useState(null); // { codigo, whatsappUrl, domicilio, reserva }
   // Barbería: { barberos: [{id, nombre}] } si la tienda es de una barbería (obtener_barberia_delivery).
@@ -3146,6 +3149,9 @@ function App() {
 
   const salir = async () => {
     await sbClient.auth.signOut();
+    // La dirección, la referencia y el teléfono guardados son de esta persona: en un celular
+    // compartido, la siguiente cuenta no debe verlos ya rellenados.
+    try { localStorage.removeItem("kd_direccion_guardada"); } catch (e) { /* sin almacenamiento */ }
     setClienteSesion(null);
     setCompletarPerfilGoogle(null);
     setVistaMisPedidos(false);
@@ -3652,6 +3658,8 @@ function App() {
       setError(problemaEntrega);
       return;
     }
+    if (enviandoRef.current) return;
+    enviandoRef.current = true;
     setEnviando(true);
     setError("");
     let codigo = generarCodigoCorto();
@@ -3706,6 +3714,7 @@ function App() {
       codigo = generarCodigoCorto();
       ({ error: err } = await insertarPedido(codigo));
     }
+    enviandoRef.current = false;
     setEnviando(false);
     if (err) {
       const msg = err.message || "";
