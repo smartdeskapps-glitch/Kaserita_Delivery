@@ -417,18 +417,19 @@ function HojaProducto({ producto, cantidadEnCarrito, onAgregar, onCerrar, onVerF
   const [cantidad, setCantidad] = useState(1);
   const [visible, setVisible] = useState(false);
   const [indice, setIndice] = useState(0);
+  const [descAbierta, setDescAbierta] = useState(false);
   const inicioToqueX = useRef(null);
   const botonAgregarRef = useRef(null);
+  const descripcionLarga = String(producto.descripcion_larga || "").trim();
   const fotos = [producto.foto_url, ...(producto.fotos_extra || [])].filter(Boolean);
   const tono = tonoCategoria(producto.categoria);
   const stock = producto.stock_disponible;
   const stockPoco = stock != null && stock <= 3;
   const maximo = stock != null ? Math.max(1, stock - cantidadEnCarrito) : 99;
-  const aviso = stockPoco
-    ? { texto: `Quedan ${stock}`, clase: "kc-banda-warn", icono: "fa-triangle-exclamation" }
-    : producto.es_destacado
-      ? { texto: "Destacado", clase: "", icono: "fa-star" }
-      : null;
+  // "Cerveza Pilsen Callao 620ml" -> nombre en negrita y la medida más liviana.
+  const nombre = tituloProducto(producto.descripcion);
+  const partes = nombre.match(/^(.+?)(\s+\d[\d.,]*\s?(?:ml|cc|l|lt|lts|g|gr|kg|oz|un|und)\b.*)$/i);
+  const total = Number(producto.precio_venta) * cantidad;
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setVisible(true));
@@ -461,71 +462,124 @@ function HojaProducto({ producto, cantidadEnCarrito, onAgregar, onCerrar, onVerF
       <div
         className={`kc-hoja ${visible ? "kc-hoja-on" : ""}`}
         style={{ "--t": tono.t, "--td": tono.td }}
+        role="dialog"
+        aria-modal="true"
+        aria-label={nombre}
       >
-        <div className="kc-hoja-asa"></div>
-        <div className="kc-hoja-foto" onTouchStart={tocarInicio} onTouchEnd={tocarFin}>
-          <button onClick={cerrar} aria-label="Cerrar" className="kc-hoja-btn left-2.5">
-            <i className="fa-solid fa-xmark"></i>
+        <div className="kc-hoja-escena" onTouchStart={tocarInicio} onTouchEnd={tocarFin}>
+          <div className="kc-hoja-cielo" aria-hidden="true">
+            <i className="kc-mancha kc-mancha-a"></i>
+            <i className="kc-mancha kc-mancha-b"></i>
+            <i className="kc-mancha kc-mancha-c"></i>
+            <svg viewBox="0 0 400 370" preserveAspectRatio="none">
+              <ellipse cx="200" cy="205" rx="168" ry="46" transform="rotate(-14 200 205)" fill="none" stroke="#6105dc" strokeOpacity=".22" strokeWidth="2" />
+              <ellipse cx="200" cy="205" rx="140" ry="34" transform="rotate(-14 200 205)" fill="none" stroke="#6105dc" strokeOpacity=".12" strokeWidth="1.5" />
+            </svg>
+          </div>
+          <button onClick={cerrar} aria-label="Volver" className="kc-hoja-btn kc-hoja-btn-izq">
+            <i className="fa-solid fa-arrow-left"></i>
           </button>
           {onToggleFavorito && (
             <button
               onClick={() => onToggleFavorito(producto.id)}
               aria-label={esFavorito ? "Quitar de favoritos" : "Agregar a favoritos"}
-              className={`kc-hoja-btn right-2.5 ${esFavorito ? "text-[#6105dc]" : ""}`}
+              aria-pressed={!!esFavorito}
+              className={`kc-hoja-btn kc-hoja-btn-der ${esFavorito ? "kc-hoja-btn-on" : ""}`}
             >
               <i className={`${esFavorito ? "fa-solid" : "fa-regular"} fa-heart`}></i>
             </button>
           )}
+          {fotos.length > 1 && (
+            <>
+              <div className="kc-hoja-pager" aria-hidden="true">
+                {fotos.map((_, i) => <i key={i} className={i === indice ? "on" : ""}></i>)}
+              </div>
+              <div className="kc-hoja-der" role="tablist" aria-label="Fotos del producto">
+                {fotos.map((url, i) => (
+                  <button
+                    key={`${url}-${i}`}
+                    type="button"
+                    role="tab"
+                    aria-selected={i === indice}
+                    aria-label={`Foto ${i + 1} de ${fotos.length}`}
+                    onClick={() => setIndice(i)}
+                    className={i === indice ? "on" : ""}
+                  >
+                    <img src={url} alt="" loading="lazy" decoding="async" />
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
           {fotos.length > 0 ? (
-            <div className="kc-hoja-img" onClick={() => onVerFoto(producto)}>
-              <img src={fotos[indice]} alt={tituloProducto(producto.descripcion)} />
+            <div className="kc-hoja-foto" onClick={() => onVerFoto(producto)}>
+              <img key={indice} src={fotos[indice]} alt={nombre} />
             </div>
           ) : (
-            <i className="fa-solid fa-image kc-sinfoto" style={{ fontSize: 44 }}></i>
+            <i className="fa-solid fa-image kc-sinfoto kc-hoja-sinfoto"></i>
           )}
-          {fotos.length > 1 && (
-            <div className="kc-hoja-puntos">
-              {fotos.map((_, i) => (
-                <span key={i} className={i === indice ? "on" : ""}></span>
-              ))}
-            </div>
-          )}
-          {aviso && (
-            <div className={`kc-banda ${aviso.clase}`}>
-              <i className={`fa-solid ${aviso.icono}`}></i>
-              {aviso.texto}
+          {(stock != null || producto.categoria) && (
+            <div className="kc-hoja-pastilla">
+              {stock != null && (
+                <>
+                  <i className="kc-dot" style={{ background: stockPoco ? "#f59e0b" : "#10b981" }}></i>
+                  {stockPoco ? `Quedan ${stock}` : `${stock} disponibles`}
+                </>
+              )}
+              {stock != null && producto.categoria && <i className="kc-hoja-sep"></i>}
+              {producto.categoria && <span>{producto.categoria}</span>}
             </div>
           )}
         </div>
-        <div className="kc-hoja-cuerpo">
-          <div className="flex flex-wrap gap-1.5">
-            {producto.categoria && <span className="kc-chip">{producto.categoria}</span>}
-            {stock != null && (
-              <span className="kc-chip kc-chip-neutro">
-                <i className="kc-dot" style={{ background: stockPoco ? "#f59e0b" : "#10b981" }}></i>
-                {stockPoco ? `Quedan ${stock}` : `${stock} disponibles`}
-              </span>
-            )}
-            {cantidadEnCarrito > 0 && (
-              <span className="kc-chip kc-chip-neutro">Ya tienes {cantidadEnCarrito} en tu pedido</span>
-            )}
-          </div>
-          <h2>{tituloProducto(producto.descripcion)}</h2>
-          <div className="kc-hoja-fila">
-            <div className="kc-hoja-precio"><small>S/</small>{Number(producto.precio_venta).toFixed(2)}</div>
-            <div className="kc-hoja-cant">
-              <button onClick={() => setCantidad((c) => Math.max(1, c - 1))} aria-label="Quitar uno">
-                <i className="fa-solid fa-minus"></i>
-              </button>
-              <span>{cantidad}</span>
-              <button onClick={() => setCantidad((c) => Math.min(maximo, c + 1))} aria-label="Agregar uno" disabled={cantidad >= maximo}>
-                <i className="fa-solid fa-plus"></i>
-              </button>
+
+        <div className="kc-hoja-texto">
+          <h2>
+            {partes ? partes[1] : nombre}
+            {partes && <span> – {partes[2].trim()}</span>}
+          </h2>
+          {(producto.es_destacado || cantidadEnCarrito > 0) && (
+            <div className="kc-hoja-etiquetas">
+              {producto.es_destacado && (
+                <span className="kc-hoja-etiqueta"><i className="fa-solid fa-star"></i>Destacado</span>
+              )}
+              {cantidadEnCarrito > 0 && <span className="kc-hoja-enpedido">Ya tienes {cantidadEnCarrito} en tu pedido</span>}
             </div>
+          )}
+          {descripcionLarga && (
+            <p className="kc-hoja-desc">
+              {descAbierta || descripcionLarga.length <= 118
+                ? descripcionLarga
+                : `${descripcionLarga.slice(0, 118).replace(/\s+\S*$/, "")}… `}
+              {descripcionLarga.length > 118 && (
+                <>
+                  {descAbierta ? " " : ""}
+                  <button type="button" onClick={() => setDescAbierta((v) => !v)} aria-expanded={descAbierta}>
+                    {descAbierta ? "Ver menos" : "Ver más"}
+                  </button>
+                </>
+              )}
+            </p>
+          )}
+        </div>
+
+        <div className="kc-hoja-barra">
+          <div className="kc-hoja-precio"><small>S/</small><span>{total.toFixed(2)}</span></div>
+          <div className="kc-hoja-cant">
+            <button onClick={() => setCantidad((c) => Math.max(1, c - 1))} aria-label="Quitar uno" disabled={cantidad <= 1}>
+              <i className="fa-solid fa-minus"></i>
+            </button>
+            <span aria-live="polite">{String(cantidad).padStart(2, "0")}</span>
+            <button onClick={() => setCantidad((c) => Math.min(maximo, c + 1))} aria-label="Agregar uno" disabled={cantidad >= maximo}>
+              <i className="fa-solid fa-plus"></i>
+            </button>
           </div>
-          <button ref={botonAgregarRef} onClick={agregar} className="kc-hoja-cta">
-            Agregar al pedido
-            <u>{formatoMoneda(Number(producto.precio_venta) * cantidad)}</u>
+          <button
+            ref={botonAgregarRef}
+            onClick={agregar}
+            className="kc-hoja-carrito"
+            aria-label={`Agregar al pedido, ${formatoMoneda(total)}`}
+          >
+            <i className="fa-solid fa-cart-plus"></i>
           </button>
         </div>
       </div>
