@@ -1183,3 +1183,10 @@ body { overflow-x: clip; }
 .kmp-pie{display:flex;flex-direction:column;gap:10px;padding-top:10px}
 .kmp-btn{height:52px;border-radius:999px;background:linear-gradient(110deg,#8a3df2,#4d04b0);color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:9px;width:100%;box-shadow:0 14px 24px -12px rgba(97,5,220,.7)}
 .kmp-btn.kmp-l{background:#fff;color:#4d04b0;box-shadow:inset 0 0 0 1.5px #ddd0f5;height:48px;font-size:14px}
+
+/* Mapa de la tienda ("Ver ubicación"): fondo que aparece y hoja que sube. */
+@keyframes kub-fondo-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes kub-hoja-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.kub-entra { animation: kub-fondo-in 180ms ease-out both; }
+.kub-entra > div { animation: kub-hoja-in 260ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+@media (prefers-reduced-motion: reduce) { .kub-entra, .kub-entra > div { animation: none; } }

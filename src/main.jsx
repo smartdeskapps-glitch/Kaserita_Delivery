@@ -194,6 +194,16 @@ function generarCodigoCorto() {
   return codigo;
 }
 
+// Los negocios son de Perú: el número se guarda como lo escribió la tienda (900376462,
+// +51 900 376 462, 0051900376462...) y wa.me exige solo dígitos con el código de país, sin
+// ceros delante. Se deja siempre en 51 + 9 dígitos.
+function telefonoWhatsappPeru(valor) {
+  let d = String(valor || "").replace(/\D/g, "").replace(/^0+/, "");
+  while (d.length > 9 && d.startsWith("51")) d = d.slice(2);
+  if (d.length > 9) d = d.slice(-9);
+  return d.length === 9 ? `51${d}` : d;
+}
+
 function armarMensajeWhatsapp({ bodegaNombre, items, total, codigo, entrega }) {
   // Los combos van con sus productos debajo (cantidad total a preparar), así
   // la tienda sabe qué armar sin abrir el combo.
@@ -1195,6 +1205,12 @@ function puntoDeTienda(b) {
   const lat = Number(b.latitud);
   const lng = Number(b.longitud);
   return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? { lat, lng } : null;
+}
+
+// Empieza a bajar el mapa al acercar el dedo o el mouse al botón, para que abra sin esperar.
+function precargarMapa() {
+  import("maplibre-gl").catch(() => {});
+  import("maplibre-gl/dist/maplibre-gl.css").catch(() => {});
 }
 
 function enlaceMapa(lat, lng) {
@@ -3498,6 +3514,15 @@ function App() {
   }, [estadoBodega, bodega]);
 
   const estadoHorario = useMemo(() => estadoAtencionBodega(bodega?.horario_atencion), [bodega]);
+  // Memorizado: el mapa compara el punto por referencia y, con un objeto nuevo en cada render, se reanimaba solo.
+  const puntoTienda = useMemo(() => puntoDeTienda(bodega), [bodega?.latitud, bodega?.longitud]); // eslint-disable-line react-hooks/exhaustive-deps
+  // El mapa de la tienda se cierra con Escape.
+  useEffect(() => {
+    if (!verTiendaAbierto) return undefined;
+    const alTeclear = (e) => { if (e.key === "Escape") setVerTiendaAbierto(false); };
+    window.addEventListener("keydown", alTeclear);
+    return () => window.removeEventListener("keydown", alTeclear);
+  }, [verTiendaAbierto]);
 
   const categorias = useMemo(() => {
     const set = new Set();
@@ -3883,7 +3908,7 @@ function App() {
           }
         : null,
     });
-    const telefono = (bodega.telefono || "").replace(/\D/g, "");
+    const telefono = telefonoWhatsappPeru(bodega.telefono);
     const whatsappUrl = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
     setPedidoConfirmado({
       codigo,
@@ -4157,11 +4182,13 @@ function App() {
               </span>
             )}
           </div>
-          {puntoDeTienda(bodega) ? (
+          {puntoTienda ? (
             <button
               type="button"
               onClick={() => setVerTiendaAbierto(true)}
-              className="text-xs text-stone-400 truncate flex items-center gap-1 hover:text-violet-600"
+              onPointerEnter={precargarMapa}
+              onTouchStart={precargarMapa}
+              className="text-xs font-semibold text-[#6105dc] truncate flex items-center gap-1 py-0.5 -my-0.5 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6105dc]"
             >
               <i className="fa-solid fa-location-dot text-[10px] shrink-0"></i>
               <span className="truncate">Ver ubicación</span>
@@ -4656,8 +4683,8 @@ function App() {
                           <span className="block text-sm font-bold text-[#1c1830] leading-snug">{bodega.nombre}</span>
                           {bodega.direccion && <span className="block text-xs text-[#78729a] line-clamp-2">{bodega.direccion}</span>}
                         </span>
-                        {puntoDeTienda(bodega) ? (
-                          <button type="button" onClick={() => setVerTiendaAbierto(true)} className="text-[12.5px] font-bold text-[#6105dc] shrink-0">
+                        {puntoTienda ? (
+                          <button type="button" onClick={() => setVerTiendaAbierto(true)} onPointerEnter={precargarMapa} onTouchStart={precargarMapa} className="text-[12.5px] font-bold text-[#6105dc] shrink-0">
                             Ver ubicación
                           </button>
                         ) : bodega.direccion ? (
@@ -4942,8 +4969,8 @@ function App() {
         </div>
       )}
 
-      {verTiendaAbierto && puntoDeTienda(bodega) && (
-        <div className="fixed inset-0 z-50 bg-stone-900/45 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4" onClick={() => setVerTiendaAbierto(false)}>
+      {verTiendaAbierto && puntoTienda && (
+        <div role="dialog" aria-modal="true" aria-label={`Ubicación de ${bodega.nombre}`} className="kub-entra fixed inset-0 z-50 bg-stone-900/45 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4" onClick={() => setVerTiendaAbierto(false)}>
           <div className="bg-white w-full max-w-md rounded-t-[28px] sm:rounded-[28px] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 px-5 pt-4 pb-3">
               <h2 className="flex-1 min-w-0 truncate text-[17px] font-bold text-[#1c1830]">{bodega.nombre}</h2>
@@ -4951,10 +4978,10 @@ function App() {
                 <i className="fa-solid fa-xmark"></i>
               </button>
             </div>
-            <MapaEntrega punto={puntoDeTienda(bodega)} soloVer alto="h-[340px]" redondeo="rounded-none" />
+            <MapaEntrega punto={puntoTienda} soloVer alto="h-[340px]" redondeo="rounded-none" />
             <div className="px-5 py-3.5">
               <a
-                href={enlaceMapa(puntoDeTienda(bodega).lat, puntoDeTienda(bodega).lng)}
+                href={enlaceMapa(puntoTienda.lat, puntoTienda.lng)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="h-12 rounded-full flex items-center justify-center gap-2 text-sm font-bold text-[#6105dc] bg-[#f4eefe] transition active:scale-[0.97]"
