@@ -80,6 +80,25 @@ Para probarlo: con un cliente que tenga notificaciones activadas y la
 bodega en "Mis tiendas", en el POS abrir Mi Link de Pedidos → "Avisar a mis
 clientes". Debe llegar la notificación "¡Tu bodega ya recibe pedidos!".
 
+## 5. Aviso al dueño cuando entra un pedido
+
+Tercera función, para avisar al celular del dueño aunque el POS esté cerrado. Usa los mismos
+secretos del paso 1.
+
+1. Correr `supabase/migration_40_avisos_whatsapp_y_push_dueno.sql` en el SQL Editor (ya está
+   aplicada en producción).
+2. Desplegar la función `enviar-aviso-pedido-tienda` con el contenido de
+   [`supabase/functions/enviar-aviso-pedido-tienda/index.ts`](supabase/functions/enviar-aviso-pedido-tienda/index.ts)
+   y **Verify JWT** desactivado.
+3. Dashboard -> **Integrations** -> **Database Webhooks** -> **Create a new webhook**: tabla
+   `pedidos_seguimiento`, evento solo **Insert**, tipo **Supabase Edge Functions**, función
+   `enviar-aviso-pedido-tienda`, header `x-webhook-secret` con el valor de `WEBHOOK_SECRET`
+   (el valor del header `Authorization` que agrega el Dashboard no se usa).
+4. En el POS: panel "Pedidos por retirar" -> **Activar** (una vez por celular).
+
+La función solo le habla a los servicios push reales (Chrome/Android, Firefox, Safari, Edge): un
+endpoint de otro dominio se descarta.
+
 ## Cómo probarlo de punta a punta
 
 1. En la vitrina, crear una cuenta de cliente (celular + PIN) y hacer un

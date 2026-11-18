@@ -890,6 +890,9 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedi
   const [avisado, setAvisado] = useState(false);
   const [salidaPendiente, setSalidaPendiente] = useState(null);
   const avisadoRef = useRef(false);
+  // Tienda sin teléfono: el enlace queda sin destinatario ("wa.me/?text=") y no sirve para avisar.
+  // No se abre solo, no se da por avisado ni se bloquea la salida.
+  const sinNumero = !/wa\.me\/\d{9,}/.test(whatsappUrl);
   const marcarAvisado = () => {
     if (avisadoRef.current) return;
     avisadoRef.current = true;
@@ -899,6 +902,7 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedi
   // Al confirmar se intenta abrir WhatsApp solo. Algunos navegadores lo bloquean porque no vino de
   // un toque; entonces queda el botón grande de abajo.
   useEffect(() => {
+    if (sinNumero) return;
     try {
       // Sin "noopener" en las opciones: con él window.open devuelve siempre null y no se
       // puede saber si el navegador lo dejó abrir o lo bloqueó.
@@ -914,7 +918,7 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedi
   // Salir sin haber abierto WhatsApp pide confirmar. Las citas con agenda no lo necesitan:
   // ya quedan en la agenda de la tienda y el mensaje es opcional.
   const salirCon = (accion) => () => {
-    if (avisado || reserva?.agenda) accion();
+    if (avisado || reserva?.agenda || sinNumero) accion();
     else setSalidaPendiente({ accion });
   };
   const copiarCodigo = async () => {
@@ -1093,7 +1097,7 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedi
       >
         <i className="fa-brands fa-whatsapp text-xl"></i> {avisado ? "Abrir WhatsApp otra vez" : "Enviar por WhatsApp"}
       </a>
-      {!avisado && !reserva?.agenda && (
+      {!avisado && !reserva?.agenda && !sinNumero && (
         <p className="text-[12px] text-amber-700 text-center leading-snug -mt-1">
           Falta un paso: envía el mensaje para que la tienda se entere de tu pedido.
         </p>
@@ -1554,6 +1558,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
   const [activandoPush, setActivandoPush] = useState(false);
   const [avisoPush, setAvisoPush] = useState("");
   const [copiadoId, setCopiadoId] = useState(null);
+  const [, repintarAvisos] = useState(0);
   const [errorCarga, setErrorCarga] = useState(false);
   const [confirmarCancelar, setConfirmarCancelar] = useState(null); // el pedido que se quiere cancelar
   const [cancelando, setCancelando] = useState(false);
@@ -1821,7 +1826,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
               href={enlacesWhatsapp[p.codigo_corto]}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => marcarWhatsappAbierto(p.codigo_corto)}
+              onClick={() => { marcarWhatsappAbierto(p.codigo_corto); repintarAvisos((n) => n + 1); }}
               className="min-h-10 px-3.5 rounded-full bg-[#6105dc] text-white text-xs font-bold flex items-center gap-1.5 shrink-0"
             >
               <i className="fa-brands fa-whatsapp" aria-hidden="true"></i> Avisar
@@ -4028,7 +4033,7 @@ function App() {
     });
     const telefono = telefonoWhatsappPeru(bodega.telefono);
     const whatsappUrl = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
-    guardarEnlaceWhatsapp(codigo, whatsappUrl);
+    if (/wa\.me\/\d{9,}/.test(whatsappUrl)) guardarEnlaceWhatsapp(codigo, whatsappUrl);
     setPedidoConfirmado({
       codigo,
       whatsappUrl,

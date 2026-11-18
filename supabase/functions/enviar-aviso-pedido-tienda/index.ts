@@ -31,6 +31,11 @@ const headers: Record<string, string> = CLAVE.startsWith("eyJ")
   ? { apikey: CLAVE, Authorization: `Bearer ${CLAVE}` }
   : { apikey: CLAVE };
 
+// El endpoint lo guarda el celular: solo se le habla a los servicios push reales, nunca a una
+// dirección cualquiera (evita que alguien use la función para hacer peticiones a donde quiera).
+const ENDPOINT_PUSH_VALIDO =
+  /^https:\/\/(fcm\.googleapis\.com|android\.googleapis\.com|updates\.push\.services\.mozilla\.com|[a-z0-9.-]+\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9.-]+\.push\.apple\.com|[a-z0-9.-]+\.notify\.windows\.com)\/\S*$/;
+
 const recortar = (t: unknown, n: number) => String(t ?? "").replace(/[\r\n]+/g, " ").trim().slice(0, n);
 
 Deno.serve(async (req) => {
@@ -69,7 +74,13 @@ Deno.serve(async (req) => {
     await Promise.all(
       dispositivos.map(async (d: { id: number; suscripcion: any }) => {
         try {
-          await webpush.sendNotification(d.suscripcion, mensaje);
+          if (!ENDPOINT_PUSH_VALIDO.test(String(d.suscripcion?.endpoint ?? ""))) {
+            await fetch(`${SUPABASE_URL}/rest/v1/push_dueno?id=eq.${d.id}`, { method: "DELETE", headers });
+            return;
+          }
+          // urgency alta: sin ella Android en reposo (Doze) retrasa el aviso minutos u horas.
+          // TTL de 1 h: un "nuevo pedido" que llega horas después ya no sirve.
+          await webpush.sendNotification(d.suscripcion, mensaje, { urgency: "high", TTL: 3600 });
           enviados++;
         } catch (err) {
           const codigo = (err as { statusCode?: number })?.statusCode;
