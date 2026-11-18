@@ -46,6 +46,10 @@ const headers: Record<string, string> = CLAVE.startsWith("eyJ")
   ? { apikey: CLAVE, Authorization: `Bearer ${CLAVE}` }
   : { apikey: CLAVE };
 
+// Solo servicios push reales (Chrome/Android, Firefox, Safari, Edge): nunca una dirección cualquiera.
+const ENDPOINT_PUSH_VALIDO =
+  /^https:\/\/(fcm\.googleapis\.com|android\.googleapis\.com|updates\.push\.services\.mozilla\.com|[a-z0-9.-]+\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9.-]+\.push\.apple\.com|[a-z0-9.-]+\.notify\.windows\.com)\/\S*$/;
+
 webpush.setVapidDetails("mailto:soporte@kaserita.app", VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
 Deno.serve(async (req) => {
@@ -84,6 +88,10 @@ Deno.serve(async (req) => {
 
     if (!suscripcion) {
       return new Response("ok (el cliente no activó notificaciones)", { status: 200 });
+    }
+    // El endpoint lo guarda el celular del cliente: solo se le habla a los servicios push reales.
+    if (!ENDPOINT_PUSH_VALIDO.test(String(suscripcion.endpoint ?? ""))) {
+      return new Response("ok (endpoint no válido)", { status: 200 });
     }
 
     // El cliente puede tener varias bodegas instaladas como accesos

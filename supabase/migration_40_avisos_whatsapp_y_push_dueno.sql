@@ -90,3 +90,14 @@ grant execute on function public.registrar_push_dueno(jsonb) to authenticated;
 
 -- Falta (a mano, en el Dashboard): Integrations > Database Webhooks > tabla pedidos_seguimiento,
 -- evento Insert, función enviar-aviso-pedido-tienda, header x-webhook-secret. Ver INSTRUCCIONES_PUSH.md, paso 5.
+
+-- 3) Lo mismo para los celulares de los clientes (avisos de "pedido listo" y de la tienda): el
+-- endpoint que guarda cada cliente también debe ser de un servicio push real.
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'clientes_delivery_push_endpoint_valido') then
+    alter table public.clientes_delivery
+      add constraint clientes_delivery_push_endpoint_valido
+      check (push_subscription is null or public.endpoint_push_valido(push_subscription->>'endpoint'));
+  end if;
+end $$;

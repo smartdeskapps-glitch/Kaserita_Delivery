@@ -36,6 +36,10 @@ function claveSecreta(): string {
 }
 const CLAVE = claveSecreta();
 
+// Solo servicios push reales (Chrome/Android, Firefox, Safari, Edge): nunca una dirección cualquiera.
+const ENDPOINT_PUSH_VALIDO =
+  /^https:\/\/(fcm\.googleapis\.com|android\.googleapis\.com|updates\.push\.services\.mozilla\.com|[a-z0-9.-]+\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9.-]+\.push\.apple\.com|[a-z0-9.-]+\.notify\.windows\.com)\/\S*$/;
+
 webpush.setVapidDetails("mailto:soporte@kaserita.app", VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
 // Las claves nuevas van solo en "apikey"; la antigua (un JWT) también en Authorization.
@@ -115,6 +119,8 @@ Deno.serve(async (req) => {
       while (cola.length > 0) {
         const cliente = cola.pop()!;
         try {
+          // Solo servicios push reales: el endpoint lo guarda el celular del cliente.
+          if (!ENDPOINT_PUSH_VALIDO.test(String(cliente.push_subscription?.endpoint ?? ""))) continue;
           await webpush.sendNotification(cliente.push_subscription, mensaje);
           enviados++;
         } catch (err) {
