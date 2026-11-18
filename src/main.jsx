@@ -204,6 +204,36 @@ function telefonoWhatsappPeru(valor) {
   return d.length === 9 ? `51${d}` : d;
 }
 
+// El pedido ya queda en la base, pero la tienda solo se entera "en la calle" si el cliente le
+// manda el WhatsApp. WhatsApp no avisa si el mensaje se envió: lo único que se sabe es si el cliente
+// tocó el botón. Se guarda eso en el pedido (la tienda ve en su POS cuáles no avisaron) y el enlace
+// queda en este celular para poder avisar después desde "Mis pedidos".
+const CLAVE_WHATSAPP_PENDIENTE = "kd_wa_pedidos_v1";
+function leerEnlacesWhatsapp() {
+  try {
+    return JSON.parse(localStorage.getItem(CLAVE_WHATSAPP_PENDIENTE) || "{}") || {};
+  } catch {
+    return {};
+  }
+}
+function guardarEnlaceWhatsapp(codigo, url) {
+  try {
+    const mapa = { ...leerEnlacesWhatsapp(), [codigo]: url };
+    const claves = Object.keys(mapa);
+    claves.slice(0, Math.max(0, claves.length - 20)).forEach((c) => delete mapa[c]);
+    localStorage.setItem(CLAVE_WHATSAPP_PENDIENTE, JSON.stringify(mapa));
+  } catch {
+    // sin almacenamiento: el botón de la confirmación sigue funcionando
+  }
+}
+function marcarWhatsappAbierto(codigo) {
+  try {
+    Promise.resolve(sbClient.rpc("marcar_whatsapp_abierto", { p_codigo: codigo })).catch(() => {});
+  } catch {
+    // no debe impedir que se abra WhatsApp
+  }
+}
+
 function armarMensajeWhatsapp({ bodegaNombre, items, total, codigo, entrega }) {
   // Los combos van con sus productos debajo (cantidad total a preparar), así
   // la tienda sabe qué armar sin abrir el combo.
@@ -846,6 +876,31 @@ function VisorFoto({ producto, onCerrar }) {
 
 function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedidos, domicilio, resumen, reserva }) {
   const [copiado, setCopiado] = useState(false);
+  const [avisado, setAvisado] = useState(false);
+  const [salidaPendiente, setSalidaPendiente] = useState(null);
+  const avisadoRef = useRef(false);
+  const marcarAvisado = () => {
+    if (avisadoRef.current) return;
+    avisadoRef.current = true;
+    setAvisado(true);
+    marcarWhatsappAbierto(codigo);
+  };
+  // Al confirmar se intenta abrir WhatsApp solo. Algunos navegadores lo bloquean porque no vino de
+  // un toque; entonces queda el botón grande de abajo.
+  useEffect(() => {
+    try {
+      const w = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+      if (w) marcarAvisado();
+    } catch {
+      // bloqueado: se usa el botón
+    }
+  }, []);
+  // Salir sin haber abierto WhatsApp pide confirmar. Las citas con agenda no lo necesitan:
+  // ya quedan en la agenda de la tienda y el mensaje es opcional.
+  const salirCon = (accion) => () => {
+    if (avisado || reserva?.agenda) accion();
+    else setSalidaPendiente({ accion });
+  };
   const copiarCodigo = async () => {
     try {
       await navigator.clipboard.writeText(codigo);
@@ -1017,26 +1072,57 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedi
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={marcarAvisado}
         className="h-14 rounded-full bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white font-bold text-[15.5px] flex items-center justify-center gap-2.5"
       >
-        <i className="fa-brands fa-whatsapp text-xl"></i> Enviar por WhatsApp
+        <i className="fa-brands fa-whatsapp text-xl"></i> {avisado ? "Abrir WhatsApp otra vez" : "Enviar por WhatsApp"}
       </a>
+      {!avisado && !reserva?.agenda && (
+        <p className="text-[12px] text-amber-700 text-center leading-snug -mt-1">
+          Falta un paso: envía el mensaje para que la tienda se entere de tu pedido.
+        </p>
+      )}
       <div className="flex gap-2">
         {onVerPedidos && (
           <button
-            onClick={onVerPedidos}
+            onClick={salirCon(onVerPedidos)}
             className="flex-1 h-[46px] rounded-full bg-white ring-1 ring-[#e6dcf7] text-[#4d04b0] font-semibold text-[13.5px] flex items-center justify-center gap-1.5"
           >
             <i className="fa-solid fa-receipt text-xs"></i> Ver mis pedidos
           </button>
         )}
         <button
-          onClick={onVolver}
+          onClick={salirCon(onVolver)}
           className="flex-1 h-[46px] rounded-full bg-white ring-1 ring-[#e6dcf7] text-[#4d04b0] font-semibold text-[13.5px] flex items-center justify-center gap-1.5"
         >
           <i className="fa-solid fa-store text-xs"></i> Volver al catálogo
         </button>
       </div>
+      {salidaPendiente && (
+        <HojaInferior titulo="Falta avisar a la tienda" onCerrar={() => setSalidaPendiente(null)}>
+          <div className="px-[18px] pb-5 flex flex-col gap-3">
+            <p className="text-[13.5px] text-[#6b6590] leading-relaxed">
+              Tu pedido ya está registrado, pero <strong className="text-[#1c1830]">{bodega.nombre}</strong> se entera mucho más
+              rápido si le envías el mensaje por WhatsApp.
+            </p>
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => { marcarAvisado(); setSalidaPendiente(null); }}
+              className="h-12 rounded-full bg-gradient-to-r from-[#8a3df2] to-[#4d04b0] text-white font-bold text-[14.5px] flex items-center justify-center gap-2"
+            >
+              <i className="fa-brands fa-whatsapp text-lg"></i> Enviar por WhatsApp
+            </a>
+            <button
+              onClick={() => { const { accion } = salidaPendiente; setSalidaPendiente(null); accion(); }}
+              className="min-h-11 text-[13px] font-semibold text-[#78729a] underline underline-offset-2"
+            >
+              Salir sin avisar
+            </button>
+          </div>
+        </HojaInferior>
+      )}
     </div>
   );
 }
@@ -1592,6 +1678,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
     return () => document.removeEventListener("keydown", alTeclear);
   }, [confirmarCancelar, cancelando, cerrarConfirmacion]);
 
+  const enlacesWhatsapp = useMemo(() => leerEnlacesWhatsapp(), [pedidos]);
   const enCurso = pedidos.filter((p) => ESTADOS_EN_CURSO.includes(p.estado));
   const anteriores = pedidos.filter((p) => !ESTADOS_EN_CURSO.includes(p.estado));
   const pestanaActiva = pestana || (enCurso.length > 0 ? "curso" : "historial");
@@ -1710,6 +1797,21 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
           <span className="text-xs font-semibold text-[#6b6590]">Total</span>
           <span className="text-lg font-extrabold tracking-tight text-[#1c1830] tabular-nums">{formatoMoneda(totalPedido(p))}</span>
         </div>
+
+        {p.estado === "pendiente" && !p.whatsapp_abierto_en && !p.cita_barbero_id && enlacesWhatsapp[p.codigo_corto] && (
+          <div className="rounded-2xl bg-amber-50 ring-1 ring-amber-200 px-3 py-2.5 flex items-center justify-between gap-3">
+            <p className="text-xs text-amber-800 leading-snug">Falta avisar a la tienda por WhatsApp.</p>
+            <a
+              href={enlacesWhatsapp[p.codigo_corto]}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => marcarWhatsappAbierto(p.codigo_corto)}
+              className="min-h-10 px-3.5 rounded-full bg-[#6105dc] text-white text-xs font-bold flex items-center gap-1.5 shrink-0"
+            >
+              <i className="fa-brands fa-whatsapp" aria-hidden="true"></i> Avisar
+            </a>
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-2">
           {(p.estado === "pendiente" || p.estado === "listo") ? (
@@ -3910,6 +4012,7 @@ function App() {
     });
     const telefono = telefonoWhatsappPeru(bodega.telefono);
     const whatsappUrl = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+    guardarEnlaceWhatsapp(codigo, whatsappUrl);
     setPedidoConfirmado({
       codigo,
       whatsappUrl,
