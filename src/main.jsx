@@ -227,6 +227,17 @@ function guardarEnlaceWhatsapp(codigo, url) {
   }
 }
 function marcarWhatsappAbierto(codigo) {
+  // Al abrir WhatsApp la página pasa a segundo plano y el aviso a la base puede no llegar:
+  // por eso el recordatorio de este celular se quita aquí mismo, sin esperar a la base.
+  try {
+    const mapa = leerEnlacesWhatsapp();
+    if (mapa[codigo]) {
+      delete mapa[codigo];
+      localStorage.setItem(CLAVE_WHATSAPP_PENDIENTE, JSON.stringify(mapa));
+    }
+  } catch {
+    // sin almacenamiento: queda solo el aviso a la base
+  }
   try {
     Promise.resolve(sbClient.rpc("marcar_whatsapp_abierto", { p_codigo: codigo })).catch(() => {});
   } catch {
@@ -889,8 +900,13 @@ function PantallaConfirmacion({ bodega, codigo, whatsappUrl, onVolver, onVerPedi
   // un toque; entonces queda el botón grande de abajo.
   useEffect(() => {
     try {
-      const w = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-      if (w) marcarAvisado();
+      // Sin "noopener" en las opciones: con él window.open devuelve siempre null y no se
+      // puede saber si el navegador lo dejó abrir o lo bloqueó.
+      const w = window.open(whatsappUrl, "_blank");
+      if (w) {
+        try { w.opener = null; } catch { /* ya sin acceso */ }
+        marcarAvisado();
+      }
     } catch {
       // bloqueado: se usa el botón
     }
@@ -1678,7 +1694,7 @@ function PantallaMisPedidos({ cliente, onVolver, bodegaActualId, onRepetirPedido
     return () => document.removeEventListener("keydown", alTeclear);
   }, [confirmarCancelar, cancelando, cerrarConfirmacion]);
 
-  const enlacesWhatsapp = useMemo(() => leerEnlacesWhatsapp(), [pedidos]);
+  const enlacesWhatsapp = leerEnlacesWhatsapp();
   const enCurso = pedidos.filter((p) => ESTADOS_EN_CURSO.includes(p.estado));
   const anteriores = pedidos.filter((p) => !ESTADOS_EN_CURSO.includes(p.estado));
   const pestanaActiva = pestana || (enCurso.length > 0 ? "curso" : "historial");
