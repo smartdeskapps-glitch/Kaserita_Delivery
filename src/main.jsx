@@ -10,6 +10,7 @@ import {
   costoEnvio as calcularCostoEnvio,
   problemaEntrega as calcularProblemaEntrega,
 } from './lib/carrito.js';
+import { estadoAtencion, textoApertura } from './lib/horario.js';
 
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://hzmrsbeamtbloudmxjrp.supabase.co";
@@ -90,30 +91,6 @@ function fechaRelativa(fechaIso) {
   if (dias < 30) return `Hace ${dias} días`;
   const meses = Math.floor(dias / 30);
   return meses === 1 ? "Hace 1 mes" : `Hace ${meses} meses`;
-}
-
-// "Abierto ahora" / "Cerrado" en base al horario que cargó el dueño desde
-// el POS (bodegas.horario_atencion, un objeto por día de la semana --
-// 0=domingo...6=sábado, igual que Date.getDay()). Sin horario configurado
-// devuelve null -- ahí la vitrina no muestra ningún indicador, para no
-// afirmar algo que el dueño nunca confirmó.
-function estadoAtencionBodega(horario) {
-  if (!horario) return null;
-  const ahora = new Date();
-  const cfg = horario[String(ahora.getDay())];
-  if (!cfg || !cfg.abierto || !cfg.desde || !cfg.hasta) return { abierto: false };
-  const [hDesde, mDesde] = cfg.desde.split(":").map(Number);
-  const [hHasta, mHasta] = cfg.hasta.split(":").map(Number);
-  const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
-  const minutosDesde = hDesde * 60 + mDesde;
-  const minutosHasta = hHasta * 60 + mHasta;
-  // Si "hasta" es menor que "desde" el horario cruza la medianoche (ej.
-  // 18:00 a 02:00) -- se trata como dos tramos en vez de uno solo.
-  const abierto =
-    minutosDesde <= minutosHasta
-      ? minutosAhora >= minutosDesde && minutosAhora < minutosHasta
-      : minutosAhora >= minutosDesde || minutosAhora < minutosHasta;
-  return { abierto };
 }
 
 function getSlugFromPath() {
@@ -2424,7 +2401,7 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
               <>
                 {habitualTienda && (() => {
                   const t = habitualTienda;
-                  const estado = estadoAtencionBodega(t.horario_atencion);
+                  const estado = estadoAtencion(t.horario_atencion);
                   const itemsUlt = itemsUltimoPedido[t.bodega_id];
                   const totalUlt = (itemsUlt || []).reduce((acc, it) => acc + it.precio_venta * it.cantidad, 0);
                   const resumen = (itemsUlt || [])
@@ -2516,7 +2493,7 @@ function PantallaMisTiendas({ onVolver, esInicio = false }) {
                   <p className="text-xs font-bold uppercase tracking-wider text-[#78729a] px-1 pt-1">Otras tiendas</p>
                 )}
                 {otras.map((t) => {
-                  const estado = estadoAtencionBodega(t.horario_atencion);
+                  const estado = estadoAtencion(t.horario_atencion);
                   const sigue = favoritas.has(t.bodega_id);
                   return (
                     <div key={t.bodega_id} className="kmt-item">
@@ -3636,7 +3613,15 @@ function App() {
       });
   }, [estadoBodega, bodega]);
 
-  const estadoHorario = useMemo(() => estadoAtencionBodega(bodega?.horario_atencion), [bodega]);
+  // El estado de abierto/cerrado se vuelve a calcular cada 30 s: una tienda que abre o cierra
+  // con la pantalla ya abierta cambia sola (el botón de pedir se habilita o se bloquea).
+  const [relojHorario, setRelojHorario] = useState(0);
+  useEffect(() => {
+    if (!bodega?.horario_atencion) return undefined;
+    const id = setInterval(() => setRelojHorario((n) => n + 1), 30000);
+    return () => clearInterval(id);
+  }, [bodega?.horario_atencion]);
+  const estadoHorario = useMemo(() => estadoAtencion(bodega?.horario_atencion), [bodega, relojHorario]); // eslint-disable-line react-hooks/exhaustive-deps
   // Memorizado: el mapa compara el punto por referencia y, con un objeto nuevo en cada render, se reanimaba solo.
   const puntoTienda = useMemo(() => puntoDeTienda(bodega), [bodega?.latitud, bodega?.longitud]); // eslint-disable-line react-hooks/exhaustive-deps
   // El mapa de la tienda se cierra con Escape.
@@ -3733,6 +3718,11 @@ function App() {
   // En una barbería hay cita: los servicios (sin stock) y los combos piden día y hora.
   // Si el carrito solo tiene productos (una pomada), se pide como cualquier pedido.
   const requiereCita = esBarberia && (itemsCarrito.some((it) => it.stock_disponible == null) || itemsCarritoCombos.length > 0);
+  // Fuera de horario no se puede pedir. Las citas de barbería sí: son para otro día u hora y
+  // las valida la agenda del local.
+  const cerradaAhora = !!estadoHorario && !estadoHorario.abierto;
+  const sinPedidoPorHorario = cerradaAhora && !requiereCita;
+  const textoAperturaTienda = textoApertura(estadoHorario);
   // Una barbería no hace delivery de servicios: se retira / se asiste en el local.
   const entregaDisponible = !!bodega?.delivery_domicilio && !esBarberia;
   const esDomicilio = !esBarberia && entregaDomicilio(bodega, tipoEntrega);
@@ -3922,6 +3912,10 @@ function App() {
     if (itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) return;
     if (problemaEntrega) {
       setError(problemaEntrega);
+      return;
+    }
+    if (sinPedidoPorHorario) {
+      setError(`La tienda está cerrada ahora. ${textoAperturaTienda ? `${textoAperturaTienda}.` : ""}`.trim());
       return;
     }
     if (enviandoRef.current) return;
@@ -5041,7 +5035,9 @@ function App() {
                   {estadoHorario && !estadoHorario.abierto && (
                     <p className="text-xs text-[#78729a] bg-white ring-1 ring-[#efe6fc] rounded-2xl px-3 py-2.5 flex items-center gap-1.5">
                       <i className="fa-solid fa-clock text-[#a29cbd]"></i>
-                      Esta tienda está cerrada ahora: tu pedido espera hasta que vuelva a abrir.
+                      {requiereCita
+                        ? "Esta tienda está cerrada ahora, pero puedes reservar tu cita para otro momento."
+                        : `Esta tienda está cerrada ahora${textoAperturaTienda ? `. ${textoAperturaTienda}` : ""}. Vuelve a pedir cuando abra.`}
                     </p>
                   )}
                 </>
@@ -5064,10 +5060,14 @@ function App() {
               {clienteSesion ? (
                 <button
                   onClick={confirmarPedido}
-                  disabled={(itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) || enviando || !!problemaEntrega}
+                  disabled={(itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) || enviando || !!problemaEntrega || sinPedidoPorHorario}
                   className="kped-btn"
                 >
-                  {enviando ? (requiereCita ? "Enviando reserva..." : "Enviando pedido...") : requiereCita ? (
+                  {sinPedidoPorHorario ? (
+                    <>
+                      <i className="fa-solid fa-clock text-lg"></i> {textoAperturaTienda ? `Cerrado · ${textoAperturaTienda.replace(/^Abre /, "abre ")}` : "Tienda cerrada"}
+                    </>
+                  ) : enviando ? (requiereCita ? "Enviando reserva..." : "Enviando pedido...") : requiereCita ? (
                     <>
                       <i className="fa-regular fa-calendar-check text-lg"></i> Reservar cita
                     </>
@@ -5081,11 +5081,19 @@ function App() {
                 <button
                   type="button"
                   onClick={iniciarConGoogle}
-                  disabled={itemsCarrito.length === 0 && itemsCarritoCombos.length === 0}
+                  disabled={(itemsCarrito.length === 0 && itemsCarritoCombos.length === 0) || sinPedidoPorHorario}
                   className="kped-btn"
                 >
-                  <span className="bg-white rounded-full w-6 h-6 flex items-center justify-center shrink-0"><IconGoogle /></span>
-                  Continuar con Google
+                  {sinPedidoPorHorario ? (
+                    <>
+                      <i className="fa-solid fa-clock text-lg"></i> {textoAperturaTienda ? `Cerrado · ${textoAperturaTienda.replace(/^Abre /, "abre ")}` : "Tienda cerrada"}
+                    </>
+                  ) : (
+                    <>
+                      <span className="bg-white rounded-full w-6 h-6 flex items-center justify-center shrink-0"><IconGoogle /></span>
+                      Continuar con Google
+                    </>
+                  )}
                 </button>
               )}
             </div>
