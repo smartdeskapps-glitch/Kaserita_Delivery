@@ -3722,7 +3722,9 @@ function App() {
   // las valida la agenda del local.
   const cerradaAhora = !!estadoHorario && !estadoHorario.abierto;
   const sinPedidoPorHorario = cerradaAhora && !requiereCita;
+  // "Abre mañana a las 8:00 a. m." (la hora ya termina en punto). El botón usa la versión corta.
   const textoAperturaTienda = textoApertura(estadoHorario);
+  const etiquetaCerrado = textoAperturaTienda ? textoAperturaTienda.replace(" a las", "") : "Tienda cerrada";
   // Una barbería no hace delivery de servicios: se retira / se asiste en el local.
   const entregaDisponible = !!bodega?.delivery_domicilio && !esBarberia;
   const esDomicilio = !esBarberia && entregaDomicilio(bodega, tipoEntrega);
@@ -3915,7 +3917,7 @@ function App() {
       return;
     }
     if (sinPedidoPorHorario) {
-      setError(`La tienda está cerrada ahora. ${textoAperturaTienda ? `${textoAperturaTienda}.` : ""}`.trim());
+      setError(`La tienda está cerrada ahora. ${textoAperturaTienda}`.trim());
       return;
     }
     if (enviandoRef.current) return;
@@ -5037,7 +5039,7 @@ function App() {
                       <i className="fa-solid fa-clock text-[#a29cbd]"></i>
                       {requiereCita
                         ? "Esta tienda está cerrada ahora, pero puedes reservar tu cita para otro momento."
-                        : `Esta tienda está cerrada ahora${textoAperturaTienda ? `. ${textoAperturaTienda}` : ""}. Vuelve a pedir cuando abra.`}
+                        : `Esta tienda está cerrada ahora. ${textoAperturaTienda} Vuelve a pedir cuando abra.`.replace("  ", " ")}
                     </p>
                   )}
                 </>
@@ -5065,7 +5067,7 @@ function App() {
                 >
                   {sinPedidoPorHorario ? (
                     <>
-                      <i className="fa-solid fa-clock text-lg"></i> {textoAperturaTienda ? `Cerrado · ${textoAperturaTienda.replace(/^Abre /, "abre ")}` : "Tienda cerrada"}
+                      <i className="fa-solid fa-clock text-lg"></i> <span className="whitespace-nowrap">{etiquetaCerrado}</span>
                     </>
                   ) : enviando ? (requiereCita ? "Enviando reserva..." : "Enviando pedido...") : requiereCita ? (
                     <>
@@ -5086,7 +5088,7 @@ function App() {
                 >
                   {sinPedidoPorHorario ? (
                     <>
-                      <i className="fa-solid fa-clock text-lg"></i> {textoAperturaTienda ? `Cerrado · ${textoAperturaTienda.replace(/^Abre /, "abre ")}` : "Tienda cerrada"}
+                      <i className="fa-solid fa-clock text-lg"></i> <span className="whitespace-nowrap">{etiquetaCerrado}</span>
                     </>
                   ) : (
                     <>
