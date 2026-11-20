@@ -16,6 +16,11 @@ describe('estadoAtencion', () => {
     expect(estadoAtencion(horario, lima(1, '08:00')).abierto).toBe(true);
     expect(estadoAtencion(horario, lima(1, '20:59')).abierto).toBe(true);
   });
+  it('dice a qué hora cierra', () => {
+    expect(estadoAtencion(horario, lima(1, '10:00')).cierra).toBe('21:00');
+    const noche = { 5: { abierto: true, desde: '18:00', hasta: '02:00' } };
+    expect(estadoAtencion(noche, lima(6, '01:00')).cierra).toBe('02:00');
+  });
   it('"hasta" ya es cerrado', () => {
     expect(estadoAtencion(horario, lima(1, '21:00')).abierto).toBe(false);
   });

@@ -12,7 +12,7 @@
 --  - Sin horario guardado, o sin ningún día abierto: no se bloquea nada.
 --  - "hasta" mayor que "desde": tramo normal. "hasta" menor: cruza la
 --    medianoche (la madrugada pertenece al día anterior). Iguales: todo el día.
---  - Las citas de barbería (cita_fecha) no se bloquean: son para otro día u
+--  - Las citas de barbería (barberia + cita_fecha) no se bloquean: son para otro día u
 --    hora y las valida la agenda.
 --  - Si el horario guardado tiene un formato roto, se deja pasar el pedido.
 -- ============================================================
@@ -79,11 +79,15 @@ set search_path to 'public'
 as $$
 declare
   v_horario jsonb;
+  v_tipo text;
 begin
-  if new.cita_fecha is not null then
+  select horario_atencion, tipo_negocio into v_horario, v_tipo from bodegas where id = new.bodega_id;
+  -- Las citas de una barberia son para otro dia u hora y las valida la agenda.
+  -- La excepcion se comprueba aqui (no depende del orden de los otros disparadores):
+  -- una bodega comun con cita_fecha puesta a mano igual se bloquea fuera de horario.
+  if new.cita_fecha is not null and v_tipo = 'barberia' then
     return new;
   end if;
-  select horario_atencion into v_horario from bodegas where id = new.bodega_id;
   if not public.horario_esta_abierto(v_horario, (now() at time zone 'America/Lima')) then
     raise exception 'La tienda está cerrada ahora. Vuelve a pedir cuando abra.';
   end if;

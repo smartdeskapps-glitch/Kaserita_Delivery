@@ -38,7 +38,8 @@ export function formatoHora12(minutos) {
 }
 
 // null = sin horario configurado (no se muestra ni se bloquea nada).
-// Si no, { abierto, proxima }: proxima = { cuando: 'hoy' | 'mañana' | 'el lunes', hora: '8:00 a. m.' }
+// Si no, { abierto, cierra, proxima }: cierra = "HH:MM" de cierre cuando está abierta;
+// proxima = { cuando: 'hoy' | 'mañana' | 'el lunes', hora: '8:00 a. m.' }
 // cuando está cerrada (null si no vuelve a abrir en los próximos 7 días).
 export function estadoAtencion(horario, ahora = new Date()) {
   if (!horario || typeof horario !== 'object' || !hayDiaAbierto(horario)) return null;
@@ -48,15 +49,16 @@ export function estadoAtencion(horario, ahora = new Date()) {
 
   const hoy = tramoDelDia(horario, dia);
   const ayer = tramoDelDia(horario, (dia + 6) % 7);
-  let abierto = false;
+  const horaCierre = (d) => horario[String(d)].hasta;
   if (hoy) {
-    if (hoy.desde === hoy.hasta) abierto = true;
-    else if (hoy.desde < hoy.hasta) abierto = minuto >= hoy.desde && minuto < hoy.hasta;
-    else abierto = minuto >= hoy.desde; // la parte de la madrugada es del tramo de ayer
+    if (hoy.desde === hoy.hasta) return { abierto: true, cierra: horaCierre(dia), proxima: null };
+    const dentro = hoy.desde < hoy.hasta ? minuto >= hoy.desde && minuto < hoy.hasta : minuto >= hoy.desde; // la madrugada es del tramo de ayer
+    if (dentro) return { abierto: true, cierra: horaCierre(dia), proxima: null };
   }
   // Un tramo de ayer que cruzó la medianoche sigue abierto hasta su "hasta".
-  if (!abierto && ayer && ayer.hasta < ayer.desde) abierto = minuto < ayer.hasta;
-  if (abierto) return { abierto: true, proxima: null };
+  if (ayer && ayer.hasta < ayer.desde && minuto < ayer.hasta) {
+    return { abierto: true, cierra: horaCierre((dia + 6) % 7), proxima: null };
+  }
 
   for (let salto = 0; salto <= 7; salto++) {
     const tramo = salto === 0 ? hoy : tramoDelDia(horario, (dia + salto) % 7);
