@@ -4277,8 +4277,8 @@ function App() {
   }
 
   return (
-    <div className="kd-entra relative max-w-3xl mx-auto pb-48" style={{ "--d": direccionEntrada }}>
-      <header className="px-4 pt-4 pb-2 flex items-center gap-3">
+    <div className="kd-entra relative max-w-3xl lg:max-w-6xl mx-auto pb-48" style={{ "--d": direccionEntrada }}>
+      <header className="px-4 lg:px-6 pt-4 pb-2 flex items-center gap-3">
         <div className="w-[46px] h-[46px] rounded-2xl bg-[#f4eefe] overflow-hidden shrink-0">
           {bodega.logo_url ? (
             <img src={bodega.logo_url} alt={bodega.nombre} className="w-full h-full object-cover" />
@@ -4394,8 +4394,8 @@ function App() {
       )}
 
       {productos.length > 0 && (
-        <div className="px-4 pt-3 pb-2 bg-[#f7f5fb]/90 backdrop-blur sticky top-0 z-20 space-y-2.5">
-          <div className="relative">
+        <div className="px-4 lg:px-6 pt-3 pb-2 bg-[#f7f5fb]/90 backdrop-blur sticky top-0 z-20 space-y-2.5">
+          <div className="relative lg:max-w-2xl">
             <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-[#a29cbd] text-sm"></i>
             <input
               type="text"
@@ -4406,9 +4406,9 @@ function App() {
             />
           </div>
           {categorias.length > 0 && (
-            <div className="relative -mx-4">
+            <div className="relative -mx-4 lg:-mx-6">
               {/* Categorías: solo texto, en píldoras que se deslizan de lado. */}
-              <div className="flex gap-2 overflow-x-auto hide-scrollbar px-4 py-1">
+              <div className="flex gap-2 overflow-x-auto hide-scrollbar px-4 lg:px-6 py-1">
                 <button
                   onClick={() => { setCategoriaActiva(""); setSoloFavoritos(false); }}
                   className={`kcat ${categoriaActiva === "" && !soloFavoritos ? "kcat-on" : ""}`}
@@ -4441,7 +4441,7 @@ function App() {
 
       {combos.length > 0 && !busqueda.trim() && !categoriaActiva && !soloFavoritos && (
         <div className="pt-4">
-          <div className="px-4 flex items-center justify-between mb-2">
+          <div className="px-4 lg:px-6 flex items-center justify-between mb-2">
             <p className="text-sm font-bold text-stone-800 flex items-center gap-1.5">
               <i className="fa-solid fa-gift text-[#6105dc]"></i> Combos con descuento
             </p>
@@ -4454,10 +4454,10 @@ function App() {
           <div
             ref={comboScrollRef}
             onScroll={manejarScrollCombos}
-            className="flex overflow-x-auto hide-scrollbar px-4 pb-1 snap-x snap-mandatory scroll-pl-4"
+            className="flex overflow-x-auto hide-scrollbar px-4 lg:px-6 pb-1 snap-x snap-mandatory scroll-pl-4 lg:scroll-pl-6"
           >
             {combos.map((combo) => (
-              <div key={combo.id} className="w-[88%] shrink-0 snap-start pr-3 last:pr-0">
+              <div key={combo.id} className="w-[88%] lg:w-1/3 shrink-0 snap-start pr-3 last:pr-0">
                 <TarjetaComboMemo
                   combo={combo}
                   cantidadCombo={carritoCombos[combo.id] || 0}
@@ -4470,7 +4470,7 @@ function App() {
             ))}
           </div>
           {combos.length > 1 && (
-            <div className="flex items-center justify-center gap-1.5 pt-2">
+            <div className="flex items-center justify-center gap-1.5 pt-2 lg:hidden">
               {combos.map((_, i) => (
                 <span
                   key={i}
@@ -4484,7 +4484,7 @@ function App() {
 
       {productosDestacados.length > 0 && (
         <div className="pt-4">
-          <div className="px-4 flex items-center justify-between mb-2">
+          <div className="px-4 lg:px-6 flex items-center justify-between mb-2">
             <p className="text-sm font-bold text-stone-800 flex items-center gap-1.5">
               <i className="fa-solid fa-star text-[#6105dc]"></i> Destacados
             </p>
@@ -4497,10 +4497,10 @@ function App() {
           <div
             ref={destacadoScrollRef}
             onScroll={manejarScrollDestacados}
-            className="flex overflow-x-auto hide-scrollbar px-4 pb-1 snap-x snap-mandatory scroll-pl-4"
+            className="flex overflow-x-auto hide-scrollbar px-4 lg:px-6 pb-1 snap-x snap-mandatory scroll-pl-4 lg:scroll-pl-6"
           >
             {productosDestacados.map((p) => (
-              <div key={p.id} className="w-[88%] shrink-0 snap-start pr-3 last:pr-0">
+              <div key={p.id} className="w-[88%] lg:w-1/2 shrink-0 snap-start pr-3 last:pr-0">
                 <TarjetaDestacadoMemo
                   producto={p}
                   cantidadEnCarrito={carrito[p.id] || 0}
@@ -4512,7 +4512,7 @@ function App() {
             ))}
           </div>
           {productosDestacados.length > 1 && (
-            <div className="flex items-center justify-center gap-1.5 pt-2">
+            <div className="flex items-center justify-center gap-1.5 pt-2 lg:hidden">
               {productosDestacados.map((_, i) => (
                 <span
                   key={i}
@@ -4524,7 +4524,7 @@ function App() {
         </div>
       )}
 
-      <main className="px-4 py-4">
+      <main className="px-4 lg:px-6 py-4">
         {!cargandoProductos && productosFiltrados.length > 0 && (
           <div className="flex items-center justify-between mb-3">
             <p className="text-base font-bold text-[#1c1830]">Todos los productos</p>
@@ -4546,7 +4546,7 @@ function App() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2.5 lg:gap-3.5">
             {productosFiltrados.map((p) => (
               <TarjetaProductoMemo
                 key={p.id}
@@ -4565,7 +4565,7 @@ function App() {
       </main>
 
       {productosAgotados.length > 0 && (
-        <div className="px-4 pb-4">
+        <div className="px-4 lg:px-6 pb-4">
           <p className="text-sm font-bold text-stone-500 flex items-center gap-1.5 mb-2">
             <i className="fa-solid fa-box-open text-stone-400"></i> Agotados
           </p>
